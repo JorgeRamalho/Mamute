@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./public/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Harako é o mixer player para DJs iniciantes e avançados: visor digital, simulador de CDJ e controladora, academia, rádio e catálogo Beatport, Deezer, SoundCloud, YouTube e Spotify."
+    />
+    <meta
+      name="keywords"
+      content="Harako, DJ, mixer player, CDJ, controladora, beatmatching, Beatport, Deezer, SoundCloud, YouTube, Spotify, academia DJ, rádio eletrônica"
+    />
+    <meta name="author" content="Harako" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#06070c" />
+    <link rel="canonical" href="https://harako.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Harako" />
+    <meta property="og:title" content="Harako — Mixer player para DJs" />
+    <meta
+      property="og:description"
+      content="Do primeiro beat ao peak time. Visor digital, CDJ virtual, sala de aula e rádio para DJs."
+    />
+    <meta property="og:image" content="./public/og.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Harako — Mixer player para DJs" />
+    <meta
+      name="twitter:description"
+      content="Simulador de CDJ, academia e rádio para DJs iniciantes e avançados."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Orbitron:wght@500;700;800&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Harako — Mixer player para DJs iniciantes e avançados</title>
+  </head>
+  <body>
+    <form name="harako-dj-cadastro" data-netlify="true" hidden>
+      <input type="text" name="fullName" />
+      <input type="text" name="artistName" />
+      <input type="email" name="email" />
+      <input type="text" name="phone" />
+      <input type="text" name="city" />
+      <input type="text" name="country" />
+      <textarea name="bio"></textarea>
+      <input type="text" name="experienceLevel" />
+    </form>
+    <div id="root"></div>
+    <script>
+      (function () {
+        var port = String(location.port || "");
+        if (port === "5173" || port === "4173") return;
+        if (document.querySelector('script[src*="assets/main.js"]')) return;
+
+        function showHint() {
+          var root = document.getElementById("root");
+          if (!root || root.childElementCount) return;
+          root.innerHTML =
+            '<section style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">HARAKO</p><h1 style="font-family:Syne,sans-serif">Live Server precisa do build</h1><p>Este app é Vite + React. Rode <code>npm run build</code> e recarregue, ou abra <a href="http://127.0.0.1:5173/" style="color:#00e8ff">http://127.0.0.1:5173/</a> com <code>npm run dev</code>.</p></section>';
+        }
+
+        var css = document.createElement("link");
+        css.rel = "stylesheet";
+        css.href = "./dist/assets/index.css";
+        css.onerror = showHint;
+        document.head.appendChild(css);
+
+        var script = document.createElement("script");
+        script.type = "module";
+        script.src = "./dist/assets/main.js";
+        script.onerror = showHint;
+        document.body.appendChild(script);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+.mixer-board {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.8rem;
+  background:
+    linear-gradient(180deg, #101826, #0a0e16);
+  border: 1px solid var(--line-strong);
+  border-radius: 28px;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.deck {
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: #0b1018;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.deck-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+.deck[data-deck="a"] .bpm {
+  color: var(--cyan);
+}
+
+.deck[data-deck="b"] .bpm {
+  color: var(--magenta);
+}
+
+.bpm {
+  font-family: var(--font-hud);
+  font-size: 1.4rem;
+}
+
+.jog {
+  width: min(100%, 240px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 10px solid #1a2230;
+  background:
+    repeating-conic-gradient(from var(--spin, 0deg), #141c28 0 8deg, #0c121c 8deg 16deg);
+  box-shadow:
+    inset 0 0 30px rgba(0, 232, 255, 0.15),
+    0 0 0 2px rgba(0, 232, 255, 0.25);
+  position: relative;
+}
+
+.jog::after {
+  content: "";
+  position: absolute;
+  inset: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1c2738, #070a10);
+  border: 1px solid var(--line);
+}
+
+.wave {
+  width: 100%;
+  height: 56px;
+  border-radius: 8px;
+  background: #070b12;
+}
+
+.deck-controls,
+.eq-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.eq-row label,
+.pitch-wrap label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  display: grid;
+  gap: 0.2rem;
+}
+
+input[type="range"] {
+  accent-color: var(--cyan);
+  width: 100%;
+}
+
+.mixer-center {
+  width: 150px;
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  padding: 0.4rem 0.2rem;
+}
+
+.xfader {
+  writing-mode: horizontal-tb;
+  width: 130px;
+}
+
+.channel-faders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  height: 160px;
+}
+
+.channel-faders input {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  height: 150px;
+  width: 28px;
+}
+
+.deck[data-playing="true"] .jog {
+  animation: jogspin 1.8s linear infinite;
+}
+
+@keyframes jogspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .mixer-board {
+    grid-template-columns: 1fr;
+  }
+
+  .mixer-center {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .channel-faders {
+    height: auto;
+  }
+
+  .channel-faders input {
+    writing-mode: horizontal-tb;
+    direction: ltr;
+    height: auto;
+    width: 100%;
+  }
+}
