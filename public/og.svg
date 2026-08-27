@@ -1,6 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Harako">
   <rect width="1200" height="630" fill="#06070c"/>
-  <text x="80" y="280" fill="#00e8ff" font-family="Orbitron, sans-serif" font-size="96" font-weight="800">HARAKO</text>
-  <text x="80" y="360" fill="#e8eef8" font-family="Outfit, sans-serif" font-size="36">Mixer player · CDJ virtual · Academia DJ</text>
-  <rect x="80" y="410" width="420" height="8" fill="#ff2d95"/>
+  <g transform="translate(80 195)">
+    <rect width="120" height="120" rx="26" fill="#06070c"/>
+    <rect x="11" y="22" width="98" height="76" rx="13" fill="#0c1018" stroke="#00e8ff" stroke-width="3.3"/>
+    <path d="M28 38v44M53 38v44M28 60h25" fill="none" stroke="#00e8ff" stroke-width="6.1" stroke-linecap="round"/>
+    <path d="M68 38v44M68 60l24-22M68 60l24 22" fill="none" stroke="#ff2d95" stroke-width="6.1" stroke-linecap="round"/>
+  </g>
+  <text x="224" y="268" fill="#00e8ff" font-family="Orbitron, sans-serif" font-size="96" font-weight="800">HARAKO</text>
+  <text x="224" y="348" fill="#e8eef8" font-family="Outfit, sans-serif" font-size="36">Mixer player · CDJ virtual · Academia DJ</text>
+  <rect x="224" y="398" width="420" height="8" fill="#ff2d95"/>
 </svg>

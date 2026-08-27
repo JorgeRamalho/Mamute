@@ -25,6 +25,9 @@ export function Hero() {
           <NavLink className="btn btn-magenta" to="/dj">
             Área do DJ
           </NavLink>
+          <a className="btn" href="#assinatura">
+            Ver assinaturas
+          </a>
         </div>
       </div>
       <DigitalVisor />

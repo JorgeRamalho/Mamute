@@ -1,4 +1,5 @@
 import { Hero } from "../components/hero/Hero";
+import { PlansSection } from "../components/plans/PlansSection";
 import { PLATFORMS } from "../data/platforms";
 import { NavLink } from "react-router";
 
@@ -6,6 +7,7 @@ export function HomePage() {
   return (
     <div className="page">
       <Hero />
+      <PlansSection />
       <section className="section-title">
         <h2>Três camadas da cabine Harako</h2>
         <p>

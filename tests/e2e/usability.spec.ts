@@ -45,4 +45,17 @@ test.describe("Usabilidade e função", () => {
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
     }
   });
+
+  test("home mostra combos Bronze, Prata e Ouro e leva o Prata ao cadastro", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Bronze, Prata e Ouro/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bronze", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Prata", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ouro", exact: true })).toBeVisible();
+    await page.locator("#assinatura").getByRole("button", { name: /Anual/ }).click();
+    await expect(page.getByText("R$ 590")).toBeVisible();
+    await page.getByRole("link", { name: "Assinar Prata" }).click();
+    await expect(page).toHaveURL(/\/dj\?plano=prata/);
+    await expect(page.getByText(/Combo escolhido no visor: Prata/)).toBeVisible();
+  });
 });

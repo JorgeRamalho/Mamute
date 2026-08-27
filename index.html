@@ -53,9 +53,61 @@
     <div id="root"></div>
     <script>
       (function () {
+        var rate = 1;
+        var target = 1;
+        var tau = 0.62;
+        var last = performance.now();
+
+        function tick(now) {
+          var dt = Math.min(0.048, (now - last) / 1000);
+          last = now;
+          rate += (target - rate) * (1 - Math.exp(-dt / tau));
+          if (target === 0 && rate < 0.02) rate = 0;
+          var track = document.querySelector(".status-track");
+          if (track) {
+            var anims = track.getAnimations();
+            for (var i = 0; i < anims.length; i += 1) {
+              anims[i].playbackRate = rate;
+            }
+          }
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+
+        document.addEventListener(
+          "pointerover",
+          function (event) {
+            var node = event.target;
+            if (node && node.closest && node.closest(".status-bar")) {
+              target = 0;
+              tau = 0.62;
+            }
+          },
+          true,
+        );
+
+        document.addEventListener(
+          "pointerout",
+          function (event) {
+            var from = event.target && event.target.closest ? event.target.closest(".status-bar") : null;
+            var to =
+              event.relatedTarget && event.relatedTarget.closest
+                ? event.relatedTarget.closest(".status-bar")
+                : null;
+            if (from && !to) {
+              target = 1;
+              tau = 0.95;
+            }
+          },
+          true,
+        );
+      })();
+
+      (function () {
         var port = String(location.port || "");
-        if (port === "5173" || port === "4173") return;
-        if (document.querySelector('script[src*="assets/main.js"]')) return;
+        if (/^517\d$/.test(port) || port === "4173") return;
+        if (document.querySelector('script[src*="dist/assets/main.js"]')) return;
+        if (document.querySelector('script[src="./assets/main.js"]')) return;
 
         function showHint() {
           var root = document.getElementById("root");
@@ -66,13 +118,13 @@
 
         var css = document.createElement("link");
         css.rel = "stylesheet";
-        css.href = "./dist/assets/index.css";
+        css.href = "./dist/assets/index.css?v=slowpause";
         css.onerror = showHint;
         document.head.appendChild(css);
 
         var script = document.createElement("script");
         script.type = "module";
-        script.src = "./dist/assets/main.js";
+        script.src = "./dist/assets/main.js?v=slowpause";
         script.onerror = showHint;
         document.body.appendChild(script);
       })();

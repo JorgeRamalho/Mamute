@@ -19,6 +19,8 @@
   --radius-sm: 10px;
   --header-h: 72px;
   --status-h: 36px;
+  --layout-max: 1180px;
+  --layout-gutter: 1rem;
   --font-display: "Syne", sans-serif;
   --font-hud: "Orbitron", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
@@ -38,6 +40,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + var(--status-h) + 0.75rem);
 }
 
 body {

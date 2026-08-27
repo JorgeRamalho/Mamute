@@ -10,19 +10,25 @@
   z-index: 40;
   height: var(--header-h);
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
-  gap: 1.25rem;
-  padding: 0 1.25rem;
+  justify-content: space-between;
+  column-gap: 1.5rem;
+  padding-inline: max(var(--layout-gutter), calc((100% - var(--layout-max)) / 2));
   background: color-mix(in srgb, var(--void) 78%, transparent);
   backdrop-filter: blur(18px) saturate(1.4);
   border-bottom: 1px solid var(--line);
+}
+
+.header-inner {
+  display: contents;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  flex-shrink: 0;
 }
 
 .brand-mark {
@@ -46,8 +52,10 @@
 
 .nav {
   display: flex;
-  justify-content: center;
-  gap: 0.35rem;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
+  padding-inline: 0.25rem;
 }
 
 .nav a {
@@ -58,6 +66,7 @@
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .nav a.active,
@@ -68,6 +77,8 @@
 
 .header-cta {
   display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
@@ -96,20 +107,37 @@
 }
 
 .status-bar {
+  position: relative;
+  z-index: 35;
   height: var(--status-h);
   overflow: hidden;
   border-bottom: 1px solid var(--line);
   background: linear-gradient(90deg, #070b12, #101826 40%, #070b12);
   display: flex;
   align-items: center;
+  cursor: default;
+  pointer-events: auto;
+  transition:
+    background 0.7s ease,
+    border-color 0.7s ease,
+    box-shadow 0.7s ease;
+}
+
+.status-bar:hover {
+  background: linear-gradient(90deg, #070b12, #151d2a 44%, #070b12);
+  border-bottom-color: color-mix(in srgb, var(--cyan) 18%, var(--line));
+  box-shadow: inset 0 0 14px rgba(0, 232, 255, 0.04);
 }
 
 .status-track {
   display: flex;
   gap: 2.5rem;
+  width: max-content;
   white-space: nowrap;
-  animation: ticker 42s linear infinite;
   padding-left: 100%;
+  animation: ticker 56s linear infinite;
+  will-change: transform;
+  pointer-events: none;
 }
 
 .status-item {
@@ -133,7 +161,7 @@
 }
 
 .page {
-  width: min(1180px, calc(100% - 2rem));
+  width: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter)));
   margin: 0 auto;
   padding: 2rem 0 4rem;
 }
@@ -147,6 +175,15 @@
   color: var(--muted);
   font-family: var(--font-mono);
   font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-track {
+    will-change: auto;
+    animation: none;
+    transform: none;
+    padding-left: 1rem;
+  }
 }
 
 @keyframes ticker {
@@ -168,9 +205,15 @@
   height: 42px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .site-header {
-    grid-template-columns: auto 1fr auto;
+    display: flex;
+    justify-content: flex-end;
+    column-gap: 0.75rem;
+  }
+
+  .brand {
+    margin-right: auto;
   }
 
   .menu-toggle {
@@ -178,19 +221,34 @@
     place-items: center;
   }
 
+  .header-cta .btn:not(.btn-solid) {
+    display: none;
+  }
+
   .nav {
     display: none;
     position: absolute;
     top: var(--header-h);
-    left: 0;
-    right: 0;
+    left: max(var(--layout-gutter), calc((100% - var(--layout-max)) / 2));
+    right: max(var(--layout-gutter), calc((100% - var(--layout-max)) / 2));
+    width: auto;
     background: var(--panel);
     flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.35rem;
     padding: 0.75rem;
-    border-bottom: 1px solid var(--line);
+    border: 1px solid var(--line);
+    border-top: 0;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   }
 
   .nav.open {
     display: flex;
+  }
+}
+
+@media (max-width: 560px) {
+  .header-cta {
+    display: none;
   }
 }

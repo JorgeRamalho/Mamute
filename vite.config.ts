@@ -7,22 +7,40 @@ function injectViteEntry(): Plugin {
     transformIndexHtml: {
       order: "pre",
       handler(html) {
-        return html
+        const next = html
           .replaceAll("./public/favicon.svg", "./favicon.svg")
-          .replaceAll("./public/og.svg", "./og.svg")
-          .replace(
-            "</body>",
-            html.includes('src="./src/main.tsx"')
-              ? "</body>"
-              : '    <script type="module" src="./src/main.tsx"></script>\n  </body>',
-          );
+          .replaceAll("./public/og.svg", "./og.svg");
+
+        if (next.includes('src="./src/main.tsx"')) return next;
+
+        return next.replace(
+          "</body>",
+          '    <script type="module" src="./src/main.tsx"></script>\n  </body>',
+        );
       },
     },
   };
 }
 
 export default defineConfig({
-  plugins: [react(), injectViteEntry()],
+  plugins: [
+    react(),
+    injectViteEntry(),
+    {
+      name: "ensure-bundle-in-html",
+      apply: "build",
+      transformIndexHtml: {
+        order: "post",
+        handler(html) {
+          if (/<script[^>]+src=["'][^"']*\/assets\/main\.js/.test(html)) return html;
+          return html.replace(
+            "</body>",
+            '    <script type="module" src="./assets/main.js"></script>\n  </body>',
+          );
+        },
+      },
+    },
+  ],
   base: "./",
   server: {
     port: 5173,
@@ -35,6 +53,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: "index.html",
       output: {
         entryFileNames: "assets/main.js",
         chunkFileNames: "assets/[name].js",

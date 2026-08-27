@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Harako">
-  <rect width="64" height="64" rx="12" fill="#06070c"/>
-  <rect x="8" y="14" width="48" height="36" rx="6" fill="#0c1018" stroke="#00e8ff" stroke-width="2"/>
-  <path d="M18 22v20M30 22v20M18 32h12" stroke="#00e8ff" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="44" cy="32" r="8" fill="none" stroke="#ff2d95" stroke-width="2"/>
-  <circle cx="44" cy="32" r="2" fill="#ffc14a"/>
+  <rect width="64" height="64" rx="14" fill="#06070c"/>
+  <rect x="6" y="12" width="52" height="40" rx="7" fill="#0c1018" stroke="#00e8ff" stroke-width="1.75"/>
+  <path d="M15 20v24M28 20v24M15 32h13" fill="none" stroke="#00e8ff" stroke-width="3.25" stroke-linecap="round"/>
+  <path d="M36 20v24M36 32l13-12M36 32l13 12" fill="none" stroke="#ff2d95" stroke-width="3.25" stroke-linecap="round"/>
 </svg>
