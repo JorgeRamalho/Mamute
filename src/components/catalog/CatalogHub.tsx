@@ -1,3 +1,4 @@
+import { NavLink } from "react-router";
 import { PLATFORMS } from "../../data/platforms";
 
 export function CatalogHub() {
@@ -26,9 +27,15 @@ export function CatalogHub() {
           </ul>
           <p>{platform.playerDjUse}</p>
           <p>
-            <a className="btn" href={platform.docsUrl} target="_blank" rel="noreferrer">
-              Documentação
-            </a>
+            {platform.docsUrl.startsWith("/") ? (
+              <NavLink className="btn" to={platform.docsUrl}>
+                Abrir no Mamute
+              </NavLink>
+            ) : (
+              <a className="btn" href={platform.docsUrl} target="_blank" rel="noreferrer">
+                Documentação
+              </a>
+            )}
             {platform.partnerUrl ? (
               <a className="btn" href={platform.partnerUrl} target="_blank" rel="noreferrer">
                 Streaming / partner

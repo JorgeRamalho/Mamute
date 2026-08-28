@@ -23,6 +23,7 @@ test.describe("Identidade visual e responsividade", () => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(8);
     await expect(page.getByText("MAMUTE OS 1.0")).toBeVisible();
+    await expect(page.getByText("Mamute").first()).toBeVisible();
     await expect(page.getByText("Beatport").first()).toBeVisible();
   });
 

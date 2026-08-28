@@ -12,8 +12,8 @@ export function Hero() {
         </h1>
         <p className="lede">
           Um painel de cabine com CDJ e controladora virtuais, academia do iniciante
-          à conclusão, rádio em modo clipe e um catálogo honesto de Beatport, Deezer,
-          SoundCloud, YouTube e Spotify.
+          à conclusão, rádio em modo clipe e um catálogo honesto: Mamute, Beatport,
+          SoundCloud, Deezer, Spotify e YouTube.
         </p>
         <div className="hero-actions">
           <NavLink className="btn btn-solid" to="/mixer">

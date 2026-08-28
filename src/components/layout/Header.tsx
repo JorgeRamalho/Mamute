@@ -3,7 +3,6 @@ import { NavLink } from "react-router";
 import { publicAsset } from "../../lib/base";
 
 const LINKS = [
-  { to: "/", label: "Início" },
   { to: "/mixer", label: "Mixer CDJ" },
   { to: "/academia", label: "Academia" },
   { to: "/radio", label: "Rádio" },
@@ -17,7 +16,7 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <NavLink to="/" className="brand" aria-label="Mamute DJPLAYER início">
+        <NavLink to="/" className="brand" aria-label="Mamute DJPLAYER">
           <img
             className="brand-mark"
             src={`${publicAsset("logo-mamute.png")}?v=mamute2`}
@@ -47,9 +46,6 @@ export function Header() {
           ))}
         </nav>
         <div className="header-cta">
-          <NavLink className="btn" to="/mixer">
-            Cabine
-          </NavLink>
           <NavLink className="btn btn-solid" to="/dj">
             Cadastrar DJ
           </NavLink>

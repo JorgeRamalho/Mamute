@@ -1,6 +1,39 @@
-import type { PlatformIntel } from "../types";
+import type { PlatformId, PlatformIntel } from "../types";
 
-export const PLATFORMS: PlatformIntel[] = [
+/** Ordem fixa no visor HUD, chips do hero e catálogo. */
+export const PLATFORM_DISPLAY_ORDER: PlatformId[] = [
+  "mamute",
+  "beatport",
+  "soundcloud",
+  "deezer",
+  "spotify",
+  "youtube",
+];
+
+const PLATFORM_ENTRIES: PlatformIntel[] = [
+  {
+    id: "mamute",
+    name: "Mamute",
+    role: "Player nativo da cabine",
+    accent: "#00e8ff",
+    summary:
+      "Motor próprio de mixer dual deck, visor HUD, academia e rádio — áudio pedagógico via Web Audio API, sem depender de stream de terceiros.",
+    capabilities: [
+      "Dois decks A/B com jog, pitch, EQ de 3 bandas, waveform e crossfader equal-power",
+      "Loops sintéticos no browser para beatmatch sem violar termos de Spotify ou Beatport",
+      "Visor digital com BPM, tom, fila e progresso da academia no localStorage",
+      "Mamute FM em modo linear ou clipe, integrada ao mesmo painel da cabine",
+      "Catálogo das demais plataformas como intel — o mix real roda aqui",
+    ],
+    limits: [
+      "Não substitui Beatport LINK, rekordbox Cloud ou biblioteca offline de clube",
+      "Áudio do mixer é sintético até haver parceria de streaming aprovada",
+      "Perfis, progresso e assinatura ficam no dispositivo até o checkout da conta",
+    ],
+    playerDjUse:
+      "O Mamute é o player da própria cabine: treino de CDJ, exercícios cronometrados e rádio no mesmo visor. Beatport, Spotify e Deezer entram como descoberta — o áudio de mixagem nasce no Mamute Engine.",
+    docsUrl: "/mixer",
+  },
   {
     id: "beatport",
     name: "Beatport",
@@ -24,28 +57,6 @@ export const PLATFORMS: PlatformIntel[] = [
       "No Mamute DJPLAYER o Beatport alimenta o visor de charts, BPM/key e a fila profissional. Mixagem real no simulador usa loops sintéticos até haver parceria LINK.",
     docsUrl: "https://api.beatport.com/v4/docs/",
     partnerUrl: "https://stream.beatport.com/",
-  },
-  {
-    id: "spotify",
-    name: "Spotify",
-    role: "Descoberta + metadados",
-    accent: "#1db954",
-    summary:
-      "Web API e Web Playback SDK para busca, playlists e player Connect — não para mixagem DJ.",
-    capabilities: [
-      "Web API: busca, playlists, biblioteca e estado de playback",
-      "Audio Features: tempo (BPM), key, energy, danceability",
-      "Web Playback SDK: dispositivo Connect no browser (Premium)",
-      "OAuth PKCE com scopes streaming, user-read-playback-state e user-modify-playback-state",
-    ],
-    limits: [
-      "Termos proíbem apps que mixam, fazem crossfade ou sobrepõem faixas",
-      "Playback no SDK exige Spotify Premium (exceto alguns planos mobile)",
-      "Mamute DJPLAYER usa Spotify só para metadados, rádio linear e descoberta — nunca para beatmatch",
-    ],
-    playerDjUse:
-      "O catálogo Spotify no Mamute DJPLAYER mostra BPM/energia no visor e alimenta a rádio em modo linear. O mixer CDJ não roteia áudio do Spotify.",
-    docsUrl: "https://developer.spotify.com/documentation/web-api",
   },
   {
     id: "soundcloud",
@@ -92,6 +103,28 @@ export const PLATFORMS: PlatformIntel[] = [
     docsUrl: "https://developers.deezer.com/guidelines",
   },
   {
+    id: "spotify",
+    name: "Spotify",
+    role: "Descoberta + metadados",
+    accent: "#1db954",
+    summary:
+      "Web API e Web Playback SDK para busca, playlists e player Connect — não para mixagem DJ.",
+    capabilities: [
+      "Web API: busca, playlists, biblioteca e estado de playback",
+      "Audio Features: tempo (BPM), key, energy, danceability",
+      "Web Playback SDK: dispositivo Connect no browser (Premium)",
+      "OAuth PKCE com scopes streaming, user-read-playback-state e user-modify-playback-state",
+    ],
+    limits: [
+      "Termos proíbem apps que mixam, fazem crossfade ou sobrepõem faixas",
+      "Playback no SDK exige Spotify Premium (exceto alguns planos mobile)",
+      "Mamute DJPLAYER usa Spotify só para metadados, rádio linear e descoberta — nunca para beatmatch",
+    ],
+    playerDjUse:
+      "O catálogo Spotify no Mamute DJPLAYER mostra BPM/energia no visor e alimenta a rádio em modo linear. O mixer CDJ não roteia áudio do Spotify.",
+    docsUrl: "https://developer.spotify.com/documentation/web-api",
+  },
+  {
     id: "youtube",
     name: "YouTube",
     role: "Clipes + aulas em vídeo",
@@ -114,3 +147,9 @@ export const PLATFORMS: PlatformIntel[] = [
     docsUrl: "https://developers.google.com/youtube/iframe_api_reference",
   },
 ];
+
+const platformById = new Map(PLATFORM_ENTRIES.map((platform) => [platform.id, platform]));
+
+export const PLATFORMS: PlatformIntel[] = PLATFORM_DISPLAY_ORDER.map(
+  (id) => platformById.get(id)!,
+);

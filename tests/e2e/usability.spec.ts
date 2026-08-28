@@ -39,9 +39,9 @@ test.describe("Usabilidade e função", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Levels" })).toBeVisible();
   });
 
-  test("catálogo lista as cinco plataformas", async ({ page }) => {
+  test("catálogo lista Mamute e as cinco plataformas externas", async ({ page }) => {
     await page.goto("/catalogo");
-    for (const name of ["Beatport", "Spotify", "SoundCloud", "Deezer", "YouTube"]) {
+    for (const name of ["Mamute", "Beatport", "SoundCloud", "Deezer", "Spotify", "YouTube"]) {
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
     }
   });

@@ -2,9 +2,8 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./public/favicon.svg?v=mamute2" />
-    <link rel="icon" type="image/png" href="./public/favicon.png?v=mamute2" />
-    <link rel="apple-touch-icon" href="./public/logo-mamute.png" />
+    <link rel="icon" type="image/svg+xml" href="./public/favicon.svg?v=monogram" />
+    <link rel="apple-touch-icon" href="./public/logo-mamute.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
@@ -121,24 +120,87 @@
         if (document.querySelector('script[src*="dist/assets/main.js"]')) return;
         if (document.querySelector('script[src="./assets/main.js"]')) return;
 
+        var CSS_HREF = "./dist/assets/index.css";
+        var JS_HREF = "./dist/assets/main.js";
+        var MAX_TRIES = 40;
+        var TRY_MS = 500;
+
         function showHint() {
           var root = document.getElementById("root");
-          if (!root || root.childElementCount) return;
+          if (!root) return;
+          if (root.childElementCount && !root.querySelector("[data-live-wait]")) return;
           root.innerHTML =
             '<section style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">Live Server precisa do build</h1><p>Este app é Vite + React. Rode <code>npm run build</code> e recarregue, ou abra <a href="http://127.0.0.1:5173/" style="color:#00e8ff">http://127.0.0.1:5173/</a> com <code>npm run dev</code>.</p></section>';
         }
 
-        var css = document.createElement("link");
-        css.rel = "stylesheet";
-        css.href = "./dist/assets/index.css?v=mamute2";
-        css.onerror = showHint;
-        document.head.appendChild(css);
+        function showWait() {
+          var root = document.getElementById("root");
+          if (!root || (root.childElementCount && !root.querySelector("[data-live-wait]"))) return;
+          root.innerHTML =
+            '<p data-live-wait style="font-family:Outfit,sans-serif;color:#9bb0c9;padding:2.5rem;text-align:center">Atualizando o bundle do Live Server…</p>';
+        }
 
-        var script = document.createElement("script");
-        script.type = "module";
-        script.src = "./dist/assets/main.js?v=mamute2";
-        script.onerror = showHint;
-        document.body.appendChild(script);
+        function bust(href) {
+          return href + "?t=" + Date.now();
+        }
+
+        function isRealAsset(type, text) {
+          if (!text || /^\s*</.test(text)) return false;
+          if (/html/i.test(type || "")) return false;
+          return text.length > 20;
+        }
+
+        function inject(cssHref, jsHref) {
+          var css = document.createElement("link");
+          css.rel = "stylesheet";
+          css.href = cssHref;
+          css.onerror = showHint;
+          document.head.appendChild(css);
+
+          var script = document.createElement("script");
+          script.type = "module";
+          script.src = jsHref;
+          script.onerror = showHint;
+          document.body.appendChild(script);
+        }
+
+        function tryLoad(attempt) {
+          var cssHref = bust(CSS_HREF);
+          var jsHref = bust(JS_HREF);
+          fetch(jsHref, { cache: "no-store" })
+            .then(function (res) {
+              return res.text().then(function (text) {
+                return { res: res, text: text };
+              });
+            })
+            .then(function (part) {
+              var type = part.res.headers.get("content-type") || "";
+              if (part.res.ok && isRealAsset(type, part.text)) {
+                inject(cssHref, jsHref);
+                return;
+              }
+              if (attempt < MAX_TRIES) {
+                if (attempt === 2) showWait();
+                setTimeout(function () {
+                  tryLoad(attempt + 1);
+                }, TRY_MS);
+                return;
+              }
+              showHint();
+            })
+            .catch(function () {
+              if (attempt < MAX_TRIES) {
+                if (attempt === 2) showWait();
+                setTimeout(function () {
+                  tryLoad(attempt + 1);
+                }, TRY_MS);
+                return;
+              }
+              showHint();
+            });
+        }
+
+        tryLoad(1);
       })();
     </script>
   </body>

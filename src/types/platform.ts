@@ -1,9 +1,10 @@
 export type PlatformId =
+  | "mamute"
   | "beatport"
-  | "deezer"
   | "soundcloud"
-  | "youtube"
-  | "spotify";
+  | "deezer"
+  | "spotify"
+  | "youtube";
 
 export interface PlatformIntel {
   id: PlatformId;

@@ -2,7 +2,8 @@
   "liveServer.settings.root": "/",
   "liveServer.settings.port": 5500,
   "liveServer.settings.file": "index.html",
-  "liveServer.settings.wait": 100,
+  "liveServer.settings.wait": 300,
+  "liveServer.settings.fullReload": true,
   "liveServer.settings.ignoreFiles": [
     ".vscode/**",
     "node_modules/**",

@@ -169,10 +169,12 @@ export function DigitalVisor() {
             </div>
             <div className="visor-platters" aria-hidden="true">
               <div className="visor-platter visor-platter-a">
-                <span>A</span>
+                <span className="visor-platter-ring" />
+                <span className="visor-platter-hub">A</span>
               </div>
               <div className="visor-platter visor-platter-b">
-                <span>B</span>
+                <span className="visor-platter-ring" />
+                <span className="visor-platter-hub">B</span>
               </div>
             </div>
           </div>

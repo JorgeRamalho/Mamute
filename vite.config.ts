@@ -50,6 +50,7 @@ export default defineConfig({
     host: true,
   },
   build: {
+    emptyOutDir: false,
     rollupOptions: {
       input: "index.html",
       output: {

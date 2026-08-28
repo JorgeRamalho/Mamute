@@ -200,7 +200,7 @@ export function RegisterForm() {
 
       <section className="form-section">
         <h2>5. Presença digital</h2>
-        <p>Handles das cinco plataformas do visor Mamute.</p>
+        <p>Handles do Mamute e das cinco integrações do visor.</p>
         <div className="fields">
           {(["instagram", "soundcloud", "mixcloud", "beatport", "spotify", "youtube", "tiktok", "deezer"] as const).map((key) => (
             <label className="field" key={key}>
