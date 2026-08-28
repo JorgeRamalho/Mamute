@@ -93,26 +93,10 @@ textarea {
   }
 }
 
-.lesson-layout {
+.radio-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 1.4fr 0.8fr;
   gap: 1rem;
-}
-
-.lesson-nav button {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 0.7rem;
-  color: var(--muted);
-}
-
-.lesson-nav button.active {
-  border-color: var(--cyan);
-  color: var(--text);
-  background: linear-gradient(90deg, rgba(0, 232, 255, 0.16), rgba(139, 124, 255, 0.08));
 }
 
 .video-frame {
@@ -130,12 +114,6 @@ textarea {
   width: 100%;
   height: 100%;
   border: 0;
-}
-
-.radio-layout {
-  display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
-  gap: 1rem;
 }
 
 .clip-list button {
@@ -196,7 +174,6 @@ textarea {
 }
 
 @media (max-width: 900px) {
-  .lesson-layout,
   .radio-layout,
   .platform-grid {
     grid-template-columns: 1fr;
