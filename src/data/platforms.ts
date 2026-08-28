@@ -20,8 +20,8 @@ export const PLATFORMS: PlatformIntel[] = [
       "Não há SDK oficial nem OpenAPI público para download",
       "Streaming em software/hardware só para integrações aprovadas",
     ],
-    harakoUse:
-      "No Harako o Beatport alimenta o visor de charts, BPM/key e a fila profissional. Mixagem real no simulador usa loops sintéticos até haver parceria LINK.",
+    playerDjUse:
+      "No Mamute DJPLAYER o Beatport alimenta o visor de charts, BPM/key e a fila profissional. Mixagem real no simulador usa loops sintéticos até haver parceria LINK.",
     docsUrl: "https://api.beatport.com/v4/docs/",
     partnerUrl: "https://stream.beatport.com/",
   },
@@ -41,10 +41,10 @@ export const PLATFORMS: PlatformIntel[] = [
     limits: [
       "Termos proíbem apps que mixam, fazem crossfade ou sobrepõem faixas",
       "Playback no SDK exige Spotify Premium (exceto alguns planos mobile)",
-      "Harako usa Spotify só para metadados, rádio linear e descoberta — nunca para beatmatch",
+      "Mamute DJPLAYER usa Spotify só para metadados, rádio linear e descoberta — nunca para beatmatch",
     ],
-    harakoUse:
-      "O catálogo Spotify no Harako mostra BPM/energia no visor e alimenta a rádio em modo linear. O mixer CDJ não roteia áudio do Spotify.",
+    playerDjUse:
+      "O catálogo Spotify no Mamute DJPLAYER mostra BPM/energia no visor e alimenta a rádio em modo linear. O mixer CDJ não roteia áudio do Spotify.",
     docsUrl: "https://developer.spotify.com/documentation/web-api",
   },
   {
@@ -65,8 +65,8 @@ export const PLATFORMS: PlatformIntel[] = [
       "Múltiplos widgets exigem reconsultar SC.Widget(iframe) a cada comando",
       "Tracks privadas precisam de sessão e secret_token",
     ],
-    harakoUse:
-      "A rádio Harako pode encaixar o widget SoundCloud como deck de clipe. O mixer pedagógico continua no motor Web Audio interno.",
+    playerDjUse:
+      "A rádio Mamute FM pode encaixar o widget SoundCloud como deck de clipe. O mixer pedagógico continua no motor Web Audio interno.",
     docsUrl: "https://developers.soundcloud.com/docs/api/html5-widget.html",
   },
   {
@@ -87,8 +87,8 @@ export const PLATFORMS: PlatformIntel[] = [
       "URLs de áudio full-length nunca podem ser expostas ao usuário",
       "Chamadas JS cross-origin devem passar pelo SDK, não por fetch direto",
     ],
-    harakoUse:
-      "Deezer entra no Harako como busca editorial e rádio de gênero. O simulador de CDJ não faz DJ mix com o stream Deezer.",
+    playerDjUse:
+      "Deezer entra no Mamute DJPLAYER como busca editorial e rádio de gênero. O simulador de CDJ não faz DJ mix com o stream Deezer.",
     docsUrl: "https://developers.deezer.com/guidelines",
   },
   {
@@ -109,8 +109,8 @@ export const PLATFORMS: PlatformIntel[] = [
       "Autoplay e iframe cross-origin pedem allow=encrypted-media;autoplay",
       "Esconder o player (height 0) viola diretrizes se for só para áudio pirata",
     ],
-    harakoUse:
-      "A rádio Harako toca clipes no visor widescreen. A academia embute aulas oficiais. O mixer não extrai stems do YouTube.",
+    playerDjUse:
+      "A rádio Mamute FM toca clipes no visor widescreen. A academia embute aulas oficiais. O mixer não extrai stems do YouTube.",
     docsUrl: "https://developers.google.com/youtube/iframe_api_reference",
   },
 ];

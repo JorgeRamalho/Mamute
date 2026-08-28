@@ -8,7 +8,7 @@ export function RadioStudio() {
   return (
     <div className="radio-layout">
       <article className="card">
-        <p className="kicker">Harako FM · modo clipe</p>
+        <p className="kicker">Mamute FM · modo clipe</p>
         <h2>{active.title}</h2>
         <p>
           {active.artist} · {active.genre} · {active.bpm} BPM · {active.key} · {active.duration}

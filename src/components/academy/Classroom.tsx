@@ -86,7 +86,7 @@ export function Classroom() {
 
       <div className="section-title">
         <h2>Laboratório de exercícios</h2>
-        <p>Treinos curtos para usar no mixer Harako com fone e o visor aberto.</p>
+        <p>Treinos curtos para usar no mixer Mamute com fone e o visor aberto.</p>
       </div>
       <div className="grid-3">
         {EXERCISES.map((exercise) => (

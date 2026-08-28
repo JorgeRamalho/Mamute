@@ -23,7 +23,7 @@ export function RegisterForm() {
     if (!profile.terms || !profile.over18) return;
     saveProfile(profile);
     const body = new URLSearchParams({
-      "form-name": "harako-dj-cadastro",
+      "form-name": "mamute-cadastro",
       fullName: profile.fullName,
       artistName: profile.artistName,
       email: profile.email,
@@ -46,8 +46,8 @@ export function RegisterForm() {
   };
 
   return (
-    <form className="form-grid" name="harako-dj-cadastro" onSubmit={onSubmit} noValidate={false}>
-      <input type="hidden" name="form-name" value="harako-dj-cadastro" />
+    <form className="form-grid" name="mamute-cadastro" onSubmit={onSubmit} noValidate={false}>
+      <input type="hidden" name="form-name" value="mamute-cadastro" />
 
       <section className="form-section">
         <h2>1. Identidade</h2>
@@ -157,7 +157,7 @@ export function RegisterForm() {
 
       <section className="form-section">
         <h2>4. Equipamento</h2>
-        <p>CDJ, controladora, mixer ou vinil — o Harako simula os três primeiros.</p>
+        <p>CDJ, controladora, mixer ou vinil — o Mamute DJPLAYER simula os três primeiros.</p>
         <div className="fields">
           <div className="field full">
             Hardware
@@ -200,7 +200,7 @@ export function RegisterForm() {
 
       <section className="form-section">
         <h2>5. Presença digital</h2>
-        <p>Handles das cinco plataformas do visor Harako.</p>
+        <p>Handles das cinco plataformas do visor Mamute.</p>
         <div className="fields">
           {(["instagram", "soundcloud", "mixcloud", "beatport", "spotify", "youtube", "tiktok", "deezer"] as const).map((key) => (
             <label className="field" key={key}>
@@ -256,7 +256,7 @@ export function RegisterForm() {
           <label className="field">
             <span>
               <input type="checkbox" checked={profile.mentorship} onChange={(e) => update("mentorship", e.target.checked)} />
-              Quero mentoria Harako
+              Quero mentoria Mamute
             </span>
           </label>
         </div>
@@ -276,7 +276,7 @@ export function RegisterForm() {
           </label>
           <label>
             <input type="checkbox" checked={profile.imageRights} onChange={(e) => update("imageRights", e.target.checked)} />
-            Autorizo uso de nome artístico no mural Harako
+            Autorizo uso de nome artístico no mural Mamute
           </label>
           <label>
             <input type="checkbox" checked={profile.newsletter} onChange={(e) => update("newsletter", e.target.checked)} />
@@ -286,7 +286,7 @@ export function RegisterForm() {
       </section>
 
       <button className="btn btn-solid" type="submit">Gravar perfil de cabine</button>
-      {saved ? <p className="form-status" role="status">Perfil salvo no visor Harako.</p> : null}
+      {saved ? <p className="form-status" role="status">Perfil salvo no visor Mamute.</p> : null}
     </form>
   );
 }

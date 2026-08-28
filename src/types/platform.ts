@@ -13,7 +13,7 @@ export interface PlatformIntel {
   summary: string;
   capabilities: string[];
   limits: string[];
-  harakoUse: string;
+  playerDjUse: string;
   docsUrl: string;
   partnerUrl?: string;
 }

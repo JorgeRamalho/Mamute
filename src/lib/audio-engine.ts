@@ -114,7 +114,7 @@ class DeckNodes {
   }
 }
 
-export class HarakoEngine {
+export class MamuteEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private xfA: GainNode | null = null;
@@ -225,4 +225,4 @@ export class HarakoEngine {
   }
 }
 
-export const engine = new HarakoEngine();
+export const engine = new MamuteEngine();

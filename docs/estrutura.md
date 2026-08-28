@@ -18,7 +18,7 @@ Mapa do repositório depois da organização. Pastas geradas (`node_modules/`, `
 ## Árvore
 
 ```
-Projeto-Harako/
+Projeto-Mamute-DJPLAYER/
 ├── index.html
 ├── package.json
 ├── package-lock.json

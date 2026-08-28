@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://harako.app/sitemap.xml
+Sitemap: https://mamutedjplayerm.app/sitemap.xml

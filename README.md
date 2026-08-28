@@ -1,4 +1,4 @@
-# Harako
+# Mamute DJPLAYER
 
 Mixer player para DJs iniciantes e avançados: visor digital, simulador de CDJ/controladora, academia, rádio em modo clipe e fichas oficiais de Beatport, Deezer, SoundCloud, YouTube e Spotify.
 

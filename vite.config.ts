@@ -7,9 +7,7 @@ function injectViteEntry(): Plugin {
     transformIndexHtml: {
       order: "pre",
       handler(html) {
-        const next = html
-          .replaceAll("./public/favicon.svg", "./favicon.svg")
-          .replaceAll("./public/og.svg", "./og.svg");
+        const next = html.replaceAll("./public/", "./");
 
         if (next.includes('src="./src/main.tsx"')) return next;
 

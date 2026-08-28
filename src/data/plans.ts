@@ -14,7 +14,7 @@ export const PLANS: Plan[] = [
     includes: [
       "Mixer dual deck com play, jog, pitch, EQ de 3 bandas e crossfader",
       "Academia: módulo Fundação (aulas, dicas e checklist do visor)",
-      "Rádio Harako FM em modo linear, com BPM e tom no visor",
+      "Rádio Mamute FM em modo linear, com BPM e tom no visor",
       "Fichas públicas de Beatport, Deezer, SoundCloud, YouTube e Spotify",
       "1 perfil de DJ gravado no visor (localStorage)",
       "Progresso das aulas no próprio dispositivo",
@@ -70,28 +70,20 @@ export const PLANS: Plan[] = [
     perks: [
       "Para quem já conta 32 beats e quer fechar o checklist da booth",
       "Press kit e residências entram no mesmo cadastro de oito seções",
-      "Prioridade no roteiro de features da cabine Harako",
+      "Prioridade no roteiro de features da cabine Mamute",
     ],
   },
 ];
 
 export const PLAN_COMPARE: CompareRow[] = [
-  { group: "Mixer", feature: "Dual deck A/B", values: { bronze: true, prata: true, ouro: true } },
-  { group: "Mixer", feature: "EQ 3 bandas + crossfader", values: { bronze: true, prata: true, ouro: true } },
-  { group: "Mixer", feature: "Waveform e hot cues", values: { bronze: false, prata: true, ouro: true } },
-  { group: "Mixer", feature: "Presets de curva XF", values: { bronze: false, prata: false, ouro: true } },
-  { group: "Academia", feature: "Módulo Fundação", values: { bronze: true, prata: true, ouro: true } },
-  { group: "Academia", feature: "Trilha até a conclusão", values: { bronze: false, prata: true, ouro: true } },
-  { group: "Academia", feature: "Exercícios cronometrados", values: { bronze: false, prata: true, ouro: true } },
-  { group: "Academia", feature: "Mentoria no cadastro", values: { bronze: false, prata: false, ouro: true } },
-  { group: "Rádio", feature: "Harako FM linear", values: { bronze: true, prata: true, ouro: true } },
-  { group: "Rádio", feature: "Modo clipe + fila", values: { bronze: false, prata: true, ouro: true } },
-  { group: "Catálogo", feature: "Intel das 5 plataformas", values: { bronze: true, prata: true, ouro: true } },
-  { group: "Catálogo", feature: "Mix Spotify / Beatport LINK", values: { bronze: false, prata: false, ouro: false } },
-  { group: "Conta", feature: "Perfis de cabine", values: { bronze: "1", prata: "3", ouro: "5" } },
-  { group: "Conta", feature: "Visores ativos", values: { bronze: "1", prata: "2", ouro: "3" } },
+  { group: "Mixer", feature: "Waveform + hot cues", values: { bronze: false, prata: true, ouro: true } },
+  { group: "Mixer", feature: "Curva XF avançada", values: { bronze: false, prata: false, ouro: true } },
+  { group: "Academia", feature: "Trilha + exercícios", values: { bronze: false, prata: true, ouro: true } },
+  { group: "Academia", feature: "Mentoria booth", values: { bronze: false, prata: false, ouro: true } },
+  { group: "Rádio", feature: "Clipe + fila", values: { bronze: false, prata: true, ouro: true } },
+  { group: "Conta", feature: "Perfis · visores", values: { bronze: "1 · 1", prata: "3 · 2", ouro: "5 · 3" } },
   { group: "Conta", feature: "Export press kit", values: { bronze: false, prata: false, ouro: true } },
-  { group: "Suporte", feature: "SLA de resposta", values: { bronze: "72 h", prata: "48 h", ouro: "12 h" } },
+  { group: "Suporte", feature: "Resposta SLA", values: { bronze: "72 h", prata: "48 h", ouro: "12 h" } },
 ];
 
 export const PLAN_FAQS: PlanFaq[] = [
@@ -113,19 +105,19 @@ export const PLAN_FAQS: PlanFaq[] = [
   {
     question: "Preciso de CDJ física para assinar?",
     answer:
-      "Não. A cabine Harako roda no browser. Hardware real (CDJ, controladora, mixer, toca-discos) entra só no cadastro, para o visor saber com o que você treina na vida real.",
+      "Não. A cabine Mamute DJPLAYER roda no browser. Hardware real (CDJ, controladora, mixer, toca-discos) entra só no cadastro, para o visor saber com o que você treina na vida real.",
   },
   {
     question: "Onde o pagamento é confirmado?",
     answer:
-      "Esta página escolhe o combo e leva ao cadastro de cabine. A cobrança entra no checkout da conta Harako depois do perfil gravado — o visor não processa cartão nesta tela.",
+      "Esta página escolhe o combo e leva ao cadastro de cabine. A cobrança entra no checkout da conta Mamute DJPLAYER depois do perfil gravado — o visor não processa cartão nesta tela.",
   },
 ];
 
 export const PLAN_NOTES = [
   "Preços em reais, sem taxas de plataforma de streaming de terceiros.",
   "Dois meses inclusos no anual (10× o valor mensal).",
-  "Harako não substitui licenças oficiais de Beatport, Spotify, Deezer, SoundCloud ou YouTube.",
+  "Mamute DJPLAYER não substitui licenças oficiais de Beatport, Spotify, Deezer, SoundCloud ou YouTube.",
 ];
 
 export const PLAN_NAMES: Record<PlanId, string> = {

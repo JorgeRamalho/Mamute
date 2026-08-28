@@ -2,7 +2,7 @@
 
 ## Produto
 
-Harako é um mixer player pedagógico no browser. O DJ inicia no visor, treina beatmatch em dois decks (CDJ + controladora), estuda na academia, ouve a rádio em modo clipe e consulta o que cada plataforma realmente permite.
+Mamute DJPLAYER é um mixer player pedagógico no browser. O DJ inicia no visor, treina beatmatch em dois decks (CDJ + controladora), estuda na academia, ouve a rádio em modo clipe e consulta o que cada plataforma realmente permite.
 
 Não é um clone de rekordbox LINK. Streams de Beatport, Spotify, Deezer, SoundCloud e YouTube **não** entram no motor de mixagem. O simulador usa loops sintéticos (Web Audio API) para não violar termos.
 

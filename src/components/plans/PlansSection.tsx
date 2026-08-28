@@ -16,10 +16,22 @@ function formatBrl(value: number): string {
   }).format(value);
 }
 
-function cellLabel(value: boolean | string): string {
-  if (value === true) return "Incluso";
-  if (value === false) return "Não incluso";
-  return value;
+function CompareCell({ value }: { value: boolean | string }) {
+  if (value === true) {
+    return (
+      <span className="compare-mark compare-yes" aria-label="Incluso">
+        ✓
+      </span>
+    );
+  }
+  if (value === false) {
+    return (
+      <span className="compare-mark compare-no" aria-label="Não incluso">
+        —
+      </span>
+    );
+  }
+  return <span className="compare-val">{value}</span>;
 }
 
 function PlanCard({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) {
@@ -105,16 +117,20 @@ export function PlansSection() {
       </div>
 
       <section className="plans-compare-wrap" aria-labelledby="plans-compare-title">
-        <h3 id="plans-compare-title">Comparativo de atributos</h3>
-        <p>Do básico ao avançado: o que cada metal destrava na cabine Harako.</p>
+        <h3 id="plans-compare-title">Comparativo rápido</h3>
+        <p>O que muda entre Bronze, Prata e Ouro — só o essencial.</p>
         <div className="plans-compare-scroll">
           <table className="plans-compare">
-            <caption className="visually-hidden">Inclusões por combo Bronze, Prata e Ouro</caption>
+            <caption className="visually-hidden">Comparativo Bronze, Prata e Ouro</caption>
             <thead>
               <tr>
-                <th scope="col">Atributo</th>
+                <th scope="col">Recurso</th>
                 {planIds.map((id) => (
-                  <th scope="col" key={id}>
+                  <th
+                    scope="col"
+                    key={id}
+                    className={id === "prata" ? "compare-plan is-focus" : "compare-plan"}
+                  >
                     {PLAN_NAMES[id]}
                   </th>
                 ))}
@@ -124,21 +140,18 @@ export function PlansSection() {
               {PLAN_COMPARE.map((row) => (
                 <tr key={`${row.group}-${row.feature}`}>
                   <th scope="row">
+                    <span className="plans-compare-label">{row.feature}</span>
                     <span className="plans-compare-group">{row.group}</span>
-                    {row.feature}
                   </th>
-                  {planIds.map((id: PlanId) => {
-                    const value = row.values[id];
-                    const included = value !== false;
-                    return (
-                      <td
-                        key={id}
-                        data-included={included ? "yes" : "no"}
-                      >
-                        {cellLabel(value)}
-                      </td>
-                    );
-                  })}
+                  {planIds.map((id: PlanId) => (
+                    <td
+                      key={id}
+                      className={id === "prata" ? "compare-plan is-focus" : "compare-plan"}
+                      data-included={row.values[id] !== false ? "yes" : "no"}
+                    >
+                      <CompareCell value={row.values[id]} />
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>

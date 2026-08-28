@@ -22,7 +22,7 @@ test.describe("Identidade visual e responsividade", () => {
     await page.goto("/");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(8);
-    await expect(page.getByText("HARAKO OS 1.0")).toBeVisible();
+    await expect(page.getByText("MAMUTE OS 1.0")).toBeVisible();
     await expect(page.getByText("Beatport").first()).toBeVisible();
   });
 

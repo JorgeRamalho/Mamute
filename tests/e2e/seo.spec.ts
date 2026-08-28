@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test.describe("SEO e estrutura", () => {
   test("home expõe título, idioma, meta e landmarks", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Harako/);
+    await expect(page).toHaveTitle(/Mamute DJPLAYER/);
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
     const description = page.locator('meta[name="description"]');
     await expect(description).toHaveAttribute("content", /mixer player/i);
@@ -11,7 +11,7 @@ test.describe("SEO e estrutura", () => {
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toContainText(/Mixer player/i);
-    await expect(page.getByLabel("Visor digital Harako")).toBeVisible();
+    await expect(page.getByLabel("Visor digital Mamute DJPLAYER")).toBeVisible();
     await expect(page.getByLabel("Feed ao vivo de DJs, músicas e eventos")).toBeVisible();
     const menu = page.getByRole("button", { name: "Menu" });
     if (await menu.isVisible()) await menu.click();

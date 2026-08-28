@@ -12,7 +12,7 @@ export function CatalogHub() {
             <p className="kicker">{platform.role}</p>
           </header>
           <p>{platform.summary}</p>
-          <h3>O que entra no Harako</h3>
+          <h3>O que entra no Mamute DJPLAYER</h3>
           <ul>
             {platform.capabilities.map((item) => (
               <li key={item}>{item}</li>
@@ -24,7 +24,7 @@ export function CatalogHub() {
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <p>{platform.harakoUse}</p>
+          <p>{platform.playerDjUse}</p>
           <p>
             <a className="btn" href={platform.docsUrl} target="_blank" rel="noreferrer">
               Documentação

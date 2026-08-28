@@ -7,9 +7,8 @@ export function HomePage() {
   return (
     <div className="page">
       <Hero />
-      <PlansSection />
       <section className="section-title">
-        <h2>Três camadas da cabine Harako</h2>
+        <h2>Três camadas da cabine Mamute</h2>
         <p>
           Interface de player moderno, motor pedagógico de CDJ e um catálogo que respeita
           cada plataforma em vez de fingir um LINK que ainda não existe.
@@ -38,7 +37,7 @@ export function HomePage() {
             Tracks passam como videoclipes no visor widescreen, com BPM, tom e fila — o hábito
             de ler metadados antes de mixar.
           </p>
-          <NavLink className="btn" to="/radio">Ouvir Harako FM</NavLink>
+          <NavLink className="btn" to="/radio">Ouvir Mamute FM</NavLink>
         </article>
       </div>
       <section className="section-title">
@@ -55,6 +54,7 @@ export function HomePage() {
           </article>
         ))}
       </div>
+      <PlansSection />
     </div>
   );
 }

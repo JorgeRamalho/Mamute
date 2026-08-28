@@ -7,7 +7,7 @@ export function normalizeLiveServerUrl(): void {
 
 export function appBasename(): string {
   const { pathname, port } = window.location;
-  if (port === "5173" || port === "4173") return "/";
+  if (/^517\d$/.test(port) || port === "4173") return "/";
 
   const path = pathname.endsWith("/index.html")
     ? pathname.slice(0, -"index.html".length)

@@ -17,11 +17,17 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <NavLink to="/" className="brand" aria-label="Harako início">
-          <img className="brand-mark" src={publicAsset("favicon.svg")} alt="" width={38} height={38} />
-          <span>
-            <span className="brand-name">HARAKO</span>
-            <span className="brand-sub">O SEU MIX PLAYER</span>
+        <NavLink to="/" className="brand" aria-label="Mamute DJPLAYER início">
+          <img
+            className="brand-mark"
+            src={`${publicAsset("logo-mamute.png")}?v=mamute2`}
+            alt=""
+            width={52}
+            height={52}
+          />
+          <span className="brand-lockup">
+            <span className="brand-name">Mamute</span>
+            <span className="brand-product">DJPLAYER</span>
           </span>
         </NavLink>
         <button

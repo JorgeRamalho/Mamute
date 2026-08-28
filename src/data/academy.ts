@@ -34,7 +34,7 @@ export const TIPS: TipCard[] = [
   {
     id: "tip-06",
     title: "Catálogos não são decks de mix",
-    body: "Spotify e Deezer no Harako são descoberta. Mixagem pedagógica roda no motor interno. Beatport LINK é o caminho profissional.",
+    body: "Spotify e Deezer no Mamute DJPLAYER são descoberta. Mixagem pedagógica roda no motor interno. Beatport LINK é o caminho profissional.",
     level: "conclusao",
   },
 ];
@@ -46,7 +46,7 @@ export const EXERCISES: Exercise[] = [
     goal: "Manter o kick do Deck A colado no grid por 2 minutos.",
     duration: "8 min",
     steps: [
-      "Abra o mixer Harako e dê play no Deck A",
+      "Abra o mixer Mamute e dê play no Deck A",
       "Feche o fone no cue A e conte 1-2-3-4 em voz alta",
       "Nudge o jog 4 vezes para frente e 4 para trás sem perder o 1",
     ],
@@ -106,5 +106,5 @@ export const SOFTWARE_OPTIONS = [
   "VirtualDJ",
   "djay Pro",
   "Engine DJ",
-  "Harako Mixer",
+  "Mamute DJPLAYER Mixer",
 ] as const;

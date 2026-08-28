@@ -12,7 +12,7 @@ export const COURSE_MODULES: CourseModule[] = [
         title: "Anatomia da CDJ e da controladora",
         duration: "12 min",
         synopsis:
-          "Jog, pitch, cue, hot cues, pads, faders e o que cada um faz no Harako e no hardware real.",
+          "Jog, pitch, cue, hot cues, pads, faders e o que cada um faz no Mamute DJPLAYER e no hardware real.",
         youtubeId: "M7lc1UVf-VE",
         checklist: [
           "Identificar jog wheel, pitch fader e cue",
@@ -97,7 +97,7 @@ export const COURSE_MODULES: CourseModule[] = [
         duration: "20 min",
         synopsis: "Vizinhanças de tom, energy boost e quando quebrar a regra de propósito.",
         checklist: [
-          "Ler a key no visor Harako",
+          "Ler a key no visor Mamute",
           "Planejar 4 faixas em círculo de quintas",
           "Usar um contraste de tom no drop",
         ],
@@ -138,7 +138,7 @@ export const COURSE_MODULES: CourseModule[] = [
         duration: "12 min",
         synopsis: "USB, cabos, rec, direitos, créditos e o que não fazer com catálogos licenciados.",
         checklist: [
-          "Exportar um set de 30 min no Harako",
+          "Exportar um set de 30 min no Mamute DJPLAYER",
           "Listar 3 faixas por plataforma (metadados)",
           "Assinar o manifesto de direitos do cadastro DJ",
         ],

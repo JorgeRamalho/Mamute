@@ -10,19 +10,19 @@ import { MixerPage } from "../pages/MixerPage";
 import { RadioPage } from "../pages/RadioPage";
 
 const TITLES: Record<string, string> = {
-  "/": "Harako — Mixer player para DJs iniciantes e avançados",
-  "/mixer": "Mixer CDJ e controladora — Harako",
-  "/academia": "Academia DJ · iniciante ao avançado — Harako",
-  "/radio": "Harako FM · rádio em modo clipe",
-  "/catalogo": "Catálogo Beatport, Deezer, SoundCloud, YouTube e Spotify — Harako",
-  "/dj": "Área do DJ · cadastro de cabine — Harako",
+  "/": "Mamute DJPLAYER — Mixer player para DJs iniciantes e avançados",
+  "/mixer": "Mixer CDJ e controladora — Mamute DJPLAYER",
+  "/academia": "Academia DJ · iniciante ao avançado — Mamute DJPLAYER",
+  "/radio": "Mamute FM · rádio em modo clipe",
+  "/catalogo": "Catálogo Beatport, Deezer, SoundCloud, YouTube e Spotify — Mamute DJPLAYER",
+  "/dj": "Área do DJ · cadastro de cabine — Mamute DJPLAYER",
 };
 
 function RouteMeta() {
   const location = useLocation();
 
   useEffect(() => {
-    document.title = TITLES[location.pathname] ?? "Harako";
+    document.title = TITLES[location.pathname] ?? "Mamute DJPLAYER";
   }, [location.pathname]);
 
   return null;

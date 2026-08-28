@@ -7,7 +7,7 @@ export function AcademyPage() {
       <h1>Do primeiro beat à conclusão de cabine</h1>
       <p className="lede">
         Quatro módulos, dez aulas, dicas e um laboratório. Marque cada checklist. O diploma
-        Harako é pedagógico — o palco real ainda pede horas de booth.
+        Mamute DJPLAYER é pedagógico — o palco real ainda pede horas de booth.
       </p>
       <Classroom />
     </div>

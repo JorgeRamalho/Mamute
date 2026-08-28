@@ -1,6 +1,7 @@
 import type { DjProfile, ExperienceLevel } from "../types";
 
-const KEY = "harako.dj.profile";
+const KEY = "mamute.dj.profile";
+const LEGACY_KEY = "playerdj.dj.profile";
 
 export const EMPTY_PROFILE: DjProfile = {
   fullName: "",
@@ -24,7 +25,7 @@ export const EMPTY_PROFILE: DjProfile = {
   preferredVenue: "clube",
   hardware: [],
   brands: "",
-  software: ["Harako Mixer"],
+  software: ["Mamute DJPLAYER Mixer"],
   headphones: "",
   instagram: "",
   soundcloud: "",
@@ -51,7 +52,7 @@ export const EMPTY_PROFILE: DjProfile = {
 };
 
 export function loadProfile(): DjProfile {
-  const raw = localStorage.getItem(KEY);
+  const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
   if (!raw) return { ...EMPTY_PROFILE };
   try {
     return { ...EMPTY_PROFILE, ...(JSON.parse(raw) as Partial<DjProfile>) };

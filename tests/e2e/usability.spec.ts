@@ -8,14 +8,14 @@ test.describe("Usabilidade e função", () => {
     await expect(page.getByRole("heading", { name: "1. Identidade" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "8. Termos" })).toBeVisible();
     await page.getByRole("textbox", { name: "Nome artístico" }).fill("DJ Visor");
-    await page.getByRole("textbox", { name: "Nome completo" }).fill("Ana Harako");
-    await page.getByRole("textbox", { name: "E-mail" }).fill("ana@harako.app");
+    await page.getByRole("textbox", { name: "Nome completo" }).fill("Ana Mamute");
+    await page.getByRole("textbox", { name: "E-mail" }).fill("ana@mamutedjplayerm.app");
     await page.getByRole("textbox", { name: "Cidade" }).fill("São Paulo");
     await page.getByRole("textbox", { name: "Bio" }).fill("Sets de melodic e techno.");
     await page.getByText("Tenho 18 anos ou mais").click();
     await page.getByText("Aceito os termos de uso").click();
     await page.getByRole("button", { name: "Gravar perfil de cabine" }).click();
-    await expect(page.getByText("Perfil salvo no visor Harako.")).toBeVisible();
+    await expect(page.getByText("Perfil salvo no visor Mamute.")).toBeVisible();
   });
 
   test("mixer expõe play, EQ e crossfader", async ({ page }) => {

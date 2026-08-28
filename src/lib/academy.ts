@@ -1,9 +1,10 @@
 import { COURSE_MODULES } from "../data/courses";
 
-const KEY = "harako.academy.progress";
+const KEY = "mamute.academy.progress";
+const LEGACY_KEY = "playerdj.academy.progress";
 
 export function loadProgress(): string[] {
-  const raw = localStorage.getItem(KEY);
+  const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);

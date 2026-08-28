@@ -1,24 +1,38 @@
 :root {
-  --void: #06070c;
+  --void: #05060b;
   --panel: #0c1018;
   --steel: #141b28;
   --steel-2: #1c2536;
   --line: rgba(0, 232, 255, 0.22);
   --line-strong: rgba(0, 232, 255, 0.55);
   --cyan: #00e8ff;
+  --cyan-hot: #7af6ff;
   --cyan-dim: #007a88;
   --magenta: #ff2d95;
+  --magenta-hot: #ff7ac4;
   --amber: #ffc14a;
+  --amber-hot: #ffe08a;
   --lime: #9dff6a;
   --violet: #8b7cff;
+  --violet-hot: #c4b8ff;
   --text: #e8eef8;
   --muted: #8a94a8;
   --danger: #ff4d6d;
+  --grad-club: linear-gradient(125deg, var(--cyan) 0%, var(--violet) 46%, var(--magenta) 100%);
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  --shadow-3d:
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 -18px 28px rgba(0, 0, 0, 0.35) inset,
+    0 22px 48px rgba(0, 0, 0, 0.48);
+  --pointer-x: 18%;
+  --pointer-y: 10%;
   --radius: 18px;
   --radius-sm: 10px;
   --header-h: 72px;
   --status-h: 36px;
+  --visor-bpm: 124;
+  --beat-ms: calc(60000ms / var(--visor-bpm));
+  --ticker-duration: 93s;
   --layout-max: 1180px;
   --layout-gutter: 1rem;
   --font-display: "Syne", sans-serif;
@@ -46,13 +60,15 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(0, 232, 255, 0.08), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(255, 45, 149, 0.08), transparent 50%),
-    var(--void);
   color: var(--text);
   font-family: var(--font-body);
   letter-spacing: 0.01em;
+  background-color: var(--void);
+  background-image:
+    radial-gradient(ellipse 90% 58% at 8% -10%, rgba(0, 232, 255, 0.18), transparent 54%),
+    radial-gradient(ellipse 70% 48% at 96% 0%, rgba(255, 45, 149, 0.16), transparent 50%),
+    radial-gradient(ellipse 55% 38% at 48% 108%, rgba(139, 124, 255, 0.14), transparent 56%),
+    linear-gradient(180deg, #070914 0%, #05060b 46%, #0b0714 100%);
 }
 
 img,

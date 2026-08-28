@@ -55,7 +55,21 @@ function Waveform({ id, spinning }: { id: DeckId; spinning: boolean }) {
       ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
       ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
       if (analyser) analyser.getByteTimeDomainData(bins);
-      ctx.strokeStyle = id === "a" ? "#00e8ff" : "#ff2d95";
+      const glow = id === "a" ? "#00e8ff" : "#ff2d95";
+      const fade = ctx.createLinearGradient(0, 0, canvas.clientWidth, 0);
+      if (id === "a") {
+        fade.addColorStop(0, "rgba(0, 232, 255, 0.2)");
+        fade.addColorStop(0.5, "#7af6ff");
+        fade.addColorStop(1, "rgba(139, 124, 255, 0.7)");
+      } else {
+        fade.addColorStop(0, "rgba(255, 45, 149, 0.25)");
+        fade.addColorStop(0.5, "#ff7ac4");
+        fade.addColorStop(1, "rgba(255, 193, 74, 0.65)");
+      }
+      ctx.shadowBlur = spinning ? 10 : 4;
+      ctx.shadowColor = glow;
+      ctx.strokeStyle = fade;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       bins.forEach((value, index) => {
         const x = (index / bins.length) * canvas.clientWidth;
@@ -64,6 +78,7 @@ function Waveform({ id, spinning }: { id: DeckId; spinning: boolean }) {
         else ctx.lineTo(x, y);
       });
       ctx.stroke();
+      ctx.shadowBlur = 0;
       raf = requestAnimationFrame(draw);
     };
     draw();
@@ -89,11 +104,12 @@ function DeckPanel({
         <span>DECK {id.toUpperCase()} · {id === "a" ? "HOUSE GRID" : "TECHNO GRID"}</span>
         <span className="bpm">{bpm} BPM</span>
       </div>
-      <div
-        className="jog"
-        style={{ "--spin": `${deck.playing ? "400deg" : "0deg"}` } as CSSProperties}
-        aria-hidden="true"
-      />
+      <div className="jog-stage" aria-hidden="true">
+        <div
+          className="jog"
+          style={{ "--spin": `${deck.playing ? "400deg" : "0deg"}` } as CSSProperties}
+        />
+      </div>
       <Waveform id={id} spinning={deck.playing} />
       <div className="deck-controls">
         <button className="btn btn-solid" type="button" onClick={async () => {
@@ -146,7 +162,7 @@ export function MixerBoard() {
   const [, dispatch] = useReducer(reducer, engine.snapshot);
 
   return (
-    <div className="mixer-board">
+    <div className="mixer-board" data-stage="6">
       <DeckPanel id="a" onChange={dispatch} />
       <div className="mixer-center">
         <p className="kicker">CROSSFADER</p>
