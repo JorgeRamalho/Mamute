@@ -1,27 +1,53 @@
-import type { DeckId } from "../types";
+import { DEFAULT_DECK_TRACKS, getTrainingTrack } from "../data/training-tracks";
+import type {
+  DeckId,
+  DeckState,
+  HotCue,
+  JogMode,
+  MixerSnapshot,
+  TrainingTrack,
+} from "../types/mixer";
 
-export interface DeckState {
-  playing: boolean;
-  bpm: number;
-  pitch: number;
-  gain: number;
-  eq: { high: number; mid: number; low: number };
+export type { DeckState, MixerSnapshot } from "../types/mixer";
+
+const HOT_CUE_SLOTS = 4;
+
+function emptyHotCues(): HotCue[] {
+  return Array.from({ length: HOT_CUE_SLOTS }, (_, index) => ({
+    slot: index + 1,
+    beat: index * 4,
+    set: index === 0,
+  }));
 }
 
-export interface MixerSnapshot {
-  a: DeckState;
-  b: DeckState;
-  crossfader: number;
-  master: number;
+function defaultTrack(id: DeckId): TrainingTrack {
+  const trackId = DEFAULT_DECK_TRACKS[id];
+  return getTrainingTrack(trackId) ?? getTrainingTrack("clip-01")!;
 }
 
-const DEFAULT_DECK: DeckState = {
-  playing: false,
-  bpm: 124,
-  pitch: 0,
-  gain: 0.85,
-  eq: { high: 0, mid: 0, low: 0 },
-};
+function createDeck(id: DeckId): DeckState {
+  const track = defaultTrack(id);
+  return {
+    playing: false,
+    bpm: track.bpm,
+    pitch: 0,
+    gain: 0.85,
+    trim: 0.72,
+    eq: { high: 0, mid: 0, low: 0 },
+    eqKill: { high: false, mid: false, low: false },
+    filter: 0,
+    sync: false,
+    masterTempo: id === "a",
+    cueMonitor: false,
+    jogMode: "cdj",
+    quantize: true,
+    loop: { active: false, inBeat: null, outBeat: null },
+    hotCues: emptyHotCues(),
+    cueBeat: 0,
+    track,
+    phase: 0,
+  };
+}
 
 function makeNoiseBuffer(ctx: AudioContext, seconds: number): AudioBuffer {
   const length = Math.floor(ctx.sampleRate * seconds);
@@ -40,8 +66,7 @@ function writeKick(data: Float32Array, sampleRate: number, at: number, accent: n
     const env = Math.exp(-t * 28) * accent;
     const freq = 48 + 90 * Math.exp(-t * 40);
     const index = at + i;
-    const current = data[index] ?? 0;
-    data[index] = current + Math.sin(2 * Math.PI * freq * t) * env;
+    data[index] = (data[index] ?? 0) + Math.sin(2 * Math.PI * freq * t) * env;
   }
 }
 
@@ -52,8 +77,7 @@ function writeHat(data: Float32Array, noise: Float32Array, sampleRate: number, a
     const env = Math.exp(-t * 70) * 0.22;
     const idx = (at + i) % noise.length;
     const index = at + i;
-    const current = data[index] ?? 0;
-    data[index] = current + (noise[idx] ?? 0) * env;
+    data[index] = (data[index] ?? 0) + (noise[idx] ?? 0) * env;
   }
 }
 
@@ -86,30 +110,42 @@ function buildLoop(ctx: AudioContext, bpm: number, color: DeckId): AudioBuffer {
 
 class DeckNodes {
   source: AudioBufferSourceNode | null = null;
+  trim: GainNode;
   gain: GainNode;
+  filter: BiquadFilterNode;
   high: BiquadFilterNode;
   mid: BiquadFilterNode;
   low: BiquadFilterNode;
   analyser: AnalyserNode;
   buffer: AudioBuffer | null = null;
+  startedAt = 0;
+  pausedPhase = 0;
 
   constructor(ctx: AudioContext, destination: AudioNode) {
+    this.trim = ctx.createGain();
     this.gain = ctx.createGain();
+    this.filter = ctx.createBiquadFilter();
     this.high = ctx.createBiquadFilter();
     this.mid = ctx.createBiquadFilter();
     this.low = ctx.createBiquadFilter();
     this.analyser = ctx.createAnalyser();
+    this.filter.type = "lowpass";
+    this.filter.frequency.value = 20000;
+    this.filter.Q.value = 0.7;
     this.high.type = "highshelf";
     this.high.frequency.value = 9000;
     this.mid.type = "peaking";
     this.mid.frequency.value = 1000;
+    this.mid.Q.value = 0.9;
     this.low.type = "lowshelf";
     this.low.frequency.value = 180;
-    this.analyser.fftSize = 256;
-    this.gain.connect(this.low);
+    this.analyser.fftSize = 512;
+    this.trim.connect(this.filter);
+    this.filter.connect(this.low);
     this.low.connect(this.mid);
     this.mid.connect(this.high);
-    this.high.connect(this.analyser);
+    this.high.connect(this.gain);
+    this.gain.connect(this.analyser);
     this.analyser.connect(destination);
   }
 }
@@ -120,11 +156,15 @@ export class MamuteEngine {
   private xfA: GainNode | null = null;
   private xfB: GainNode | null = null;
   private decks: { a: DeckNodes; b: DeckNodes } | null = null;
+  private phaseTimer: number | null = null;
   snapshot: MixerSnapshot = {
-    a: { ...DEFAULT_DECK, bpm: 124 },
-    b: { ...DEFAULT_DECK, bpm: 128 },
+    a: createDeck("a"),
+    b: createDeck("b"),
     crossfader: 0.5,
-    master: 0.8,
+    master: 0.82,
+    booth: 0.65,
+    cueMix: 0.5,
+    masterDeck: "a",
   };
 
   async ensure(): Promise<void> {
@@ -141,36 +181,72 @@ export class MamuteEngine {
       a: new DeckNodes(ctx, this.xfA),
       b: new DeckNodes(ctx, this.xfB),
     };
-    this.decks.a.buffer = buildLoop(ctx, this.snapshot.a.bpm, "a");
-    this.decks.b.buffer = buildLoop(ctx, this.snapshot.b.bpm, "b");
+    this.rebuildBuffer("a");
+    this.rebuildBuffer("b");
     this.applyGains();
+    this.applyDeck("a");
+    this.applyDeck("b");
+    this.startPhaseLoop();
   }
 
   analyser(id: DeckId): AnalyserNode | null {
     return this.decks?.[id].analyser ?? null;
   }
 
+  effectiveBpm(id: DeckId): number {
+    const deck = this.snapshot[id];
+    return deck.bpm * (1 + deck.pitch / 100);
+  }
+
   async toggle(id: DeckId): Promise<void> {
     await this.ensure();
-    const deck = this.snapshot[id];
-    if (deck.playing) {
+    if (this.snapshot[id].playing) {
       this.stop(id);
       return;
     }
     this.start(id);
   }
 
+  loadTrack(id: DeckId, trackId: string): void {
+    const track = getTrainingTrack(trackId);
+    if (!track) return;
+    const wasPlaying = this.snapshot[id].playing;
+    if (wasPlaying) this.stop(id);
+    this.snapshot[id].track = track;
+    this.snapshot[id].bpm = track.bpm;
+    this.snapshot[id].pitch = 0;
+    this.snapshot[id].cueBeat = 0;
+    this.snapshot[id].phase = 0;
+    this.rebuildBuffer(id);
+    if (this.snapshot[id].sync) this.applySync(id);
+    if (wasPlaying) this.start(id);
+  }
+
   setPitch(id: DeckId, pitch: number): void {
     this.snapshot[id].pitch = pitch;
+    if (this.snapshot[id].sync) this.applySync(id);
     const source = this.decks?.[id].source;
-    if (source) source.playbackRate.value = 1 + pitch / 100;
+    if (source) source.playbackRate.value = 1 + this.snapshot[id].pitch / 100;
   }
 
   setEq(id: DeckId, band: keyof DeckState["eq"], value: number): void {
     this.snapshot[id].eq[band] = value;
-    const nodes = this.decks?.[id];
-    if (!nodes) return;
-    nodes[band].gain.value = value;
+    this.applyEq(id);
+  }
+
+  setEqKill(id: DeckId, band: keyof DeckState["eqKill"], value: boolean): void {
+    this.snapshot[id].eqKill[band] = value;
+    this.applyEq(id);
+  }
+
+  setTrim(id: DeckId, value: number): void {
+    this.snapshot[id].trim = value;
+    if (this.decks?.[id].trim) this.decks[id].trim.gain.value = value;
+  }
+
+  setFilter(id: DeckId, value: number): void {
+    this.snapshot[id].filter = value;
+    this.applyFilter(id);
   }
 
   setGain(id: DeckId, value: number): void {
@@ -188,6 +264,150 @@ export class MamuteEngine {
     if (this.master) this.master.gain.value = value;
   }
 
+  setBooth(value: number): void {
+    this.snapshot.booth = value;
+  }
+
+  setCueMix(value: number): void {
+    this.snapshot.cueMix = value;
+  }
+
+  setSync(id: DeckId, enabled: boolean): void {
+    this.snapshot[id].sync = enabled;
+    if (enabled) this.applySync(id);
+  }
+
+  setMasterDeck(id: DeckId): void {
+    this.snapshot.masterDeck = id;
+    this.snapshot.a.masterTempo = id === "a";
+    this.snapshot.b.masterTempo = id === "b";
+    if (this.snapshot.a.sync) this.applySync("a");
+    if (this.snapshot.b.sync) this.applySync("b");
+  }
+
+  setCueMonitor(id: DeckId, enabled: boolean): void {
+    this.snapshot[id].cueMonitor = enabled;
+  }
+
+  setJogMode(id: DeckId, mode: JogMode): void {
+    this.snapshot[id].jogMode = mode;
+  }
+
+  setQuantize(id: DeckId, enabled: boolean): void {
+    this.snapshot[id].quantize = enabled;
+  }
+
+  setCueBeat(id: DeckId, beat: number): void {
+    this.snapshot[id].cueBeat = beat;
+  }
+
+  callCue(id: DeckId): void {
+    this.snapshot[id].phase = this.beatToPhase(id, this.snapshot[id].cueBeat);
+    if (this.snapshot[id].playing) {
+      this.restart(id);
+    }
+  }
+
+  setHotCue(id: DeckId, slot: number): void {
+    const cue = this.snapshot[id].hotCues.find((item) => item.slot === slot);
+    if (!cue) return;
+    cue.beat = this.phaseToBeat(id, this.snapshot[id].phase);
+    cue.set = true;
+  }
+
+  triggerHotCue(id: DeckId, slot: number): void {
+    const cue = this.snapshot[id].hotCues.find((item) => item.slot === slot);
+    if (!cue || !cue.set) return;
+    this.snapshot[id].phase = this.beatToPhase(id, cue.beat);
+    if (!this.snapshot[id].playing) this.start(id);
+    else this.restart(id);
+  }
+
+  toggleLoop(id: DeckId): void {
+    const loop = this.snapshot[id].loop;
+    if (!loop.active) {
+      loop.inBeat = this.phaseToBeat(id, this.snapshot[id].phase);
+      loop.outBeat = loop.inBeat + 4;
+      loop.active = true;
+      return;
+    }
+    loop.active = false;
+    loop.inBeat = null;
+    loop.outBeat = null;
+  }
+
+  nudge(id: DeckId, direction: -1 | 1): void {
+    const deck = this.snapshot[id];
+    const bump = direction * (deck.jogMode === "vinyl" ? 0.035 : 0.018);
+    deck.phase = (deck.phase + bump + 1) % 1;
+    const source = this.decks?.[id].source;
+    if (source) {
+      const rate = 1 + deck.pitch / 100 + direction * 0.04;
+      source.playbackRate.value = rate;
+      window.setTimeout(() => {
+        if (source.playbackRate) source.playbackRate.value = 1 + deck.pitch / 100;
+      }, 120);
+    }
+  }
+
+  private beatToPhase(_id: DeckId, beat: number): number {
+    return (beat % 8) / 8;
+  }
+
+  private phaseToBeat(_id: DeckId, phase: number): number {
+    return Math.round(phase * 8) % 8;
+  }
+
+  private applySync(id: DeckId): void {
+    const master = this.snapshot[this.snapshot.masterDeck];
+    const target = master.bpm;
+    const deck = this.snapshot[id];
+    deck.pitch = ((target / deck.bpm) - 1) * 100;
+    const source = this.decks?.[id].source;
+    if (source) source.playbackRate.value = 1 + deck.pitch / 100;
+  }
+
+  private applyEq(id: DeckId): void {
+    const nodes = this.decks?.[id];
+    const deck = this.snapshot[id];
+    if (!nodes) return;
+    nodes.high.gain.value = deck.eqKill.high ? -40 : deck.eq.high;
+    nodes.mid.gain.value = deck.eqKill.mid ? -40 : deck.eq.mid;
+    nodes.low.gain.value = deck.eqKill.low ? -40 : deck.eq.low;
+  }
+
+  private applyFilter(id: DeckId): void {
+    const nodes = this.decks?.[id];
+    if (!nodes) return;
+    const value = this.snapshot[id].filter;
+    if (value === 0) {
+      nodes.filter.type = "lowpass";
+      nodes.filter.frequency.value = 20000;
+      return;
+    }
+    if (value < 0) {
+      nodes.filter.type = "lowpass";
+      nodes.filter.frequency.value = 180 + (1 + value / 100) * 4800;
+      return;
+    }
+    nodes.filter.type = "highpass";
+    nodes.filter.frequency.value = 80 + (value / 100) * 4200;
+  }
+
+  private applyDeck(id: DeckId): void {
+    this.setTrim(id, this.snapshot[id].trim);
+    this.applyEq(id);
+    this.applyFilter(id);
+  }
+
+  private rebuildBuffer(id: DeckId): void {
+    if (!this.ctx || !this.decks) return;
+    this.decks[id].buffer = buildLoop(this.ctx, this.snapshot[id].bpm, id);
+    if (this.decks[id].source) {
+      this.decks[id].source!.buffer = this.decks[id].buffer;
+    }
+  }
+
   private start(id: DeckId): void {
     if (!this.ctx || !this.decks) return;
     this.stop(id);
@@ -197,20 +417,47 @@ export class MamuteEngine {
     source.buffer = nodes.buffer;
     source.loop = true;
     source.playbackRate.value = 1 + this.snapshot[id].pitch / 100;
-    source.connect(nodes.gain);
-    source.start();
+    source.connect(nodes.trim);
+    const offset = nodes.buffer.duration * this.snapshot[id].phase;
+    source.start(0, offset);
     nodes.source = source;
+    nodes.startedAt = this.ctx.currentTime - offset / source.playbackRate.value;
     this.snapshot[id].playing = true;
   }
 
+  private restart(id: DeckId): void {
+    if (this.snapshot[id].playing) this.start(id);
+  }
+
   private stop(id: DeckId): void {
-    const source = this.decks?.[id].source;
-    if (source) {
-      source.stop();
-      source.disconnect();
+    const nodes = this.decks?.[id];
+    if (nodes?.source && this.ctx) {
+      const elapsed = this.ctx.currentTime - nodes.startedAt;
+      const rate = 1 + this.snapshot[id].pitch / 100;
+      const loopDuration = nodes.buffer?.duration ?? 1;
+      nodes.pausedPhase = ((elapsed * rate) / loopDuration + this.snapshot[id].phase) % 1;
+      this.snapshot[id].phase = nodes.pausedPhase;
+      nodes.source.stop();
+      nodes.source.disconnect();
+      nodes.source = null;
     }
-    if (this.decks) this.decks[id].source = null;
     this.snapshot[id].playing = false;
+  }
+
+  private startPhaseLoop(): void {
+    if (this.phaseTimer !== null) return;
+    this.phaseTimer = window.setInterval(() => {
+      if (!this.ctx || !this.decks) return;
+      (["a", "b"] as const).forEach((id) => {
+        const deck = this.snapshot[id];
+        const nodes = this.decks![id];
+        if (!deck.playing || !nodes.source) return;
+        const elapsed = this.ctx!.currentTime - nodes.startedAt;
+        const rate = 1 + deck.pitch / 100;
+        const loopDuration = nodes.buffer?.duration ?? 1;
+        deck.phase = ((elapsed * rate) / loopDuration) % 1;
+      });
+    }, 50);
   }
 
   private applyGains(): void {

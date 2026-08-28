@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "live": "tsc -b && vite build && vite preview --host --port 5500",
+    "live:watch": "vite build --watch",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "playwright test --config config/playwright.config.ts",

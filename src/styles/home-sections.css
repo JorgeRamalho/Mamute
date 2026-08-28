@@ -446,7 +446,285 @@
   transform: translateY(-2px);
 }
 
+.mamute-spotlight {
+  --spot-accent: var(--cyan);
+  position: relative;
+  isolation: isolate;
+  margin: -1.2rem 0 0.5rem;
+  padding: clamp(1.35rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.75rem);
+  border-radius: calc(var(--radius) + 10px);
+  scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--cyan) 28%, var(--line));
+  background:
+    radial-gradient(ellipse 80% 60% at 78% 42%, rgba(255, 45, 149, 0.12), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 22% 38%, rgba(0, 232, 255, 0.14), transparent 60%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--steel) 88%, #0a0e16) 0%,
+      var(--panel) 48%,
+      color-mix(in srgb, var(--magenta) 8%, #080b12) 100%
+    );
+  box-shadow:
+    var(--shadow-3d),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 24px 64px rgba(0, 0, 0, 0.42),
+    0 0 48px rgba(0, 232, 255, 0.06);
+}
+
+.mamute-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background: var(--scan);
+  mix-blend-mode: overlay;
+}
+
+.mamute-spotlight-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mamute-spotlight-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.55;
+  animation: mamute-spotlight-drift calc(14 * var(--beat-ms)) ease-in-out infinite;
+}
+
+.mamute-spotlight-orb--cyan {
+  width: min(42vw, 280px);
+  height: min(42vw, 280px);
+  right: 8%;
+  top: 10%;
+  background: rgba(0, 232, 255, 0.35);
+}
+
+.mamute-spotlight-orb--magenta {
+  width: min(36vw, 240px);
+  height: min(36vw, 240px);
+  left: 4%;
+  bottom: 0;
+  background: rgba(255, 45, 149, 0.28);
+  animation-delay: calc(-7 * var(--beat-ms));
+}
+
+.mamute-spotlight-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: center;
+}
+
+.mamute-spotlight-copy {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 34rem;
+}
+
+.mamute-spotlight-copy h2 {
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  line-height: 1.02;
+  text-shadow: 0 10px 36px rgba(0, 232, 255, 0.1);
+}
+
+.mamute-spotlight-copy > p:not(.kicker) {
+  color: var(--muted);
+  line-height: 1.62;
+  font-size: 1rem;
+}
+
+.mamute-spotlight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mamute-spotlight-tags li {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 35%, var(--line));
+  color: var(--cyan-hot);
+  background: rgba(0, 232, 255, 0.06);
+  box-shadow: inset 0 0 12px rgba(0, 232, 255, 0.06);
+}
+
+.mamute-spotlight-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.mamute-spotlight-art {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+}
+
+.mamute-spotlight-stage {
+  position: relative;
+  width: min(100%, 320px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.mamute-spotlight-halo {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0, 232, 255, 0.42), transparent 58%),
+    radial-gradient(circle at 62% 68%, rgba(255, 45, 149, 0.22), transparent 52%);
+  filter: blur(18px);
+  opacity: 0.9;
+  animation: mamute-spotlight-breathe calc(6 * var(--beat-ms)) ease-in-out infinite;
+}
+
+.mamute-spotlight-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.mamute-spotlight-ring--outer {
+  width: 92%;
+  height: 92%;
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+  box-shadow:
+    0 0 24px rgba(0, 232, 255, 0.22),
+    inset 0 0 18px rgba(0, 232, 255, 0.08);
+  animation: mamute-spotlight-orbit 22s linear infinite;
+}
+
+.mamute-spotlight-ring--inner {
+  width: 78%;
+  height: 78%;
+  border: 1px dashed color-mix(in srgb, var(--magenta) 40%, transparent);
+  opacity: 0.75;
+  animation: mamute-spotlight-orbit 16s linear infinite reverse;
+}
+
+.mamute-spotlight-frame {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 256px;
+  max-width: min(256px, 72vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--cyan-hot) 70%, white),
+    var(--cyan) 35%,
+    var(--magenta) 72%,
+    color-mix(in srgb, var(--violet) 80%, white)
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 32px rgba(0, 232, 255, 0.35),
+    0 0 48px rgba(255, 45, 149, 0.18),
+    0 18px 40px rgba(0, 0, 0, 0.45);
+  animation: mamute-spotlight-float calc(8 * var(--beat-ms)) ease-in-out infinite;
+}
+
+.mamute-spotlight-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 256px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: contain;
+  object-position: center;
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  user-select: none;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.42));
+}
+
+.mamute-spotlight-caption {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+@keyframes mamute-spotlight-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes mamute-spotlight-orbit {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes mamute-spotlight-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes mamute-spotlight-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -6%, 0) scale(1.08);
+  }
+}
+
 @media (max-width: 900px) {
+  .mamute-spotlight-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .mamute-spotlight-art {
+    order: -1;
+  }
+
+  .mamute-spotlight-stage {
+    margin-inline: auto;
+  }
+
   .cabinet-stage {
     grid-template-columns: 1fr;
   }
@@ -483,6 +761,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .mamute-spotlight-orb,
+  .mamute-spotlight-halo,
+  .mamute-spotlight-ring,
+  .mamute-spotlight-frame {
+    animation: none;
+  }
+
   .cabinet-wave span {
     animation: none;
     height: 42%;

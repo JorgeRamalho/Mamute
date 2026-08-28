@@ -78,7 +78,6 @@
 .card,
 .plan-card,
 .form-section,
-.mixer-board,
 .video-frame {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
@@ -151,7 +150,6 @@
   .card,
   .plan-card,
   .form-section,
-  .mixer-board,
   .video-frame {
     transform: none;
     transition: none;
@@ -162,7 +160,6 @@
   .card,
   .plan-card,
   .form-section,
-  .mixer-board,
   .video-frame {
     transform: none;
   }

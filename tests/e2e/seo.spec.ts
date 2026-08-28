@@ -20,7 +20,7 @@ test.describe("SEO e estrutura", () => {
 
   test("rotas internas mantêm H1 e navegação", async ({ page }) => {
     const routes = [
-      { path: "/mixer", heading: /Cabine dual deck/ },
+      { path: "/mixer", heading: /Cabine dual CDJ/ },
       { path: "/academia", heading: /primeiro beat/ },
       { path: "/radio", heading: /modo clipe/ },
       { path: "/catalogo", heading: /Beatport/ },

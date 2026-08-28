@@ -1,6 +1,7 @@
 const FINE_POINTER = "(hover: hover) and (pointer: fine)";
 const REDUCE_MOTION = "(prefers-reduced-motion: reduce)";
-const SURFACE = ".card, .plan-card, .form-section, .video-frame, .clip-list button";
+const SURFACE =
+  ".card, .plan-card, .form-section, .video-frame, .clip-list button, .mixer-board, .cdj-deck, .mixer-console, .cdj-jog";
 
 function isHtml(node: EventTarget | null): node is HTMLElement {
   return node instanceof HTMLElement;
