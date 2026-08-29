@@ -8,9 +8,9 @@ export function HomePage() {
   return (
     <div className="page">
       <Hero />
+      <VisorTechSection />
       <MamuteSpotlightSection />
       <CabinetLayersSection />
-      <VisorTechSection />
       <PlansSection />
     </div>
   );
