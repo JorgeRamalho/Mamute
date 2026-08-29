@@ -14,17 +14,28 @@
   align-items: center;
   column-gap: 0.75rem;
   padding-inline: max(var(--layout-gutter), calc((100% - var(--layout-max)) / 2));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--void) 42%, transparent),
-      color-mix(in srgb, #0c1018 78%, transparent)
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--void) 42%, transparent),
+    color-mix(in srgb, #0c1018 78%, transparent)
+  );
   backdrop-filter: blur(18px) saturate(1.55);
   border-bottom: 1px solid transparent;
   box-shadow:
     inset 0 -1px 0 color-mix(in srgb, var(--cyan) 35%, transparent),
     0 12px 32px rgba(0, 0, 0, 0.28);
+  transition: box-shadow 240ms ease;
+}
+
+.site-header.is-scrolled {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--void) 86%, transparent),
+    color-mix(in srgb, #0c1018 96%, transparent)
+  );
+  box-shadow:
+    inset 0 -1px 0 color-mix(in srgb, var(--cyan) 46%, transparent),
+    0 16px 40px rgba(0, 0, 0, 0.46);
 }
 
 .header-inner {

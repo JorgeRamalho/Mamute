@@ -5,6 +5,7 @@ import {
   platformSearchUrl,
   resolveYoutubeId,
 } from "../data/radio-youtube-map";
+import { fetchDeezerJson } from "./deezer-api";
 
 const STORAGE_KEY = "mamute.radio.imports";
 
@@ -75,11 +76,11 @@ function mapDeezerTrack(track: DeezerTrack, platform: PlatformId): RadioClip {
 }
 
 async function fetchDeezerSearch(query: string, limit = 1): Promise<DeezerTrack[]> {
-  const url = `https://api.deezer.com/search/track?q=${encodeURIComponent(query)}&limit=${limit}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Deezer indisponível (${response.status}).`);
-  const payload = (await response.json()) as DeezerSearchResponse;
-  return payload.data ?? [];
+  const payload = await fetchDeezerJson<DeezerSearchResponse>("search/track", {
+    q: query,
+    limit,
+  });
+  return payload?.data ?? [];
 }
 
 function dedupeClips(clips: RadioClip[]): RadioClip[] {
@@ -129,7 +130,7 @@ export async function importPlatformCatalog(platform: PlatformId): Promise<Radio
 }
 
 export async function importAllPlatformCatalogs(
-  platforms: PlatformId[] = ["spotify", "beatport", "deezer", "youtube"],
+  platforms: PlatformId[] = ["spotify", "deezer", "youtube", "beatport"],
 ): Promise<RadioClip[]> {
   const batches = await Promise.all(platforms.map((platform) => importPlatformCatalog(platform)));
   return dedupeClips(batches.flat());

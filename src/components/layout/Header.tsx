@@ -1,5 +1,7 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { NavLink } from "react-router";
+
+const SCROLL_ACTIVATE_PX = 10;
 
 const LINKS = [
   { to: "/mixer", label: "Mixer CDJ" },
@@ -65,9 +67,20 @@ function BrandMark() {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const syncScrolled = () => {
+      setScrolled(window.scrollY > SCROLL_ACTIVATE_PX);
+    };
+
+    syncScrolled();
+    window.addEventListener("scroll", syncScrolled, { passive: true });
+    return () => window.removeEventListener("scroll", syncScrolled);
+  }, []);
 
   return (
-    <header className="site-header">
+    <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
       <div className="header-inner">
         <NavLink to="/" className="brand" aria-label="Mamute DJPLAYER">
           <BrandMark />

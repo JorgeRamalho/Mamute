@@ -1,3 +1,4 @@
+import { RadioErrorBoundary } from "../components/radio/RadioErrorBoundary";
 import { RadioStudio } from "../components/radio/RadioStudio";
 
 export function RadioPage() {
@@ -7,9 +8,11 @@ export function RadioPage() {
       <h1>Rádio integrada</h1>
       <p className="lede">
         Equalizador de cabine, player com loop nos clipes das plataformas e deck local para enviar
-        MP3 — Spotify, Beatport, SoundCloud, Deezer e YouTube Music no mesmo visor.
+        MP3 — Spotify, Deezer, YouTube Music e Beatport no mesmo visor.
       </p>
-      <RadioStudio />
+      <RadioErrorBoundary>
+        <RadioStudio />
+      </RadioErrorBoundary>
     </div>
   );
 }

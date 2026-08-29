@@ -1,7 +1,7 @@
 const FINE_POINTER = "(hover: hover) and (pointer: fine)";
 const REDUCE_MOTION = "(prefers-reduced-motion: reduce)";
 const SURFACE =
-  ".card, .plan-card, .form-section, .video-frame, .radio-eq-chassis, .radio-dj-player, .radio-dj-queue-item, .radio-loop-deck, .radio-loop-item, .radio-catalog-import, .mixer-board, .cdj-deck, .mixer-console, .cdj-jog";
+  ".card, .plan-card, .form-section, .video-frame, .radio-eq-chassis, .radio-loop-deck, .radio-loop-item, .radio-catalog-import, .mixer-board, .cdj-deck, .mixer-console, .cdj-jog";
 
 function isHtml(node: EventTarget | null): node is HTMLElement {
   return node instanceof HTMLElement;

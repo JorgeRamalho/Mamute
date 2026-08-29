@@ -46,5 +46,5 @@ export interface RadioEngineState {
 }
 
 export type RadioSource =
-  | { kind: "clip"; clip: RadioClip; loop: boolean }
+  | { kind: "clip"; clip: RadioClip; continuous: boolean; autoplay: boolean }
   | { kind: "upload"; upload: RadioUpload };

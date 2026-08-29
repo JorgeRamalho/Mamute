@@ -44,6 +44,13 @@ export default defineConfig({
     port: 5173,
     host: true,
     cors: true,
+    proxy: {
+      "/api/deezer": {
+        target: "https://api.deezer.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/deezer/, ""),
+      },
+    },
   },
   preview: {
     port: 4173,

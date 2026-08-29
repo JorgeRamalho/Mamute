@@ -30,7 +30,7 @@ export function RadioCatalogImport({ onImported }: RadioCatalogImportProps) {
       const added = merged.length;
       setMessage(
         platform === "all"
-          ? `Catálogo atualizado — ${added} faixas na fila Mamute FM (Spotify, Beatport, Deezer e YouTube Music).`
+          ? `Catálogo atualizado — ${added} faixas na fila Mamute FM (Spotify, Deezer, YouTube Music e Beatport).`
           : `${platformLabel(platform)} importado — ${added} faixas no total.`,
       );
       onImported();
