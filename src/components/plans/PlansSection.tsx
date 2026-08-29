@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router";
 import { PLAN_COMPARE, PLAN_NAMES, PLAN_NOTES, PLANS } from "../../data/plans";
-import { BoothFaqSection } from "./BoothFaqSection";
 import type { BillingCycle, Plan, PlanId } from "../../types/plan";
 
 const CYCLE_LABEL: Record<BillingCycle, string> = {
@@ -165,8 +164,6 @@ export function PlansSection() {
           <li key={note}>{note}</li>
         ))}
       </ul>
-
-      <BoothFaqSection />
     </section>
   );
 }

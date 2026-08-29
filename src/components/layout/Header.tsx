@@ -7,7 +7,7 @@ const LINKS = [
   { to: "/mixer", label: "Mixer CDJ" },
   { to: "/academia", label: "Academia" },
   { to: "/radio", label: "Rádio" },
-  { to: "/catalogo", label: "Catálogo" },
+  { to: "/catalogo", label: "Plataformas" },
   { to: "/dj", label: "Área DJ" },
 ];
 

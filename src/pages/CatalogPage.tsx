@@ -2,13 +2,15 @@ import { CatalogHub } from "../components/catalog/CatalogHub";
 
 export function CatalogPage() {
   return (
-    <div className="page">
-      <p className="kicker">Integrações</p>
-      <h1>Beatport, Deezer, SoundCloud, YouTube e Spotify</h1>
-      <p className="lede">
-        Pesquisa consolidada das APIs oficiais. O Mamute DJPLAYER mostra o que cada serviço permite
-        — e o que bloqueia uma cabine de verdade.
-      </p>
+    <div className="page platforms-page">
+      <header className="platforms-intro">
+        <p className="kicker">Integrações de plataformas</p>
+        <h1>Plataformas</h1>
+        <p className="lede">
+          Mamute, Beatport, SoundCloud, Deezer, YouTube e Spotify — o que cada serviço permite no
+          Mamute DJPLAYER e o que ainda bloqueia uma cabine de verdade.
+        </p>
+      </header>
       <CatalogHub />
     </div>
   );

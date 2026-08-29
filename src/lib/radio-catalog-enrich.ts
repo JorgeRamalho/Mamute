@@ -1,8 +1,12 @@
+import { resolveYoutubeId } from "../data/radio-youtube-map";
 import type { RadioClip } from "../types/radio";
 import { fetchDeezerJson } from "./deezer-api";
 
 interface DeezerTrack {
   preview: string;
+  title_short?: string;
+  title?: string;
+  artist?: { name: string };
 }
 
 interface DeezerSearchResponse {
@@ -41,13 +45,22 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-/** Garante preview Deezer em cada faixa — fallback legal quando o embed do YouTube falha. */
-export async function enrichCatalogWithPreviews(clips: RadioClip[]): Promise<RadioClip[]> {
-  const pending = clips.map((clip, clipIndex) => ({ clip, clipIndex }));
-  const missing = pending.filter(({ clip }) => !clip.previewUrl);
-  if (missing.length === 0) return clips;
+function withResolvedYoutube(clips: RadioClip[]): RadioClip[] {
+  return clips.map((clip) => {
+    if (clip.youtubeId) return clip;
+    const youtubeId = resolveYoutubeId(clip.artist, clip.title);
+    return youtubeId ? { ...clip, youtubeId } : clip;
+  });
+}
 
-  const enriched = [...clips];
+/** Previews Deezer + IDs YouTube para rádio com faixa completa. */
+export async function enrichCatalogWithPreviews(clips: RadioClip[]): Promise<RadioClip[]> {
+  const withYoutube = withResolvedYoutube(clips);
+  const pending = withYoutube.map((clip, clipIndex) => ({ clip, clipIndex }));
+  const missing = pending.filter(({ clip }) => !clip.previewUrl);
+  if (missing.length === 0) return withYoutube;
+
+  const enriched = [...withYoutube];
   const previews = await mapWithConcurrency(missing, 4, async ({ clip }) =>
     fetchDeezerPreview(clip.artist, clip.title),
   );

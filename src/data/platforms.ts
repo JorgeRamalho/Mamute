@@ -1,4 +1,5 @@
 import type { PlatformId, PlatformIntel } from "../types";
+import { BEATPORT_ACCENT, YOUTUBE_ACCENT } from "./platform-accents";
 
 /** Ordem fixa no visor HUD, chips do hero e catálogo. */
 export const PLATFORM_DISPLAY_ORDER: PlatformId[] = [
@@ -38,7 +39,7 @@ const PLATFORM_ENTRIES: PlatformIntel[] = [
     id: "beatport",
     name: "Beatport",
     role: "Catálogo DJ / streaming profissional",
-    accent: "#01ff95",
+    accent: BEATPORT_ACCENT,
     summary:
       "Loja e streaming de dance music com filtros de BPM, tom e gênero — o padrão da cabine eletrônica.",
     capabilities: [
@@ -128,7 +129,7 @@ const PLATFORM_ENTRIES: PlatformIntel[] = [
     id: "youtube",
     name: "YouTube",
     role: "Clipes + aulas em vídeo",
-    accent: "#ff0033",
+    accent: YOUTUBE_ACCENT,
     summary:
       "IFrame Player API para clipes da rádio e Data API v3 para metadados das aulas da academia.",
     capabilities: [

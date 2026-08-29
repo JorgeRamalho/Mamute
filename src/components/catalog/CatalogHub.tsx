@@ -3,7 +3,7 @@ import { PLATFORMS } from "../../data/platforms";
 
 export function CatalogHub() {
   return (
-    <div className="platform-grid">
+    <div className="platform-stack">
       {PLATFORMS.map((platform) => (
         <article className="card platform-card" key={platform.id} id={platform.id}>
           <header>

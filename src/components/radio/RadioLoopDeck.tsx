@@ -85,7 +85,7 @@ export function RadioLoopDeck({ activeUploadId, onSelectUpload }: RadioLoopDeckP
   const loopEndPct = (engineState.loopEnd / duration) * 100;
 
   return (
-    <section className="radio-loop-deck card" aria-label="Loop e uploads MP3">
+    <section className="radio-loop-deck radio-loop-deck--plain card" aria-label="Loop e uploads MP3">
       <header className="radio-loop-head">
         <div>
           <p className="kicker">Mamute FM · loop local</p>

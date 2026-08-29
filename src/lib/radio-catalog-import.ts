@@ -5,6 +5,7 @@ import {
   platformSearchUrl,
   resolveYoutubeId,
 } from "../data/radio-youtube-map";
+import { BEGINNER_DJ_QUERIES } from "../data/beginner-dj-tracks";
 import { fetchDeezerJson } from "./deezer-api";
 
 const STORAGE_KEY = "mamute.radio.imports";
@@ -53,7 +54,11 @@ function guessGenre(platform: PlatformId): string {
   }
 }
 
-function mapDeezerTrack(track: DeezerTrack, platform: PlatformId): RadioClip {
+function mapDeezerTrack(
+  track: DeezerTrack,
+  platform: PlatformId,
+  captionPrefix = "Importado",
+): RadioClip {
   const artist = track.artist.name;
   const title = track.title_short || track.title;
   const youtubeId = resolveYoutubeId(artist, title);
@@ -69,7 +74,7 @@ function mapDeezerTrack(track: DeezerTrack, platform: PlatformId): RadioClip {
     youtubeId: youtubeId ?? "",
     previewUrl: track.preview,
     sourceUrl: track.link || platformSearchUrl(platform, artist, title),
-    caption: `Importado de ${platform} · metadados Deezer · preview 30s ou clipe no visor.`,
+    caption: `${captionPrefix} · ${platform} · preview ou clipe no player.`,
     platform,
     importedAt: Date.now(),
   };
@@ -115,18 +120,41 @@ export function mergeImports(existing: RadioClip[], incoming: RadioClip[]): Radi
   return dedupeClips([...byId.values()]);
 }
 
-export async function importPlatformCatalog(platform: PlatformId): Promise<RadioClip[]> {
-  const queries = PLATFORM_IMPORT_QUERIES[platform];
-  if (!queries?.length) return [];
+export async function importPlatformCatalog(
+  platform: PlatformId,
+  queries: string[] = PLATFORM_IMPORT_QUERIES[platform] ?? [],
+  captionPrefix = "Importado",
+): Promise<RadioClip[]> {
+  if (!queries.length) return [];
 
   const imported: RadioClip[] = [];
   for (const query of queries) {
     const tracks = await fetchDeezerSearch(query, 1);
     const first = tracks[0];
-    if (first) imported.push(mapDeezerTrack(first, platform));
+    if (first) imported.push(mapDeezerTrack(first, platform, captionPrefix));
   }
 
   return dedupeClips(imported);
+}
+
+export async function importBeginnerDjCatalog(): Promise<RadioClip[]> {
+  const platforms = (Object.keys(BEGINNER_DJ_QUERIES) as PlatformId[]).filter(
+    (platform) => BEGINNER_DJ_QUERIES[platform]?.length,
+  );
+  const batches = await Promise.all(
+    platforms.map((platform) =>
+      importPlatformCatalog(platform, BEGINNER_DJ_QUERIES[platform] ?? [], "Essencial DJ iniciante"),
+    ),
+  );
+  return dedupeClips(batches.flat());
+}
+
+export async function syncBeginnerDjToStorage(): Promise<RadioClip[]> {
+  const stored = loadStoredImports();
+  const incoming = await importBeginnerDjCatalog();
+  const merged = mergeImports(stored, incoming);
+  saveStoredImports(merged);
+  return merged;
 }
 
 export async function importAllPlatformCatalogs(

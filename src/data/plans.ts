@@ -179,7 +179,7 @@ export const PLAN_FAQS: PlanFaq[] = [
       "Nenhum combo promete Beatport LINK ou mix de biblioteca Spotify.",
     ],
     route: "/catalogo",
-    routeLabel: "Ver catálogo completo",
+    routeLabel: "Ver plataformas",
   },
   {
     id: "pagamento",

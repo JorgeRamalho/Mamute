@@ -2,14 +2,20 @@ type YoutubeEmbedOptions = {
   loop?: boolean;
   autoplay?: boolean;
   enableJsApi?: boolean;
+  nocookie?: boolean;
 };
 
-/** URL de embed com origin — evita "Vídeo indisponível" / erro 153 em browsers recentes. */
+/** URL de embed com origin — reprodução completa na rádio Mamute FM. */
 export function buildYoutubeEmbedSrc(videoId: string, options: YoutubeEmbedOptions = {}): string {
+  const host = options.nocookie ? "www.youtube-nocookie.com" : "www.youtube.com";
   const params = new URLSearchParams({
     rel: "0",
     modestbranding: "1",
     playsinline: "1",
+    controls: "0",
+    fs: "0",
+    iv_load_policy: "3",
+    disablekb: "1",
   });
 
   if (options.enableJsApi) {
@@ -29,5 +35,5 @@ export function buildYoutubeEmbedSrc(videoId: string, options: YoutubeEmbedOptio
     params.set("playlist", videoId);
   }
 
-  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+  return `https://${host}/embed/${videoId}?${params.toString()}`;
 }

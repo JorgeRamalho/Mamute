@@ -294,6 +294,301 @@
   padding: 1.1rem;
 }
 
+.radio-dj-player--unified {
+  padding: 1.1rem 1.15rem 1.2rem;
+}
+
+.radio-dj-head--unified {
+  margin-bottom: 0.65rem;
+}
+
+.radio-dj-live-badge {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: var(--cyan);
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  background: rgba(0, 232, 255, 0.08);
+}
+
+.radio-dj-eq-strip {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.radio-dj-eq-label {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+.radio-dj-eq-bands {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.radio-dj-eq-band {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.radio-dj-eq-band-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--eq-accent, var(--cyan)) 80%, white);
+}
+
+.radio-dj-eq-band-hz {
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.radio-dj-now-playing {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.radio-dj-now-playing-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.radio-dj-now-playing-dot[data-playing="true"] {
+  background: var(--magenta);
+  box-shadow: 0 0 10px rgba(255, 45, 149, 0.5);
+}
+
+.radio-dj-music-meta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.radio-dj-youtube-engine {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  height: 158px;
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: -1;
+  border: 0;
+}
+
+.radio-dj-player--unified .radio-cabinet-toolbar {
+  margin-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .radio-dj-eq-bands {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.radio-dj-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.radio-dj-playlist-btn {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+}
+
+.radio-dj-playlist-btn.is-on {
+  border-color: var(--magenta);
+  color: var(--magenta);
+  background: rgba(255, 45, 149, 0.1);
+}
+
+.radio-dj-queue-item.is-saved:not(.is-active) {
+  border-color: color-mix(in srgb, var(--magenta) 35%, var(--line));
+}
+
+.radio-cabinet {
+  padding: 1.1rem 1.15rem 1.2rem;
+}
+
+.radio-cabinet-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.radio-cabinet-title {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  line-height: 1.05;
+  margin: 0.15rem 0;
+}
+
+.radio-cabinet-lede {
+  color: var(--muted);
+  margin: 0.35rem 0 0;
+  max-width: 62ch;
+  line-height: 1.5;
+}
+
+.radio-cabinet-live {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: var(--cyan);
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  background: rgba(0, 232, 255, 0.08);
+}
+
+.radio-cabinet-toolbar {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.radio-cabinet-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.radio-cabinet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.radio-cabinet-btn {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: #121824;
+  color: var(--text);
+}
+
+.radio-cabinet-btn--primary {
+  border-color: color-mix(in srgb, var(--cyan) 55%, var(--line));
+  color: var(--cyan);
+  background: rgba(0, 232, 255, 0.08);
+}
+
+.radio-cabinet-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.radio-cabinet-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.radio-cabinet-status {
+  margin: 0;
+  text-align: center;
+  color: var(--cyan);
+  font-size: 0.82rem;
+}
+
+.radio-cabinet-core {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.radio-eq-console--compact {
+  gap: 0.5rem;
+}
+
+.radio-eq-compact-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+.radio-eq-chassis--compact {
+  grid-template-columns: 1fr;
+  transform: none;
+  padding: 0.85rem;
+}
+
+.radio-eq-chassis--compact .radio-tuner-spectrum {
+  display: none;
+}
+
+.radio-cabinet .radio-dj-player {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.radio-cabinet .radio-dj-player.card::before {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .radio-cabinet-core {
+    grid-template-columns: 1fr;
+  }
+}
+
 .radio-dj-head {
   display: flex;
   flex-wrap: wrap;
@@ -545,15 +840,16 @@
   padding-top: 1rem;
   border-top: 1px solid var(--line);
   justify-items: stretch;
-  align-items: start;
+  align-items: stretch;
 }
 
 .radio-dj-queue-group {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
   min-width: 0;
+  height: 100%;
 }
 
 .radio-dj-queue-label {
@@ -565,6 +861,7 @@
   margin: 0 0 0.45rem;
   width: 100%;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .radio-dj-queue-list {
@@ -572,20 +869,40 @@
   margin: 0;
   padding: 0;
   display: grid;
+  flex: 1;
   gap: 0.35rem;
   width: 100%;
+  align-content: stretch;
+}
+
+.radio-dj-queue--featured .radio-dj-queue-list {
+  grid-template-rows: minmax(2.85rem, 1fr);
+}
+
+.radio-dj-queue-empty {
+  display: grid;
+  place-items: center;
+  min-height: 2.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-mono);
 }
 
 .radio-dj-queue-item {
   width: 100%;
+  height: 100%;
+  min-height: 2.85rem;
   text-align: center;
-  padding: 0.55rem 0.6rem;
+  padding: 0.45rem 0.55rem;
   border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--steel);
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 0.1rem;
-  justify-items: center;
 }
 
 .radio-dj-queue-item strong {
@@ -667,6 +984,68 @@
   padding: 1.1rem;
 }
 
+/* Mamute FM · loop local — sem tilt, transição ou hover */
+.radio-loop-deck--plain.card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  transform: none;
+  transition: none;
+  transform-style: flat;
+  box-shadow: none;
+}
+
+.radio-loop-deck--plain.card::before {
+  display: none;
+}
+
+.radio-loop-deck--plain,
+.radio-loop-deck--plain * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.radio-loop-deck--plain .radio-loop-upload-btn:hover,
+.radio-loop-deck--plain .radio-loop-btn:hover,
+.radio-loop-deck--plain .radio-loop-item:hover,
+.radio-loop-deck--plain .radio-loop-remove:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.radio-loop-deck--plain .radio-loop-upload-btn:hover {
+  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--cyan) 50%, var(--line));
+  background: rgba(0, 232, 255, 0.08);
+}
+
+.radio-loop-deck--plain .radio-loop-btn:hover {
+  border-color: var(--line);
+  color: var(--text);
+  background: var(--steel);
+}
+
+.radio-loop-deck--plain .radio-loop-btn.is-on {
+  border-color: var(--magenta);
+  color: var(--magenta);
+  box-shadow: none;
+}
+
+.radio-loop-deck--plain .radio-loop-item:hover {
+  border-color: var(--line);
+  background: var(--steel);
+}
+
+.radio-loop-deck--plain .radio-loop-item.is-active {
+  border-color: var(--cyan);
+  background: var(--steel);
+}
+
+.radio-loop-deck--plain .radio-loop-remove:hover {
+  border-color: var(--line);
+  color: var(--magenta);
+  background: rgba(255, 45, 149, 0.08);
+}
+
 .radio-loop-head {
   display: flex;
   flex-wrap: wrap;
@@ -727,7 +1106,6 @@
 .radio-loop-btn.is-on {
   border-color: var(--magenta);
   color: var(--magenta);
-  box-shadow: 0 0 14px rgba(255, 45, 149, 0.2);
 }
 
 .radio-loop-btn:disabled {
@@ -807,9 +1185,7 @@
 
 .radio-loop-item.is-active {
   border-color: var(--cyan);
-  background:
-    linear-gradient(90deg, rgba(0, 232, 255, 0.12), rgba(139, 124, 255, 0.06)),
-    var(--steel);
+  background: var(--steel);
 }
 
 .radio-loop-remove {

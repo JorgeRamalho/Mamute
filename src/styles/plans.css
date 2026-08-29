@@ -13,7 +13,7 @@
 
 .plans {
   scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
-  margin: 2.5rem 0 0;
+  margin: 2rem 0 0;
   display: grid;
   gap: 1.6rem;
 }
@@ -377,7 +377,8 @@
 .booth-faq {
   display: grid;
   gap: 1rem;
-  margin-top: 0.35rem;
+  margin-top: 2.5rem;
+  scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
   padding: clamp(1rem, 2.5vw, 1.35rem);
   border-radius: calc(var(--radius) + 4px);
   border: 1px solid color-mix(in srgb, var(--cyan) 22%, var(--line));

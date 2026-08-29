@@ -1,0 +1,459 @@
+/* Visor digital virtual — Mamute FM HUD */
+
+.radio-hud {
+  margin: 0.75rem 0 1rem;
+}
+
+.radio-hud-bezel {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--hud-accent, var(--cyan)) 35%, var(--line));
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--hud-accent, var(--cyan)) 12%, transparent), transparent 70%),
+    linear-gradient(165deg, #141c28 0%, #0a0e14 45%, #06080c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -24px 40px rgba(0, 0, 0, 0.45),
+    0 20px 48px rgba(0, 0, 0, 0.5),
+    0 0 60px color-mix(in srgb, var(--hud-accent, var(--cyan)) 8%, transparent);
+  overflow: hidden;
+}
+
+.radio-hud-bezel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--hud-accent, var(--cyan)) 70%, white),
+    color-mix(in srgb, var(--magenta) 50%, white),
+    transparent
+  );
+  opacity: 0.85;
+  z-index: 3;
+}
+
+.radio-hud-bezel-top {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+}
+
+.radio-hud-brand {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.radio-hud-chip {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--hud-accent, var(--cyan)) 40%, var(--line));
+  color: var(--hud-accent, var(--cyan));
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.radio-hud-live {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  padding: 0.28rem 0.5rem;
+  border-radius: 999px;
+  color: var(--hud-accent, var(--cyan));
+  border: 1px solid color-mix(in srgb, var(--hud-accent, var(--cyan)) 45%, var(--line));
+  background: color-mix(in srgb, var(--hud-accent, var(--cyan)) 10%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--hud-accent, var(--cyan)) 25%, transparent);
+}
+
+.radio-hud[data-playing="true"] .radio-hud-live {
+  color: var(--magenta);
+  border-color: color-mix(in srgb, var(--magenta) 50%, var(--line));
+  background: rgba(255, 45, 149, 0.1);
+  box-shadow: 0 0 16px rgba(255, 45, 149, 0.25);
+  animation: radio-hud-live-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes radio-hud-live-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.radio-hud-screen {
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.radio-hud-screen-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1rem 1fr 1.1rem;
+  gap: 0.5rem;
+  min-height: 10.5rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #020408;
+  overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.7);
+}
+
+.radio-hud-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--hud-accent, var(--cyan)) 85%, white),
+    transparent
+  );
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-accent, var(--cyan)) 50%, transparent);
+  animation: radio-hud-scan 4.2s linear infinite;
+}
+
+.radio-hud-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 20px 20px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 45%, black 20%, transparent 85%);
+}
+
+.radio-hud-glow {
+  position: absolute;
+  inset: 15% 10%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--hud-accent, var(--cyan)) 18%, transparent),
+    transparent 70%
+  );
+  animation: radio-hud-glow calc(var(--beat-ms, 500ms) * 2) ease-in-out infinite;
+}
+
+.radio-hud[data-playing="false"] .radio-hud-glow {
+  opacity: 0.35;
+  animation: none;
+}
+
+.radio-hud-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes radio-hud-scan {
+  0% {
+    top: 6%;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0.3;
+  }
+}
+
+@keyframes radio-hud-glow {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.95;
+  }
+}
+
+.radio-hud-vu {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  gap: 2px;
+  z-index: 1;
+}
+
+.radio-hud-vu-seg {
+  flex: 1;
+  min-height: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  transform-origin: bottom;
+}
+
+.radio-hud[data-playing="true"] .radio-hud-vu-seg {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hud-accent, var(--cyan)) 90%, white),
+    color-mix(in srgb, var(--magenta) 60%, var(--hud-accent, var(--cyan)))
+  );
+  animation: radio-hud-vu calc(var(--beat-ms, 500ms) * 0.45) ease-in-out infinite;
+  animation-delay: calc(var(--seg-i) * 0.05s);
+  opacity: calc(0.35 + (var(--seg-i) / 12) * 0.65);
+}
+
+.radio-hud-vu--right .radio-hud-vu-seg {
+  animation-delay: calc((11 - var(--seg-i)) * 0.05s);
+}
+
+@keyframes radio-hud-vu {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(calc(0.45 + (var(--seg-i) % 4) * 0.12));
+  }
+}
+
+.radio-hud-core {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.45rem;
+  align-content: center;
+  min-width: 0;
+}
+
+.radio-hud-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.radio-hud-marquee-track {
+  display: inline-block;
+  white-space: nowrap;
+  font-family: var(--font-hud);
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--hud-accent, var(--cyan)) 75%, white);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--hud-accent, var(--cyan)) 40%, transparent);
+  animation: radio-hud-marquee 18s linear infinite;
+}
+
+.radio-hud[data-playing="false"] .radio-hud-marquee-track {
+  animation: none;
+  color: var(--muted);
+  text-shadow: none;
+}
+
+@keyframes radio-hud-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.radio-hud-wave {
+  width: 100%;
+  height: 3.2rem;
+  display: block;
+  opacity: 0.9;
+}
+
+.radio-hud-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.radio-hud-metric {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.radio-hud-metric-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.radio-hud-metric-value {
+  font-family: var(--font-hud);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--hud-accent, var(--cyan)) 80%, white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.radio-hud-status {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.radio-hud-spectrum {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 2.8rem;
+  margin-top: 0.55rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #010306;
+}
+
+.radio-hud-spectrum-bar {
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hud-accent, var(--cyan)) 85%, white),
+    color-mix(in srgb, var(--magenta) 65%, var(--hud-accent, var(--cyan)))
+  );
+  transform-origin: bottom;
+  opacity: 0.4;
+}
+
+.radio-hud[data-playing="true"] .radio-hud-spectrum-bar {
+  animation: radio-hud-spectrum calc(var(--beat-ms, 500ms) * 0.55) ease-in-out infinite;
+  animation-delay: calc(var(--bar-i) * 0.04s);
+  opacity: calc(0.45 + (var(--bar-i) % 6) * 0.08);
+}
+
+@keyframes radio-hud-spectrum {
+  0%,
+  100% {
+    transform: scaleY(calc(0.15 + (var(--bar-i) % 5) * 0.06));
+  }
+  50% {
+    transform: scaleY(calc(0.5 + (var(--bar-i) % 7) * 0.07));
+  }
+}
+
+.radio-hud-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.55rem 0.85rem 0.7rem;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.radio-hud-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.radio-hud-footer-sync {
+  color: var(--hud-accent, var(--cyan));
+}
+
+.radio-hud-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.radio-hud-action {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.38rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--muted);
+}
+
+.radio-hud-action:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--hud-accent, var(--cyan)) 50%, var(--line));
+  color: var(--hud-accent, var(--cyan));
+}
+
+.radio-hud-action.is-on {
+  border-color: var(--magenta);
+  color: var(--magenta);
+  background: rgba(255, 45, 149, 0.08);
+}
+
+.radio-hud-action:disabled {
+  opacity: 0.45;
+}
+
+.radio-dj-music-player--engine {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radio-dj-audio--hidden {
+  position: fixed;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+@media (max-width: 720px) {
+  .radio-hud-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .radio-hud-screen-inner {
+    grid-template-columns: 0.6rem 1fr 0.6rem;
+    min-height: 9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radio-hud-scan,
+  .radio-hud-glow,
+  .radio-hud-marquee-track,
+  .radio-hud-spectrum-bar,
+  .radio-hud-vu-seg,
+  .radio-hud-live {
+    animation: none !important;
+  }
+}

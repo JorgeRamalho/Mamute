@@ -6,6 +6,12 @@ export function isPlayableClip(clip: RadioClip): boolean {
   return Boolean(clip.youtubeId || clip.previewUrl);
 }
 
+function clipPlaybackRank(clip: RadioClip): number {
+  if (clip.youtubeId) return 2;
+  if (clip.previewUrl) return 1;
+  return 0;
+}
+
 export function getPlayableClips(clips: RadioClip[]): RadioClip[] {
   return clips.filter(isPlayableClip);
 }
@@ -13,7 +19,9 @@ export function getPlayableClips(clips: RadioClip[]): RadioClip[] {
 /** Ordem editorial da rádio: alterna Spotify → Deezer → YouTube Music → Beatport. */
 export function buildRadioProgramming(clips: RadioClip[]): RadioClip[] {
   const groups = RADIO_PLATFORM_ORDER.map((platformId) =>
-    clips.filter((clip) => clip.platform === platformId && isPlayableClip(clip)),
+    clips
+      .filter((clip) => clip.platform === platformId && isPlayableClip(clip))
+      .sort((a, b) => clipPlaybackRank(b) - clipPlaybackRank(a)),
   );
   const maxLen = Math.max(0, ...groups.map((group) => group.length));
   const programming: RadioClip[] = [];
@@ -28,8 +36,16 @@ export function buildRadioProgramming(clips: RadioClip[]): RadioClip[] {
   return programming;
 }
 
-export function getNextPlayableClip(clips: RadioClip[], currentId: string): RadioClip | null {
-  const programming = buildRadioProgramming(clips);
+export function getNextPlayableClip(
+  clips: RadioClip[],
+  currentId: string,
+  scopeIds?: string[],
+): RadioClip | null {
+  const pool =
+    scopeIds && scopeIds.length > 0
+      ? clips.filter((clip) => scopeIds.includes(clip.id))
+      : clips;
+  const programming = buildRadioProgramming(pool);
   if (programming.length === 0) return null;
 
   const currentIndex = programming.findIndex((clip) => clip.id === currentId);
@@ -41,5 +57,7 @@ export function getFirstClipForPlatform(clips: RadioClip[], platformId: Platform
   const editorial = clips.find(
     (clip) => clip.platform === platformId && clip.id.startsWith("radio-"),
   );
-  return editorial ?? clips.find((clip) => clip.platform === platformId);
+  const platformClips = clips.filter((clip) => clip.platform === platformId);
+  const sorted = [...platformClips].sort((a, b) => clipPlaybackRank(b) - clipPlaybackRank(a));
+  return editorial ?? sorted[0];
 }

@@ -133,10 +133,31 @@ textarea {
     var(--steel);
 }
 
+.platforms-page {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.platforms-intro {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.platforms-page .lede {
+  max-width: 56ch;
+}
+
+.platform-stack,
 .platform-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.platforms-page .platform-card {
+  width: 100%;
 }
 
 .platform-card header {
@@ -174,8 +195,7 @@ textarea {
 }
 
 @media (max-width: 900px) {
-  .radio-layout,
-  .platform-grid {
+  .radio-layout {
     grid-template-columns: 1fr;
   }
 }

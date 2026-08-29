@@ -2,12 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PLATFORMS } from "../../data/platforms";
 import { buildRadioCatalog } from "../../data/radio";
 import { enrichCatalogWithPreviews } from "../../lib/radio-catalog-enrich";
+import { syncBeginnerDjToStorage } from "../../lib/radio-catalog-import";
 import { getNextPlayableClip } from "../../lib/radio-playlist";
 import { radioEngine } from "../../lib/radio-engine";
+import {
+  loadUserPlaylistIds,
+  markBeginnerPlaylistLoaded,
+  togglePlaylistClip,
+  wasBeginnerPlaylistLoaded,
+} from "../../lib/radio-user-playlist";
 import type { RadioClip, RadioEqLevels, RadioSource, RadioUpload } from "../../types/radio";
-import { RadioCatalogImport } from "./RadioCatalogImport";
 import { RadioDjPlayer } from "./RadioDjPlayer";
-import { RadioEqConsole } from "./RadioEqConsole";
 import { RadioLoopDeck } from "./RadioLoopDeck";
 
 const platformById = new Map(PLATFORMS.map((platform) => [platform.id, platform]));
@@ -27,6 +32,8 @@ function syncClipInCatalog(catalog: RadioClip[], clipId: string): RadioClip | un
 export function RadioStudio() {
   const [catalog, setCatalog] = useState<RadioClip[]>(() => buildRadioCatalog());
   const [catalogReady, setCatalogReady] = useState(true);
+  const [playlistIds, setPlaylistIds] = useState<string[]>(() => loadUserPlaylistIds());
+  const [playlistOnly, setPlaylistOnly] = useState(false);
   const [source, setSource] = useState<RadioSource>(() => ({
     kind: "clip",
     clip: buildRadioCatalog()[0]!,
@@ -51,24 +58,31 @@ export function RadioStudio() {
     });
   }, [applyCatalog]);
 
+  const bootstrapCatalog = useCallback(async () => {
+    if (!wasBeginnerPlaylistLoaded()) {
+      await syncBeginnerDjToStorage();
+      markBeginnerPlaylistLoaded();
+    }
+    const enriched = await enrichCatalogWithPreviews(buildRadioCatalog());
+    applyCatalog(enriched);
+    setCatalogReady(true);
+    setSource((current) =>
+      current.kind === "clip" && !current.autoplay ? { ...current, autoplay: true } : current,
+    );
+  }, [applyCatalog]);
+
   useEffect(() => {
     let cancelled = false;
-
-    void enrichCatalogWithPreviews(buildRadioCatalog()).then((enriched) => {
+    void bootstrapCatalog().then(() => {
       if (cancelled) return;
-      applyCatalog(enriched);
-      setCatalogReady(true);
-      setSource((current) =>
-        current.kind === "clip" && !current.autoplay
-          ? { ...current, autoplay: true }
-          : current,
-      );
     });
-
     return () => {
       cancelled = true;
     };
-  }, [applyCatalog]);
+  }, [bootstrapCatalog]);
+
+  const playbackScope = playlistOnly ? playlistIds : undefined;
+  const visibleClips = playlistOnly ? catalog.filter((clip) => playlistIds.includes(clip.id)) : catalog;
 
   const accent =
     source.kind === "clip"
@@ -101,11 +115,11 @@ export function RadioStudio() {
 
     setSource((current) => {
       if (current.kind !== "clip" || !current.continuous) return current;
-      const next = getNextPlayableClip(catalog, current.clip.id);
+      const next = getNextPlayableClip(catalog, current.clip.id, playbackScope);
       if (!next || next.id === current.clip.id) return current;
       return { kind: "clip", clip: next, continuous: true, autoplay: true };
     });
-  }, [catalog]);
+  }, [catalog, playbackScope]);
 
   const handleTrackEnded = useCallback(() => {
     advanceToNextClip();
@@ -117,24 +131,26 @@ export function RadioStudio() {
     );
   }, []);
 
+  const handleTogglePlaylistClip = useCallback((clipId: string) => {
+    setPlaylistIds(togglePlaylistClip(clipId));
+  }, []);
+
   useEffect(() => {
     radioEngine.setEqAll(DEFAULT_EQ);
   }, []);
 
-  const handleEqChange = (levels: RadioEqLevels) => {
-    (Object.keys(levels) as (keyof RadioEqLevels)[]).forEach((band) => {
-      radioEngine.setEq(band, levels[band]);
-    });
-  };
-
   return (
     <div className="radio-studio">
-      <RadioCatalogImport onImported={refreshCatalog} />
-      <RadioEqConsole accent={accent} onEqChange={handleEqChange} />
       <RadioDjPlayer
-        clips={catalog}
+        clips={visibleClips}
         catalogReady={catalogReady}
+        accent={accent}
+        playlistIds={playlistIds}
+        playlistOnly={playlistOnly}
+        onPlaylistOnlyChange={setPlaylistOnly}
+        onCatalogUpdated={refreshCatalog}
         source={source}
+        onTogglePlaylistClip={handleTogglePlaylistClip}
         onSelectClip={selectClip}
         onToggleContinuous={toggleContinuous}
         onTrackEnded={handleTrackEnded}

@@ -7,8 +7,8 @@ export function RadioPage() {
       <p className="kicker">Mamute FM</p>
       <h1>Rádio integrada</h1>
       <p className="lede">
-        Equalizador de cabine, player com loop nos clipes das plataformas e deck local para enviar
-        MP3 — Spotify, Deezer, YouTube Music e Beatport no mesmo visor.
+        Uma única cabine com equalizador, playlist DJ iniciante e rádio contínua das plataformas —
+        faixas completas em sequência automática.
       </p>
       <RadioErrorBoundary>
         <RadioStudio />

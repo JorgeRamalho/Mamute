@@ -10,6 +10,7 @@ type RadioYoutubeFrameProps = {
   onEnded: () => void;
   onUnavailable?: () => void;
   onReady?: () => void;
+  onPlaying?: () => void;
 };
 
 type YoutubeMessagePayload = {
@@ -55,24 +56,27 @@ export function RadioYoutubeFrame({
   onEnded,
   onUnavailable,
   onReady,
+  onPlaying,
 }: RadioYoutubeFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const frameId = useId().replace(/:/g, "");
   const onEndedRef = useRef(onEnded);
   const onUnavailableRef = useRef(onUnavailable);
   const onReadyRef = useRef(onReady);
+  const onPlayingRef = useRef(onPlaying);
   const autoplayRef = useRef(autoplay);
   const endedRef = useRef(false);
   const unavailableRef = useRef(false);
   const wasPlayingRef = useRef(false);
   const trackStartedAtRef = useRef(Date.now());
   const [embedSrc, setEmbedSrc] = useState(() =>
-    buildYoutubeEmbedSrc(videoId, { autoplay, enableJsApi: true }),
+    buildYoutubeEmbedSrc(videoId, { autoplay, enableJsApi: true, nocookie: true }),
   );
 
   onEndedRef.current = onEnded;
   onUnavailableRef.current = onUnavailable;
   onReadyRef.current = onReady;
+  onPlayingRef.current = onPlaying;
   autoplayRef.current = autoplay;
 
   const markUnavailable = () => {
@@ -86,7 +90,13 @@ export function RadioYoutubeFrame({
     unavailableRef.current = false;
     wasPlayingRef.current = false;
     trackStartedAtRef.current = Date.now();
-    setEmbedSrc(buildYoutubeEmbedSrc(videoId, { autoplay: autoplayRef.current, enableJsApi: true }));
+    setEmbedSrc(
+      buildYoutubeEmbedSrc(videoId, {
+        autoplay: autoplayRef.current,
+        enableJsApi: true,
+        nocookie: true,
+      }),
+    );
 
     const timer = window.setTimeout(() => {
       if (!wasPlayingRef.current) {
@@ -99,7 +109,9 @@ export function RadioYoutubeFrame({
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== "https://www.youtube.com") return;
+      if (event.origin !== "https://www.youtube.com" && event.origin !== "https://www.youtube-nocookie.com") {
+        return;
+      }
 
       const iframe = iframeRef.current;
       if (!iframe?.contentWindow || event.source !== iframe.contentWindow) return;
@@ -117,6 +129,9 @@ export function RadioYoutubeFrame({
       const { playerState, currentTime = 0, duration = 0 } = readInfo(payload);
 
       if (playerState === 1 && currentTime > 1) {
+        if (!wasPlayingRef.current) {
+          onPlayingRef.current?.();
+        }
         wasPlayingRef.current = true;
       }
 
