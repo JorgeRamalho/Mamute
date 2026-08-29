@@ -1,5 +1,7 @@
 import { useEffect, type ReactNode } from "react";
+import { Link } from "react-router";
 import { bindStageLight } from "../../lib/stage-light";
+import { CookieConsent } from "./CookieConsent";
 import { Header } from "./Header";
 import { StatusBar } from "./StatusBar";
 
@@ -27,7 +29,12 @@ export function AppShell({ children }: AppShellProps) {
       <footer className="site-footer">
         <p>MAMUTE DJPLAYER · visor do dancefloor · mixer pedagógico, não substitui licenças oficiais.</p>
         <p>Beatport, Spotify, SoundCloud, Deezer e YouTube são marcas de seus respectivos donos.</p>
+        <nav className="site-footer-legal" aria-label="Legal">
+          <Link to="/#privacidade">Política de privacidade</Link>
+          <Link to="/#cookies">Política de cookies</Link>
+        </nav>
       </footer>
+      <CookieConsent />
     </div>
   );
 }

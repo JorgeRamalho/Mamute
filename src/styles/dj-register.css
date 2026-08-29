@@ -1,0 +1,284 @@
+.dj-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.dj-page-intro {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 52rem;
+}
+
+.dj-page-intro .lede {
+  max-width: 56ch;
+}
+
+.dj-register {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.dj-register-hero {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  border-radius: calc(var(--radius) + 4px);
+  border: 1px solid color-mix(in srgb, var(--magenta) 28%, var(--line));
+  background:
+    radial-gradient(ellipse 70% 60% at 100% 0%, rgba(255, 45, 149, 0.12), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(0, 232, 255, 0.1), transparent 58%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.03), transparent 45%),
+    var(--steel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.32);
+}
+
+.dj-register-hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dj-register-hero-copy {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 38rem;
+}
+
+.dj-register-hero-copy h2 {
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  margin: 0;
+}
+
+.dj-register-hero-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.dj-register-progress-ring {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: end;
+  text-align: right;
+  min-width: 7.5rem;
+}
+
+.dj-register-progress-value {
+  font-family: var(--font-hud);
+  font-size: 1.65rem;
+  letter-spacing: 0.06em;
+  color: var(--cyan);
+  line-height: 1;
+}
+
+.dj-register-progress-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dj-register-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.dj-register-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  transition: width 0.35s ease;
+}
+
+.dj-register-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dj-register-step-pill {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.dj-register-step-pill:hover {
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--line));
+  color: var(--text);
+}
+
+.dj-register-step-pill.is-done {
+  border-color: color-mix(in srgb, var(--lime) 45%, var(--line));
+  color: color-mix(in srgb, var(--lime) 85%, white);
+}
+
+.dj-register-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.dj-register-form .form-section {
+  scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
+  padding: clamp(1rem, 2.2vw, 1.35rem);
+  border: 1px solid color-mix(in srgb, var(--line) 85%, white 8%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 38%),
+    var(--steel);
+  transform: none;
+  transition: border-color 0.2s ease;
+}
+
+.dj-register-form .form-section:focus-within {
+  border-color: color-mix(in srgb, var(--cyan) 40%, var(--line));
+}
+
+.dj-register-section-head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.dj-register-section-badge {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 12px;
+  font-family: var(--font-hud);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  color: var(--cyan);
+  border: 1px solid color-mix(in srgb, var(--cyan) 40%, var(--line));
+  background: rgba(0, 232, 255, 0.08);
+}
+
+.dj-register-section-head h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+}
+
+.dj-register-section-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dj-register-form label.field {
+  gap: 0.28rem;
+}
+
+.dj-register-form .field-hint {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: color-mix(in srgb, var(--muted) 90%, white);
+  line-height: 1.35;
+}
+
+.dj-register-form input:focus,
+.dj-register-form select:focus,
+.dj-register-form textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--cyan) 55%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 3px rgba(0, 232, 255, 0.12);
+}
+
+.dj-register-form .chip-set label {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.dj-register-form .chip-set label:has(input:checked) {
+  border-color: color-mix(in srgb, var(--magenta) 55%, var(--line));
+  background: rgba(255, 45, 149, 0.1);
+  color: color-mix(in srgb, var(--magenta) 20%, white);
+}
+
+.dj-register-form .checks label {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.dj-register-form .checks label:has(input:checked) {
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--line));
+  background: rgba(0, 232, 255, 0.06);
+}
+
+.dj-register-footer {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--magenta) 35%, var(--line));
+  background:
+    radial-gradient(ellipse 80% 80% at 50% 0%, rgba(255, 45, 149, 0.1), transparent 65%),
+    var(--steel-2);
+}
+
+.dj-register-footer p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.dj-register-footer .btn-solid {
+  justify-self: start;
+  padding: 0.7rem 1.35rem;
+  font-size: 0.72rem;
+}
+
+.dj-register-form .form-status {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--lime) 40%, var(--line));
+  background: rgba(157, 255, 106, 0.08);
+}
+
+@media (max-width: 720px) {
+  .dj-register-progress-ring {
+    justify-items: start;
+    text-align: left;
+    width: 100%;
+  }
+
+  .dj-register-hero-top {
+    flex-direction: column;
+  }
+}
