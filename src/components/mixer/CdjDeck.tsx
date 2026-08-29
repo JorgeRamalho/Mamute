@@ -24,8 +24,6 @@ export type MixerAction =
   | { type: "loadTrack"; id: DeckId; trackId: string }
   | { type: "callCue"; id: DeckId }
   | { type: "setCue"; id: DeckId }
-  | { type: "setHotCue"; id: DeckId; slot: number }
-  | { type: "triggerHotCue"; id: DeckId; slot: number }
   | { type: "toggleLoop"; id: DeckId }
   | { type: "nudge"; id: DeckId; direction: -1 | 1 };
 
@@ -307,29 +305,27 @@ export function CdjDeck({
         </button>
       </div>
 
-      <div className="cdj-hotcues" aria-label={`Hot cues deck ${id.toUpperCase()}`}>
-        {deck.hotCues.map((cue) => (
-          <button
-            key={cue.slot}
-            type="button"
-            className={`cdj-hotcue${cue.set ? " is-set" : ""}`}
-            aria-label={`Hot cue ${cue.slot}`}
-            onClick={(event) => {
-              if (event.shiftKey) onChange({ type: "setHotCue", id, slot: cue.slot });
-              else onChange({ type: "triggerHotCue", id, slot: cue.slot });
-            }}
-          >
-            {cue.slot}
-          </button>
-        ))}
+      <div className="cdj-jog-row">
+        <JogWheel
+          id={id}
+          mode={deck.jogMode}
+          playing={deck.playing}
+          onNudge={(direction) => onChange({ type: "nudge", id, direction })}
+        />
+        <label className="cdj-pitch">
+          <span>TEMPO</span>
+          <input
+            type="range"
+            min={-8}
+            max={8}
+            step={0.1}
+            value={deck.pitch}
+            aria-label={`Pitch deck ${id.toUpperCase()}`}
+            onChange={(event) => onChange({ type: "pitch", id, value: Number(event.target.value) })}
+          />
+          <span className="cdj-pitch-value">{deck.pitch.toFixed(1)}%</span>
+        </label>
       </div>
-
-      <JogWheel
-        id={id}
-        mode={deck.jogMode}
-        playing={deck.playing}
-        onNudge={(direction) => onChange({ type: "nudge", id, direction })}
-      />
 
       <div className="cdj-channel-strip">
         <label className="cdj-knob">
@@ -356,19 +352,6 @@ export function CdjDeck({
           />
         </label>
       </div>
-
-      <label className="cdj-pitch">
-        TEMPO · {deck.pitch.toFixed(1)}%
-        <input
-          type="range"
-          min={-8}
-          max={8}
-          step={0.1}
-          value={deck.pitch}
-          aria-label={`Pitch deck ${id.toUpperCase()}`}
-          onChange={(event) => onChange({ type: "pitch", id, value: Number(event.target.value) })}
-        />
-      </label>
     </section>
   );
 }

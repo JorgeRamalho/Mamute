@@ -1,5 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from "react";
-import { engine } from "../../lib/audio-engine";
+import { type CSSProperties } from "react";
 import type { DeckId, MixerSnapshot } from "../../types/mixer";
 import type { MixerAction } from "./CdjDeck";
 import { VolumeKnob } from "./VolumeKnob";
@@ -139,69 +138,12 @@ export function MixerConsole({
   snap: MixerSnapshot;
   onChange: (action: MixerAction) => void;
 }) {
-  const meterRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = meterRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    let raf = 0;
-    const aBins = new Uint8Array(64);
-    const bBins = new Uint8Array(64);
-
-    const draw = () => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      canvas.width = width * devicePixelRatio;
-      canvas.height = height * devicePixelRatio;
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-      ctx.clearRect(0, 0, width, height);
-
-      const analyserA = engine.analyser("a");
-      const analyserB = engine.analyser("b");
-      if (analyserA) analyserA.getByteFrequencyData(aBins);
-      if (analyserB) analyserB.getByteFrequencyData(bBins);
-
-      const avg = (bins: Uint8Array) =>
-        bins.reduce((sum, value) => sum + value, 0) / (bins.length * 255);
-
-      const levels = [
-        { label: "A", level: avg(aBins), color: "#00e8ff" },
-        { label: "B", level: avg(bBins), color: "#ff2d95" },
-        { label: "M", level: (avg(aBins) + avg(bBins)) * 0.5 * snap.master, color: "#ffc14a" },
-      ];
-
-      const colW = width / levels.length - 8;
-      levels.forEach((item, index) => {
-        const x = index * (colW + 8) + 4;
-        const barH = Math.max(6, item.level * (height - 20));
-        ctx.fillStyle = "rgba(255,255,255,0.06)";
-        ctx.fillRect(x, 8, colW, height - 16);
-        const grad = ctx.createLinearGradient(0, height - barH, 0, height);
-        grad.addColorStop(0, item.color);
-        grad.addColorStop(1, `${item.color}33`);
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, height - barH - 8, colW, barH);
-        ctx.fillStyle = "rgba(255,255,255,0.55)";
-        ctx.font = "10px IBM Plex Mono, monospace";
-        ctx.fillText(item.label, x + colW / 2 - 4, height - 2);
-      });
-
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => cancelAnimationFrame(raf);
-  }, [snap.master]);
-
   return (
     <section className="mixer-console" data-stage="7" aria-label="Mixer central">
       <header className="mixer-console-head">
         <p className="kicker">Mamute · DJM-V10</p>
         <h2 className="mixer-console-title">Mixer &amp; EQ</h2>
       </header>
-
-      <canvas ref={meterRef} className="mixer-vu" aria-label="Medidores VU" />
 
       <div className="mixer-eq-rack" role="group" aria-label="Equalizador de 3 bandas">
         <p className="mixer-eq-rack-label">EQ · HIGH / MED / LOW</p>

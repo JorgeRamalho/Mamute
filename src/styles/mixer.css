@@ -7,20 +7,14 @@
 
 .mixer-cabinet-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
-  gap: 1rem;
-  align-items: end;
-}
-
-.mixer-cabinet-title {
-  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
-  line-height: 1.05;
+  gap: 0.35rem;
 }
 
 .mixer-cabinet-note {
   color: var(--muted);
-  line-height: 1.55;
-  font-size: 0.92rem;
+  line-height: 1.5;
+  font-size: 0.88rem;
+  max-width: 42rem;
 }
 
 .mixer-board {
@@ -629,38 +623,12 @@
   transform: translateY(0);
 }
 
-.cdj-hotcues {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.35rem;
+.cdj-jog-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   min-width: 0;
-}
-
-.cdj-hotcue {
-  aspect-ratio: 1.35;
-  border-radius: 8px;
-  border: 1px dashed color-mix(in srgb, var(--line) 80%, white);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.12));
-  font-family: var(--font-hud);
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.35),
-    0 3px 0 rgba(0, 0, 0, 0.25);
-  transform: translateZ(4px);
-}
-
-.cdj-hotcue:active {
-  transform: translateZ(1px) translateY(2px);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
-}
-
-.cdj-hotcue.is-set {
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--amber) 55%, var(--line));
-  color: var(--amber-hot);
-  box-shadow: inset 0 0 12px rgba(255, 193, 74, 0.12);
 }
 
 .cdj-jog-shell {
@@ -668,6 +636,9 @@
   justify-items: center;
   gap: 0.35rem;
   perspective: 640px;
+  flex: 0 1 186px;
+  width: 186px;
+  max-width: calc(100% - 3.2rem);
   min-width: 0;
   transform: translateZ(16px);
 }
@@ -688,7 +659,7 @@
   --glint-x: 34%;
   --glint-y: 28%;
   position: relative;
-  width: min(100%, 210px);
+  width: 100%;
   aspect-ratio: 1;
   border-radius: 50%;
   border: 10px solid #141c28;
@@ -781,8 +752,7 @@
   grid-template-columns: 1fr 1fr;
 }
 
-.cdj-knob,
-.cdj-pitch {
+.cdj-knob {
   display: grid;
   gap: 0.2rem;
   font-family: var(--font-mono);
@@ -792,11 +762,49 @@
   text-transform: uppercase;
 }
 
-.cdj-pitch input,
+.cdj-pitch {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  flex: 0 0 auto;
+  gap: 0.28rem;
+  min-width: 2.55rem;
+  padding: 0.4rem 0.28rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.38);
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  transform: translateZ(8px);
+}
+
+.cdj-pitch-value {
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  color: var(--cyan-hot);
+}
+
+.cdj-deck[data-deck="b"] .cdj-pitch-value {
+  color: var(--magenta-hot);
+}
+
 .cdj-knob input,
 .mixer-console input[type="range"] {
   accent-color: var(--cyan);
   width: 100%;
+}
+
+.cdj-pitch input {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  height: min(168px, 42vw);
+  width: 22px;
+  accent-color: var(--cyan);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
 }
 
 .cdj-deck[data-deck="b"] .cdj-pitch input,
@@ -855,19 +863,6 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-family: var(--font-hud);
-}
-
-.mixer-vu {
-  width: 100%;
-  height: 58px;
-  border-radius: 10px;
-  background: #04070d;
-  border: 2px solid #05080f;
-  outline: 1px solid var(--line);
-  box-shadow:
-    inset 0 4px 10px rgba(0, 0, 0, 0.72),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  transform: translateZ(6px);
 }
 
 .mixer-eq-rack {
@@ -1337,10 +1332,6 @@
 
   .cdj-jog {
     transform: rotateX(18deg);
-  }
-
-  .mixer-cabinet-head {
-    grid-template-columns: 1fr;
   }
 
   .mixer-faders {

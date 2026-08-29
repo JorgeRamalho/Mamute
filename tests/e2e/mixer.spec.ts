@@ -20,9 +20,14 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
       const m = mix.getBoundingClientRect();
       const cs = getComputedStyle(board);
       const overflowX = document.documentElement.scrollWidth - window.innerWidth;
-      const hotA = [...deckA.querySelectorAll(".cdj-hotcue")].map((el) => {
-        const r = el.getBoundingClientRect();
-        return r.right <= a.right + 2 && r.left >= a.left - 2 && r.width > 8;
+      const pitchBeside = ["a", "b"].map((deckId) => {
+        const deck = document.querySelector(`.cdj-deck[data-deck='${deckId}']`);
+        const jog = deck?.querySelector(".cdj-jog");
+        const pitch = deck?.querySelector(".cdj-pitch");
+        if (!jog || !pitch) return false;
+        const j = jog.getBoundingClientRect();
+        const p = pitch.getBoundingClientRect();
+        return p.left > j.left + j.width * 0.5 && p.width > 20;
       });
       const smallEq = [...document.querySelectorAll(".mixer-eq-boost button")].filter((el) => {
         const r = el.getBoundingClientRect();
@@ -38,7 +43,8 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
         gapMB: b.left - m.right,
         heightDelta: Math.abs(a.height - m.height),
         overflowX,
-        hotVisible: hotA.filter(Boolean).length,
+        hotpads: document.querySelectorAll(".cdj-hotcue").length,
+        pitchBeside,
         smallEq,
         unlabeled: [...document.querySelectorAll(".mixer-cabinet button, .mixer-cabinet input")].filter(
           (el) => {
@@ -59,7 +65,8 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
     expect(metrics.gapAM).toBeGreaterThanOrEqual(8);
     expect(metrics.gapMB).toBeGreaterThanOrEqual(8);
     expect(metrics.overflowX).toBeLessThanOrEqual(8);
-    expect(metrics.hotVisible).toBe(4);
+    expect(metrics.hotpads).toBe(0);
+    expect(metrics.pitchBeside).toEqual([true, true]);
     expect(metrics.smallEq).toBe(0);
     expect(metrics.unlabeled).toBe(0);
     expect(metrics.transform === "none" || !metrics.transform.startsWith("matrix3d")).toBe(true);

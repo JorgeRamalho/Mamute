@@ -23,9 +23,26 @@ export function appBasename(): string {
   return "/";
 }
 
+function assetFileName(file: string): string {
+  return file.replace(/^\/+/, "");
+}
+
 export function publicAsset(file: string): string {
-  if (document.querySelector('script[src*="dist/assets/main.js"]')) {
-    return `./public/${file}`;
+  const name = assetFileName(file);
+
+  const liveRootScript = document.querySelector<HTMLScriptElement>(
+    'script[src*="dist/assets/main.js"]',
+  );
+  if (liveRootScript) {
+    return new URL(`./public/${name}`, document.baseURI).href;
   }
-  return `${appBasename()}${file}`;
+
+  const bundledScript = document.querySelector<HTMLScriptElement>(
+    'script[src*="assets/main.js"]',
+  );
+  if (bundledScript?.src) {
+    return new URL(`../${name}`, bundledScript.src).href;
+  }
+
+  return new URL(name, `${window.location.origin}${appBasename()}`).href;
 }

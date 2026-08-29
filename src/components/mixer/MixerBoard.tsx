@@ -81,12 +81,6 @@ function reducer(_state: typeof engine.snapshot, action: MixerAction) {
     case "setCue":
       engine.setCueBeat(action.id, engine.snapshot[action.id].phase * 8);
       break;
-    case "setHotCue":
-      engine.setHotCue(action.id, action.slot);
-      break;
-    case "triggerHotCue":
-      engine.triggerHotCue(action.id, action.slot);
-      break;
     case "toggleLoop":
       engine.toggleLoop(action.id);
       break;
@@ -115,13 +109,8 @@ export function MixerBoard() {
   return (
     <div className="mixer-cabinet" data-stage="6">
       <header className="mixer-cabinet-head">
-        <div>
-          <p className="kicker">Mamute DJPLAYER · cabine profissional</p>
-          <h2 className="mixer-cabinet-title">Dual CDJ + mixer integrado</h2>
-        </div>
         <p className="mixer-cabinet-note">
-          Key Camelot, sync, hot cues, loop e trim pedagógicos. Loops sintéticos — sem roteamento de
-          streaming licenciado.
+          Key Camelot, sync, loop e trim. Loops sintéticos — sem streaming licenciado.
         </p>
       </header>
 

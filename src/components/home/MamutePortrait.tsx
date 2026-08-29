@@ -1,4 +1,6 @@
-const MASCOT_SRC = "/mamute-mascot.png";
+import { publicAsset } from "../../lib/base";
+
+const MASCOT_FILE = "mamute-mascot.png";
 const MASCOT_SIZE = 320;
 
 export function MamutePortrait() {
@@ -9,7 +11,7 @@ export function MamutePortrait() {
         <div className="mamute-portrait__frame">
           <div className="mamute-portrait__media">
             <img
-              src={MASCOT_SRC}
+              src={publicAsset(MASCOT_FILE)}
               alt="Mamute DJ com fones e óculos refletindo a pista iluminada por luzes de clube"
               width={MASCOT_SIZE}
               height={MASCOT_SIZE}
