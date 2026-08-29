@@ -8,8 +8,8 @@ export function HomePage() {
   return (
     <div className="page">
       <Hero />
-      <VisorTechSection />
       <MamuteSpotlightSection />
+      <VisorTechSection />
       <CabinetLayersSection />
       <PlansSection />
     </div>

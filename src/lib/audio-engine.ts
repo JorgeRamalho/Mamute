@@ -22,7 +22,7 @@ function emptyHotCues(): HotCue[] {
 
 function defaultTrack(id: DeckId): TrainingTrack {
   const trackId = DEFAULT_DECK_TRACKS[id];
-  return getTrainingTrack(trackId) ?? getTrainingTrack("clip-01")!;
+  return getTrainingTrack(trackId) ?? getTrainingTrack("radio-spotify-01")!;
 }
 
 function createDeck(id: DeckId): DeckState {

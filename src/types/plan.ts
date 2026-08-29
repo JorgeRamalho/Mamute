@@ -22,7 +22,14 @@ export interface CompareRow {
   values: Record<PlanId, boolean | string>;
 }
 
+export type BoothFaqTopic = "assinatura" | "mixer" | "academia" | "integracoes" | "conta";
+
 export interface PlanFaq {
+  id: string;
+  topic: BoothFaqTopic;
   question: string;
   answer: string;
+  takeaways: string[];
+  route?: string;
+  routeLabel?: string;
 }

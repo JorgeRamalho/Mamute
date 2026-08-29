@@ -20,6 +20,6 @@ export type {
   TrainingTrack,
 } from "./mixer";
 export type { PlatformId, PlatformIntel } from "./platform";
-export type { RadioClip } from "./radio";
-export type { BillingCycle, CompareRow, Plan, PlanFaq, PlanId } from "./plan";
+export type { RadioClip, RadioSource, RadioUpload } from "./radio";
+export type { BillingCycle, BoothFaqTopic, CompareRow, Plan, PlanFaq, PlanId } from "./plan";
 export type { TickerItem } from "./ticker";

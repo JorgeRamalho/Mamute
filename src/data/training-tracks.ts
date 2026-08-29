@@ -30,8 +30,8 @@ export const TRAINING_TRACKS: TrainingTrack[] = [
 ];
 
 export const DEFAULT_DECK_TRACKS: Record<"a" | "b", string> = {
-  a: "clip-01",
-  b: "clip-02",
+  a: "radio-spotify-01",
+  b: "radio-beatport-01",
 };
 
 export function getTrainingTrack(id: string): TrainingTrack | undefined {

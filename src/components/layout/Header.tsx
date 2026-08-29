@@ -76,15 +76,6 @@ export function Header() {
             <span className="brand-product">DJPLAYER</span>
           </span>
         </NavLink>
-        <button
-          className="menu-toggle"
-          type="button"
-          aria-expanded={open}
-          aria-controls="site-nav"
-          onClick={() => setOpen((value) => !value)}
-        >
-          Menu
-        </button>
         <nav id="site-nav" className={open ? "nav open" : "nav"} aria-label="Principal">
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} onClick={() => setOpen(false)}>
@@ -97,6 +88,16 @@ export function Header() {
             Cadastrar DJ
           </NavLink>
         </div>
+        <button
+          className={open ? "menu-toggle is-open" : "menu-toggle"}
+          type="button"
+          aria-expanded={open}
+          aria-controls="site-nav"
+          aria-label="Menu"
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="menu-toggle-icon" aria-hidden="true" />
+        </button>
       </div>
     </header>
   );

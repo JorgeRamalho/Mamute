@@ -3,7 +3,6 @@ import { PLATFORMS } from "../../data/platforms";
 import { visorBeatPhase, visorWaveFrame } from "../../lib/visor-motion";
 import { bindVisorStage } from "../../lib/visor-stage";
 
-const TECH = ["Web Audio", "CSS3", "Canvas HUD", "CDJ Sim", "Playwright"] as const;
 const VU_BARS = 12;
 
 export function DigitalVisor() {
@@ -146,15 +145,6 @@ export function DigitalVisor() {
                     }
                   >
                     {platform.name}
-                  </span>
-                ))}
-                {TECH.map((tech, index) => (
-                  <span
-                    className="tech-chip"
-                    key={tech}
-                    style={{ "--orbit-i": String(index + PLATFORMS.length) } as CSSProperties}
-                  >
-                    {tech}
                   </span>
                 ))}
               </div>

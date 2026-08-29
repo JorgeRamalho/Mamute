@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router";
-import { PLAN_COMPARE, PLAN_FAQS, PLAN_NAMES, PLAN_NOTES, PLANS } from "../../data/plans";
+import { PLAN_COMPARE, PLAN_NAMES, PLAN_NOTES, PLANS } from "../../data/plans";
+import { BoothFaqSection } from "./BoothFaqSection";
 import type { BillingCycle, Plan, PlanId } from "../../types/plan";
 
 const CYCLE_LABEL: Record<BillingCycle, string> = {
@@ -165,15 +166,7 @@ export function PlansSection() {
         ))}
       </ul>
 
-      <section className="plans-faq" aria-labelledby="plans-faq-title">
-        <h3 id="plans-faq-title">Perguntas da booth</h3>
-        {PLAN_FAQS.map((item) => (
-          <details key={item.question}>
-            <summary>{item.question}</summary>
-            <p>{item.answer}</p>
-          </details>
-        ))}
-      </section>
+      <BoothFaqSection />
     </section>
   );
 }
