@@ -27,12 +27,12 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
         if (!jog || !pitch) return false;
         const j = jog.getBoundingClientRect();
         const p = pitch.getBoundingClientRect();
-        return p.left > j.left + j.width * 0.5 && p.width > 20;
+        if (deckId === "a") {
+          return p.right <= j.left + 8 && p.width > 20;
+        }
+        return p.left >= j.right - 8 && p.width > 20;
       });
-      const smallEq = [...document.querySelectorAll(".mixer-eq-boost button")].filter((el) => {
-        const r = el.getBoundingClientRect();
-        return r.width < 24 || r.height < 24;
-      }).length;
+      const eqBoostButtons = document.querySelectorAll(".mixer-eq-boost button").length;
       return {
         ok: true as const,
         cols: cs.gridTemplateColumns.split(" ").length,
@@ -45,7 +45,7 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
         overflowX,
         hotpads: document.querySelectorAll(".cdj-hotcue").length,
         pitchBeside,
-        smallEq,
+        eqBoostButtons,
         unlabeled: [...document.querySelectorAll(".mixer-cabinet button, .mixer-cabinet input")].filter(
           (el) => {
             const name =
@@ -67,7 +67,7 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
     expect(metrics.overflowX).toBeLessThanOrEqual(8);
     expect(metrics.hotpads).toBe(0);
     expect(metrics.pitchBeside).toEqual([true, true]);
-    expect(metrics.smallEq).toBe(0);
+    expect(metrics.eqBoostButtons).toBe(0);
     expect(metrics.unlabeled).toBe(0);
     expect(metrics.transform === "none" || !metrics.transform.startsWith("matrix3d")).toBe(true);
   });
@@ -83,10 +83,10 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
     await expect(page.getByRole("button", { name: "Kill MED canal B" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Kill LOW canal A" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Aumentar HIGH canal A" }).click();
-    await expect(page.locator(".mixer-eq-channel[data-channel='a'] .mixer-eq-db").first()).toHaveText(
-      "+1 dB",
-    );
+    await page.getByRole("slider", { name: "HIGH canal A" }).fill("100");
+    await expect(
+      page.locator(".mixer-eq-channel[data-channel='a'] .mixer-eq-band").first().locator(".mixer-vol-knob-value"),
+    ).toHaveText("100%");
 
     await page.getByRole("button", { name: "Kill MED canal A" }).click();
     await expect(page.getByRole("button", { name: "Kill MED canal A" })).toHaveAttribute(
@@ -117,7 +117,7 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
     await expect(focused).toBeVisible();
 
     const minHit = await page
-      .locator(".mixer-eq-boost button")
+      .locator(".mixer-eq-kill")
       .first()
       .evaluate((el) => {
         const r = el.getBoundingClientRect();

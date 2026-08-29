@@ -167,6 +167,25 @@ export function CdjDeck({
   const musical = resolveMusicalKey(deck.track.key);
   const harmony = harmonicDistance(masterKey, deck.track.key);
 
+  const pitchFader = (
+    <label className="cdj-pitch cdj-pitch--hero">
+      <span className="cdj-pitch-label">PITCH · TEMPO</span>
+      <div className="cdj-pitch-slider">
+        <input
+          className="cdj-pitch-input"
+          type="range"
+          min={-8}
+          max={8}
+          step={0.1}
+          value={deck.pitch}
+          aria-label={`Pitch deck ${id.toUpperCase()}`}
+          onChange={(event) => onChange({ type: "pitch", id, value: Number(event.target.value) })}
+        />
+      </div>
+      <span className="cdj-pitch-value">{deck.pitch.toFixed(1)}%</span>
+    </label>
+  );
+
   return (
     <section
       className="cdj-deck"
@@ -273,84 +292,19 @@ export function CdjDeck({
         </div>
       </div>
 
-      <div className="cdj-secondary-transport" aria-label={`Funções auxiliares deck ${id.toUpperCase()}`}>
-        <button className="cdj-btn cdj-btn--ghost" type="button" onClick={() => onChange({ type: "setCue", id })}>
-          SET CUE
-        </button>
-        <button className="cdj-btn cdj-btn--ghost" type="button" onClick={() => onChange({ type: "callCue", id })}>
-          CALL
-        </button>
-        <button
-          className={`cdj-btn cdj-btn--ghost${deck.loop.active ? " is-on" : ""}`}
-          type="button"
-          onClick={() => onChange({ type: "toggleLoop", id })}
-        >
-          LOOP
-        </button>
-        <button
-          className={`cdj-btn cdj-btn--ghost${deck.quantize ? " is-on" : ""}`}
-          type="button"
-          onClick={() => onChange({ type: "quantize", id, value: !deck.quantize })}
-        >
-          QNT
-        </button>
-        <button
-          className="cdj-btn cdj-btn--ghost"
-          type="button"
-          onClick={() =>
-            onChange({ type: "jogMode", id, value: deck.jogMode === "vinyl" ? "cdj" : "vinyl" })
-          }
-        >
-          {deck.jogMode === "vinyl" ? "VINYL" : "CDJ"}
-        </button>
-      </div>
-
       <div className="cdj-jog-row">
+        <div className="cdj-jog-row-side cdj-jog-row-side--left">
+          {id === "a" ? pitchFader : null}
+        </div>
         <JogWheel
           id={id}
           mode={deck.jogMode}
           playing={deck.playing}
           onNudge={(direction) => onChange({ type: "nudge", id, direction })}
         />
-        <label className="cdj-pitch">
-          <span>TEMPO</span>
-          <input
-            type="range"
-            min={-8}
-            max={8}
-            step={0.1}
-            value={deck.pitch}
-            aria-label={`Pitch deck ${id.toUpperCase()}`}
-            onChange={(event) => onChange({ type: "pitch", id, value: Number(event.target.value) })}
-          />
-          <span className="cdj-pitch-value">{deck.pitch.toFixed(1)}%</span>
-        </label>
-      </div>
-
-      <div className="cdj-channel-strip">
-        <label className="cdj-knob">
-          TRIM
-          <input
-            type="range"
-            min={0.2}
-            max={1}
-            step={0.01}
-            value={deck.trim}
-            aria-label={`Trim deck ${id.toUpperCase()}`}
-            onChange={(event) => onChange({ type: "trim", id, value: Number(event.target.value) })}
-          />
-        </label>
-        <label className="cdj-knob">
-          FILTER
-          <input
-            type="range"
-            min={-100}
-            max={100}
-            value={deck.filter}
-            aria-label={`Filter deck ${id.toUpperCase()}`}
-            onChange={(event) => onChange({ type: "filter", id, value: Number(event.target.value) })}
-          />
-        </label>
+        <div className="cdj-jog-row-side cdj-jog-row-side--right">
+          {id === "b" ? pitchFader : null}
+        </div>
       </div>
     </section>
   );

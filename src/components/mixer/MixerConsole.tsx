@@ -1,6 +1,6 @@
-import { type CSSProperties } from "react";
 import type { DeckId, MixerSnapshot } from "../../types/mixer";
 import type { MixerAction } from "./CdjDeck";
+import { RotaryKnob } from "./RotaryKnob";
 import { VolumeKnob } from "./VolumeKnob";
 
 const EQ_BANDS = [
@@ -13,17 +13,10 @@ const EQ_MIN = -24;
 const EQ_MAX = 12;
 const EQ_STEP = 1;
 
-function clampEq(value: number) {
-  return Math.min(EQ_MAX, Math.max(EQ_MIN, value));
-}
-
-function formatEqDb(value: number) {
-  if (value > 0) return `+${value}`;
-  return String(value);
-}
-
-function eqDialDeg(value: number) {
-  return ((value - EQ_MIN) / (EQ_MAX - EQ_MIN)) * 270 - 135;
+function formatPositionPercent(value: number, min: number, max: number) {
+  const span = max - min;
+  if (span <= 0) return "0%";
+  return `${Math.round(((value - min) / span) * 100)}%`;
 }
 
 function EqBand({
@@ -45,57 +38,29 @@ function EqBand({
 
   return (
     <div className="mixer-eq-band" data-killed={killed ? "true" : "false"}>
-      <button
-        type="button"
-        className={`mixer-eq-name${killed ? " is-on" : ""}`}
-        aria-pressed={killed}
-        aria-label={`Kill ${label} canal ${channel}`}
-        onClick={() => onChange({ type: "eqKill", id: deckId, band, value: !killed })}
-      >
-        {label}
-      </button>
-      <div
-        className="mixer-eq-dial"
-        style={{ "--eq-rot": `${eqDialDeg(value)}deg` } as CSSProperties}
-        aria-hidden="true"
-      >
-        <span className="mixer-eq-dial-face">
-          <span className="mixer-eq-dial-tick" />
-        </span>
-      </div>
-      <p className="mixer-eq-db">{killed ? "KILL" : `${formatEqDb(value)} dB`}</p>
-      <div className="mixer-eq-boost">
-        <button
-          type="button"
-          aria-label={`Diminuir ${label} canal ${channel}`}
-          disabled={killed || value <= EQ_MIN}
-          onClick={() =>
-            onChange({ type: "eq", id: deckId, band, value: clampEq(value - EQ_STEP) })
-          }
-        >
-          −
-        </button>
-        <input
-          type="range"
+      <p className="mixer-eq-band-label">{label}</p>
+      <div className="mixer-eq-band-row">
+        <RotaryKnob
+          hideLabel
+          label={label}
+          value={value}
           min={EQ_MIN}
           max={EQ_MAX}
           step={EQ_STEP}
-          value={value}
           disabled={killed}
-          aria-label={`${label} canal ${channel}`}
-          onChange={(event) =>
-            onChange({ type: "eq", id: deckId, band, value: Number(event.target.value) })
-          }
+          ariaLabel={`${label} canal ${channel}`}
+          toneClass="mixer-vol-knob--eq"
+          formatValue={(next) => (killed ? "KILL" : formatPositionPercent(next, EQ_MIN, EQ_MAX))}
+          onChange={(next) => onChange({ type: "eq", id: deckId, band, value: next })}
         />
         <button
           type="button"
-          aria-label={`Aumentar ${label} canal ${channel}`}
-          disabled={killed || value >= EQ_MAX}
-          onClick={() =>
-            onChange({ type: "eq", id: deckId, band, value: clampEq(value + EQ_STEP) })
-          }
+          className={`mixer-eq-kill${killed ? " is-on" : ""}`}
+          aria-pressed={killed}
+          aria-label={`Kill ${label} canal ${channel}`}
+          onClick={() => onChange({ type: "eqKill", id: deckId, band, value: !killed })}
         >
-          +
+          <span className="mixer-eq-kill-dot" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -112,10 +77,35 @@ function ChannelEq({
   onChange: (action: MixerAction) => void;
 }) {
   const deck = snap[deckId];
+  const channel = deckId.toUpperCase();
 
   return (
     <div className="mixer-eq-channel" data-channel={deckId}>
-      <p className="mixer-eq-channel-label">CH {deckId.toUpperCase()}</p>
+      <p className="mixer-eq-channel-label">CH {channel}</p>
+      <div className="mixer-channel-pre">
+        <RotaryKnob
+          label="TRIM"
+          value={deck.trim}
+          min={0.2}
+          max={1}
+          step={0.01}
+          ariaLabel={`Trim deck ${channel}`}
+          toneClass="mixer-vol-knob--trim"
+          formatValue={(next) => `${Math.round(next * 100)}%`}
+          onChange={(value) => onChange({ type: "trim", id: deckId, value })}
+        />
+        <RotaryKnob
+          label="FILTER"
+          value={deck.filter}
+          min={-100}
+          max={100}
+          step={1}
+          ariaLabel={`Filter deck ${channel}`}
+          toneClass="mixer-vol-knob--filter"
+          formatValue={(next) => formatPositionPercent(next, -100, 100)}
+          onChange={(value) => onChange({ type: "filter", id: deckId, value })}
+        />
+      </div>
       {EQ_BANDS.map((item) => (
         <EqBand
           key={item.id}
@@ -144,6 +134,31 @@ export function MixerConsole({
         <p className="kicker">Mamute · DJM-V10</p>
         <h2 className="mixer-console-title">Mixer &amp; EQ</h2>
       </header>
+
+      <div className="mixer-monitor-knobs mixer-monitor-knobs--hero" role="group" aria-label="Master, booth e cue mix">
+        <p className="mixer-monitor-knobs-label">OUTPUT · MONITOR</p>
+        <VolumeKnob
+          label="MASTER"
+          tone="master"
+          value={snap.master}
+          ariaLabel="Volume master"
+          onChange={(value) => onChange({ type: "master", value })}
+        />
+        <VolumeKnob
+          label="BOOTH"
+          tone="booth"
+          value={snap.booth}
+          ariaLabel="Volume booth"
+          onChange={(value) => onChange({ type: "booth", value })}
+        />
+        <VolumeKnob
+          label="CUE MIX"
+          tone="cue"
+          value={snap.cueMix}
+          ariaLabel="Cue mix headphone"
+          onChange={(value) => onChange({ type: "cueMix", value })}
+        />
+      </div>
 
       <div className="mixer-eq-rack" role="group" aria-label="Equalizador de 3 bandas">
         <p className="mixer-eq-rack-label">EQ · HIGH / MED / LOW</p>
@@ -196,37 +211,6 @@ export function MixerConsole({
           <span>A</span>
           <span>B</span>
         </div>
-      </div>
-
-      <div className="mixer-monitor-knobs" role="group" aria-label="Master, booth e cue mix">
-        <VolumeKnob
-          label="MASTER"
-          tone="master"
-          value={snap.master}
-          ariaLabel="Volume master"
-          onChange={(value) => onChange({ type: "master", value })}
-        />
-        <VolumeKnob
-          label="BOOTH"
-          tone="booth"
-          value={snap.booth}
-          ariaLabel="Volume booth"
-          onChange={(value) => onChange({ type: "booth", value })}
-        />
-        <VolumeKnob
-          label="CUE MIX"
-          tone="cue"
-          value={snap.cueMix}
-          ariaLabel="Cue mix headphone"
-          onChange={(value) => onChange({ type: "cueMix", value })}
-        />
-      </div>
-
-      <div className="mixer-console-tags">
-        <span data-on={snap.a.cueMonitor ? "true" : "false"}>CUE A</span>
-        <span data-on={snap.b.cueMonitor ? "true" : "false"}>CUE B</span>
-        <span data-on={snap.masterDeck === "a" ? "true" : "false"}>MT A</span>
-        <span data-on={snap.masterDeck === "b" ? "true" : "false"}>MT B</span>
       </div>
     </section>
   );
