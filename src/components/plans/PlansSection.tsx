@@ -62,7 +62,7 @@ function PlanCard({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) {
         <span>{suffix}</span>
       </p>
       {equivalent ? <p className="plan-equivalent">{equivalent}</p> : null}
-      <NavLink className="btn" to={`/dj?plano=${plan.id}`}>
+      <NavLink className="btn" to={`/cadastro?plano=${plan.id}`}>
         {plan.cta}
       </NavLink>
 

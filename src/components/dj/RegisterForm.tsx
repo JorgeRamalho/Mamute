@@ -1,16 +1,18 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useNavigate } from "react-router";
 import { GENRE_OPTIONS, SOFTWARE_OPTIONS } from "../../data/academy";
-import { isExperience, loadProfile, saveProfile } from "../../lib/storage";
+import { PasswordField } from "../forms/PasswordField";
+import {
+  hasCredentials,
+  hydrateProfileFromServer,
+  MIN_PASSWORD_LENGTH,
+  registerDjProfile,
+} from "../../lib/dj-auth";
+import { HARDWARE_LABELS } from "../../lib/dj-profile-view";
+import { isExperience, loadProfile } from "../../lib/storage";
 import type { DjProfile, HardwareKind } from "../../types";
 
 const HARDWARE: HardwareKind[] = ["cdj", "controladora", "mixer", "toca-discos"];
-
-const HARDWARE_LABELS: Record<HardwareKind, string> = {
-  cdj: "CDJ",
-  controladora: "Controladora",
-  mixer: "Mixer",
-  "toca-discos": "Toca-discos",
-};
 
 const SOCIAL_FIELDS = [
   { key: "instagram", label: "Instagram", placeholder: "@seuartista" },
@@ -62,14 +64,14 @@ function estimateProgress(profile: DjProfile): number {
   return Math.round((done / checks.length) * 100);
 }
 
-function isStepDone(profile: DjProfile, step: number): boolean {
+function isStepDone(profile: DjProfile, step: number, passwordReady: boolean): boolean {
   switch (step) {
     case 1:
       return Boolean(
         profile.fullName.trim() && profile.artistName.trim() && profile.city.trim() && profile.country.trim(),
       );
     case 2:
-      return Boolean(profile.email.trim());
+      return Boolean(profile.email.trim()) && passwordReady;
     case 3:
       return Boolean(profile.bio.trim() && profile.genres.length > 0);
     case 4:
@@ -133,11 +135,30 @@ function FieldLabel({
   );
 }
 
-export function RegisterForm() {
+type RegisterFormProps = {
+  selectedPlan?: string | null;
+};
+
+export function RegisterForm({ selectedPlan = null }: RegisterFormProps) {
+  const navigate = useNavigate();
+  const alreadyHasPassword = hasCredentials();
   const [profile, setProfile] = useState<DjProfile>(() => loadProfile());
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [authError, setAuthError] = useState("");
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    void hydrateProfileFromServer().then((remote) => {
+      if (remote) setProfile(remote);
+    });
+  }, []);
+
   const progress = useMemo(() => estimateProgress(profile), [profile]);
+  const passwordReady =
+    alreadyHasPassword && !password
+      ? true
+      : password.length >= MIN_PASSWORD_LENGTH && password === passwordConfirm;
 
   const update = <K extends keyof DjProfile>(key: K, value: DjProfile[K]) => {
     setProfile((current) => ({ ...current, [key]: value }));
@@ -146,29 +167,38 @@ export function RegisterForm() {
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setAuthError("");
     if (!profile.terms || !profile.over18) return;
-    saveProfile(profile);
-    const body = new URLSearchParams({
-      "form-name": "mamute-cadastro",
-      fullName: profile.fullName,
-      artistName: profile.artistName,
-      email: profile.email,
-      phone: profile.phone,
-      city: profile.city,
-      country: profile.country,
-      bio: profile.bio,
-      experienceLevel: profile.experienceLevel,
-    });
-    try {
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
-      });
-    } catch {
-      /* local save already persisted */
+    if (!alreadyHasPassword || password) {
+      if (password.length < MIN_PASSWORD_LENGTH) {
+        setAuthError(`A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+        return;
+      }
+      if (password !== passwordConfirm) {
+        setAuthError("A confirmação da senha não confere.");
+        return;
+      }
     }
+
+    const result = await registerDjProfile(
+      profile,
+      password,
+      selectedPlan,
+    );
+
+    if (!result.ok) {
+      setAuthError(result.message);
+      return;
+    }
+
     setSaved(true);
+    if (result.emailVerificationRequired) {
+      const query = new URLSearchParams({ email: profile.email });
+      if (result.emailSent) query.set("enviado", "1");
+      navigate(`/cadastro/confirmar-email?${query.toString()}`);
+      return;
+    }
+    navigate("/dj?cadastrado=1");
   };
 
   return (
@@ -195,7 +225,7 @@ export function RegisterForm() {
             <button
               key={id}
               type="button"
-              className={`dj-register-step-pill${isStepDone(profile, step) ? " is-done" : ""}`}
+              className={`dj-register-step-pill${isStepDone(profile, step, passwordReady) ? " is-done" : ""}`}
               onClick={() => scrollToSection(id)}
             >
               {String(step).padStart(2, "0")} · {short}
@@ -308,6 +338,37 @@ export function RegisterForm() {
                 placeholder="https://…"
                 value={profile.website}
                 onChange={(e) => update("website", e.target.value)}
+              />
+            </FieldLabel>
+            <FieldLabel
+              label="Senha"
+              hint={
+                alreadyHasPassword
+                  ? "Deixe em branco para manter a senha atual, ou defina uma nova."
+                  : "Usada só para entrar na Área do DJ. Mínimo de 8 caracteres."
+              }
+            >
+              <PasswordField
+                name="password"
+                aria-label="Senha"
+                autoComplete="new-password"
+                required={!alreadyHasPassword}
+                minLength={alreadyHasPassword ? undefined : MIN_PASSWORD_LENGTH}
+                placeholder={alreadyHasPassword ? "Nova senha (opcional)" : "Mínimo 8 caracteres"}
+                value={password}
+                onChange={setPassword}
+              />
+            </FieldLabel>
+            <FieldLabel label="Confirmar senha" hint="Repita a senha para evitar erro de digitação.">
+              <PasswordField
+                name="passwordConfirm"
+                aria-label="Confirmar senha"
+                autoComplete="new-password"
+                required={!alreadyHasPassword || Boolean(password)}
+                minLength={password ? MIN_PASSWORD_LENGTH : undefined}
+                placeholder="Repita a senha"
+                value={passwordConfirm}
+                onChange={setPasswordConfirm}
               />
             </FieldLabel>
           </div>
@@ -610,9 +671,14 @@ export function RegisterForm() {
 
         <footer className="dj-register-footer">
           <p>
-            Ao gravar, seu perfil fica salvo neste navegador e pode ser enviado ao Mamute. Revise nome
-            artístico e e-mail antes de confirmar.
+            Ao gravar, o perfil é salvo no banco Mamute e espelhado neste navegador. Revise nome
+            artístico, e-mail e senha antes de confirmar.
           </p>
+          {authError ? (
+            <p className="dj-login-error" role="alert">
+              {authError}
+            </p>
+          ) : null}
           <button className="btn btn-solid" type="submit">
             Gravar perfil de cabine
           </button>

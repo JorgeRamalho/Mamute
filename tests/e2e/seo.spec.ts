@@ -24,7 +24,8 @@ test.describe("SEO e estrutura", () => {
       { path: "/academia", heading: /primeiro beat/ },
       { path: "/radio", heading: /modo clipe/ },
       { path: "/catalogo", heading: /Beatport/ },
-      { path: "/dj", heading: /Cadastro completo/ },
+      { path: "/cadastro", heading: /Cadastro completo/ },
+      { path: "/dj", heading: /Entrar no portal/ },
     ];
     for (const route of routes) {
       await page.goto(route.path);

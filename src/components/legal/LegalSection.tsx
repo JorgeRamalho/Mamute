@@ -1,7 +1,7 @@
 const PRIVACY_SECTIONS = [
   {
     title: "Quem somos",
-    body: "O Mamute DJPLAYER é um visor pedagógico de mixer e academia para DJs. Esta política descreve como tratamos dados quando você navega no site, grava perfil na Área do DJ ou usa o mixer, a rádio e a academia no navegador.",
+    body: "O Mamute DJPLAYER é um visor pedagógico de mixer e academia para DJs. Esta política descreve como tratamos dados quando você navega no site, grava o perfil no Cadastro DJ, entra na Área do DJ ou usa o mixer, a rádio e a academia no navegador.",
   },
   {
     title: "Dados que coletamos",
@@ -25,7 +25,7 @@ const PRIVACY_SECTIONS = [
   },
   {
     title: "Seus direitos",
-    body: "Você pode acessar, corrigir ou apagar o perfil editando o formulário na Área do DJ ou limpando o armazenamento local do site. Para solicitações sobre envios de formulário ou dúvidas sobre esta política, use o canal de contato indicado no site ou no e-mail informado no cadastro.",
+    body: "Você pode acessar, corrigir ou apagar o perfil editando o formulário em Cadastro DJ ou limpando o armazenamento local do site. Para solicitações sobre envios de formulário ou dúvidas sobre esta política, use o canal de contato indicado no site ou no e-mail informado no cadastro.",
   },
   {
     title: "Atualizações",
@@ -43,8 +43,20 @@ const COOKIE_ROWS = [
   {
     name: "mamute.dj.profile",
     type: "Funcional",
-    purpose: "Perfil de DJ gravado na Área do DJ (nome artístico, contato, bio, etc.).",
+    purpose: "Perfil de DJ gravado no Cadastro DJ (nome artístico, contato, bio, etc.).",
     duration: "Até limpar o navegador",
+  },
+  {
+    name: "mamute.dj.credentials",
+    type: "Funcional",
+    purpose: "Hash da senha de acesso ao portal (não armazenamos a senha em texto).",
+    duration: "Até limpar o navegador",
+  },
+  {
+    name: "mamute.dj.session",
+    type: "Funcional",
+    purpose: "Sessão da Área do DJ enquanto o portal está aberto neste dispositivo.",
+    duration: "Até fechar a aba",
   },
   {
     name: "mamute.academy.progress",

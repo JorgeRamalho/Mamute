@@ -1,0 +1,132 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { PasswordField } from "../components/forms/PasswordField";
+import { confirmEmailWithToken, resendEmailVerification, type LoginResult } from "../lib/dj-auth";
+
+type VerifyState = "pending" | "success" | "error" | "idle";
+
+export function ConfirmEmailPage() {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const token = params.get("token") ?? "";
+  const email = params.get("email") ?? "";
+  const emailSent = params.get("enviado") === "1";
+
+  const [verifyState, setVerifyState] = useState<VerifyState>(token ? "pending" : "idle");
+  const [verifyMessage, setVerifyMessage] = useState("");
+  const [resendEmail, setResendEmail] = useState(email);
+  const [password, setPassword] = useState("");
+  const [resendMessage, setResendMessage] = useState("");
+  const [resendError, setResendError] = useState("");
+  const [resendPending, setResendPending] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    void confirmEmailWithToken(token).then((result: LoginResult) => {
+      if (result.ok) {
+        setVerifyState("success");
+        setVerifyMessage("E-mail confirmado. Redirecionando ao portal…");
+        window.setTimeout(() => navigate("/dj"), 1800);
+        return;
+      }
+      setVerifyState("error");
+      setVerifyMessage(result.message);
+    });
+  }, [token, navigate]);
+
+  const onResend = async () => {
+    setResendError("");
+    setResendMessage("");
+    if (!resendEmail.trim() || !password) {
+      setResendError("Informe o e-mail cadastrado e a senha para reenviar o link.");
+      return;
+    }
+    setResendPending(true);
+    const result = await resendEmailVerification(resendEmail, password);
+    setResendPending(false);
+    if (!result.ok) {
+      setResendError(result.message);
+      return;
+    }
+    setResendMessage(result.message);
+  };
+
+  return (
+    <div className="page dj-page">
+      <header className="dj-page-intro">
+        <p className="kicker">Cadastro DJ</p>
+        <h1>Confirme seu e-mail</h1>
+        <p className="lede">
+          A autenticação da Área do DJ exige confirmação do e-mail cadastrado. Abra o link que
+          enviamos ou peça um novo abaixo.
+        </p>
+      </header>
+
+      {token ? (
+        <section className="dj-login card" aria-live="polite">
+          {verifyState === "pending" ? <p className="form-status">Validando link de confirmação…</p> : null}
+          {verifyState === "success" ? (
+            <p className="form-status dj-login-banner" role="status">{verifyMessage}</p>
+          ) : null}
+          {verifyState === "error" ? (
+            <p className="dj-login-error" role="alert">{verifyMessage}</p>
+          ) : null}
+        </section>
+      ) : (
+        <section className="dj-login card" aria-labelledby="confirm-email-title">
+          <h2 id="confirm-email-title">Aguardando confirmação</h2>
+          {emailSent ? (
+            <p className="form-status dj-login-banner" role="status">
+              Enviamos um e-mail de confirmação{email ? ` para ${email}` : ""}. Abra o link na
+              mensagem para liberar o login.
+            </p>
+          ) : (
+            <p className="lede">
+              {email
+                ? `Confirme ${email} pelo link do e-mail ou peça um novo envio.`
+                : "Confirme o e-mail pelo link recebido ou peça um novo envio."}
+            </p>
+          )}
+
+          <div className="dj-login-form">
+            <label className="field">
+              E-mail cadastrado
+              <input
+                type="email"
+                value={resendEmail}
+                onChange={(event) => setResendEmail(event.target.value)}
+                readOnly={Boolean(email)}
+                placeholder="voce@email.com"
+              />
+            </label>
+            <label className="field">
+              Senha
+              <PasswordField
+                aria-label="Senha"
+                autoComplete="current-password"
+                required
+                minLength={8}
+                placeholder="Mínimo 8 caracteres"
+                value={password}
+                onChange={setPassword}
+              />
+            </label>
+            {resendError ? (
+              <p className="dj-login-error" role="alert">{resendError}</p>
+            ) : null}
+            {resendMessage ? (
+              <p className="form-status" role="status">{resendMessage}</p>
+            ) : null}
+            <button className="btn btn-solid" type="button" disabled={resendPending} onClick={() => void onResend()}>
+              {resendPending ? "Reenviando…" : "Reenviar e-mail de confirmação"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      <p className="dj-page-switch">
+        Já confirmou? <Link to="/dj">Entrar na Área do DJ</Link>
+      </p>
+    </div>
+  );
+}

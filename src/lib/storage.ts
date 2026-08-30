@@ -2,6 +2,7 @@ import type { DjProfile, ExperienceLevel } from "../types";
 
 const KEY = "mamute.dj.profile";
 const LEGACY_KEY = "playerdj.dj.profile";
+const PLAN_KEY = "mamute.dj.selectedPlan";
 
 export const EMPTY_PROFILE: DjProfile = {
   fullName: "",
@@ -63,6 +64,19 @@ export function loadProfile(): DjProfile {
 
 export function saveProfile(profile: DjProfile): void {
   localStorage.setItem(KEY, JSON.stringify(profile));
+}
+
+export function loadSelectedPlan(): string | null {
+  const raw = localStorage.getItem(PLAN_KEY);
+  return raw && raw.trim() ? raw : null;
+}
+
+export function saveSelectedPlan(plan: string | null): void {
+  if (!plan) {
+    localStorage.removeItem(PLAN_KEY);
+    return;
+  }
+  localStorage.setItem(PLAN_KEY, plan);
 }
 
 export function isExperience(value: string): value is ExperienceLevel {

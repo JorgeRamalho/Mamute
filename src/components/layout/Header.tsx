@@ -1,14 +1,15 @@
 import { useEffect, useId, useState } from "react";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
+import { onDjSessionChange, sessionIdentityName } from "../../lib/dj-auth";
 
 const SCROLL_ACTIVATE_PX = 10;
 
 const LINKS = [
-  { to: "/mixer", label: "Mixer CDJ" },
-  { to: "/academia", label: "Academia" },
-  { to: "/radio", label: "Rádio" },
-  { to: "/catalogo", label: "Plataformas" },
+  { to: "/", label: "Início" },
   { to: "/dj", label: "Área DJ" },
+  { to: "/academia", label: "Sala de Aula" },
+  { to: "/mixer", label: "Mixer CDJ" },
+  { to: "/catalogo", label: "Plataformas" },
 ];
 
 const MARK_M =
@@ -66,8 +67,10 @@ function BrandMark() {
 }
 
 export function Header() {
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [identity, setIdentity] = useState<string | null>(() => sessionIdentityName());
 
   useEffect(() => {
     const syncScrolled = () => {
@@ -78,6 +81,12 @@ export function Header() {
     window.addEventListener("scroll", syncScrolled, { passive: true });
     return () => window.removeEventListener("scroll", syncScrolled);
   }, []);
+
+  useEffect(() => {
+    setIdentity(sessionIdentityName());
+  }, [location.pathname]);
+
+  useEffect(() => onDjSessionChange(() => setIdentity(sessionIdentityName())), []);
 
   return (
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
@@ -91,15 +100,26 @@ export function Header() {
         </NavLink>
         <nav id="site-nav" className={open ? "nav open" : "nav"} aria-label="Principal">
           {LINKS.map((link) => (
-            <NavLink key={link.to} to={link.to} onClick={() => setOpen(false)}>
+            <NavLink key={link.to} to={link.to} end={link.to === "/"} onClick={() => setOpen(false)}>
               {link.label}
             </NavLink>
           ))}
         </nav>
         <div className="header-cta">
-          <NavLink className="btn btn-solid" to="/dj">
-            Cadastrar DJ
-          </NavLink>
+          {identity ? (
+            <NavLink
+              className="btn btn-solid header-identity"
+              to="/dj"
+              title={`Área do DJ · ${identity}`}
+              onClick={() => setOpen(false)}
+            >
+              {identity}
+            </NavLink>
+          ) : (
+            <NavLink className="btn btn-solid" to="/cadastro">
+              Cadastrar DJ
+            </NavLink>
+          )}
         </div>
         <button
           className={open ? "menu-toggle is-open" : "menu-toggle"}

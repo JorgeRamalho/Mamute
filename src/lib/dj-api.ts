@@ -1,0 +1,268 @@
+import type { DjProfile } from "../types";
+import type { DjSession } from "./dj-auth";
+
+const TOKEN_KEY = "mamute.dj.api.token";
+const TOKEN_EXPIRES_KEY = "mamute.dj.api.tokenExpires";
+
+export type ApiError = { ok: false; error: string; code?: string };
+type RegisterOk = {
+  ok: true;
+  mode: "created" | "updated";
+  emailVerificationRequired: boolean;
+  emailSent?: boolean;
+  message?: string;
+  profile: DjProfile;
+  token?: string;
+  expiresAt?: string;
+};
+type LoginOk = {
+  ok: true;
+  token: string;
+  expiresAt: string;
+  session: DjSession;
+  profile: DjProfile;
+};
+type VerifyEmailOk = {
+  ok: true;
+  token: string;
+  expiresAt: string;
+  session: DjSession;
+  profile: DjProfile;
+};
+type ResendVerificationOk = {
+  ok: true;
+  alreadyVerified: boolean;
+  emailSent?: boolean;
+  message: string;
+};
+type ProfileOk = {
+  ok: true;
+  profile: DjProfile;
+  selectedPlan: string | null;
+};
+type AcademyProgressOk = {
+  ok: true;
+  completedLessons: string[];
+};
+
+function authHeaders(): HeadersInit {
+  const token = loadApiToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function saveApiToken(token: string, expiresAt: string): void {
+  sessionStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_EXPIRES_KEY, expiresAt);
+}
+
+export function loadApiToken(): string | null {
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  const expiresAt = sessionStorage.getItem(TOKEN_EXPIRES_KEY);
+  if (!token || !expiresAt) return null;
+  if (Date.now() >= Date.parse(expiresAt)) {
+    clearApiToken();
+    return null;
+  }
+  return token;
+}
+
+export function clearApiToken(): void {
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_EXPIRES_KEY);
+}
+
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  if (window.location.port === "5500") {
+    throw new TypeError("API indisponível neste visor.");
+  }
+  const response = await fetch(input, init);
+  const type = response.headers.get("content-type") ?? "";
+  if (!type.toLowerCase().includes("application/json")) {
+    throw new TypeError("API indisponível neste visor.");
+  }
+  return response;
+}
+
+async function parseJson<T>(response: Response): Promise<T | ApiError> {
+  try {
+    return (await response.json()) as T | ApiError;
+  } catch {
+    return { ok: false, error: "Resposta inválida do servidor." };
+  }
+}
+
+export async function registerProfile(
+  profile: DjProfile,
+  password: string,
+  selectedPlan?: string | null,
+): Promise<RegisterOk | ApiError> {
+  const response = await apiFetch("/api/dj/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile, password, selectedPlan }),
+  });
+  const data = await parseJson<RegisterOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    if (!data.emailVerificationRequired && data.token && data.expiresAt) {
+      saveApiToken(data.token, data.expiresAt);
+    }
+    return data;
+  }
+  return { ok: false, error: "Não foi possível gravar o cadastro." };
+}
+
+export async function loginProfile(
+  email: string,
+  password: string,
+): Promise<LoginOk | ApiError> {
+  const response = await apiFetch("/api/dj/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await parseJson<LoginOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    saveApiToken(data.token, data.expiresAt);
+    return data;
+  }
+  return { ok: false, error: "Não foi possível entrar." };
+}
+
+export async function verifyEmailToken(token: string): Promise<VerifyEmailOk | ApiError> {
+  const response = await apiFetch("/api/dj/verify-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  const data = await parseJson<VerifyEmailOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    saveApiToken(data.token, data.expiresAt);
+    return data;
+  }
+  return { ok: false, error: "Não foi possível confirmar o e-mail." };
+}
+
+export async function resendVerificationEmail(
+  email: string,
+  password: string,
+): Promise<ResendVerificationOk | ApiError> {
+  const response = await apiFetch("/api/dj/resend-verification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await parseJson<ResendVerificationOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    return data;
+  }
+  return { ok: false, error: "Não foi possível reenviar o e-mail de confirmação." };
+}
+
+export async function fetchRemoteProfile(): Promise<ProfileOk | ApiError | null> {
+  const token = loadApiToken();
+  if (!token) return null;
+
+  const response = await apiFetch("/api/dj/profile", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (response.status === 401) {
+    clearApiToken();
+    return null;
+  }
+
+  const data = await parseJson<ProfileOk>(response);
+  if ("ok" in data && data.ok) {
+    return data;
+  }
+  return data;
+}
+
+export async function logoutProfile(): Promise<{ ok: true } | ApiError> {
+  const token = loadApiToken();
+  if (!token) {
+    return { ok: true };
+  }
+
+  try {
+    const response = await apiFetch("/api/dj/logout", {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    clearApiToken();
+    const data = await parseJson<{ ok: true }>(response);
+    if ("ok" in data && data.ok) {
+      return data;
+    }
+    if ("error" in data) {
+      return data;
+    }
+    return { ok: true };
+  } catch {
+    clearApiToken();
+    return { ok: true };
+  }
+}
+
+export async function fetchAcademyProgress(): Promise<AcademyProgressOk | ApiError | null> {
+  const token = loadApiToken();
+  if (!token) return null;
+
+  const response = await apiFetch("/api/dj/academy-progress", {
+    headers: authHeaders(),
+  });
+
+  if (response.status === 401) {
+    clearApiToken();
+    return null;
+  }
+
+  const data = await parseJson<AcademyProgressOk>(response);
+  if ("ok" in data && data.ok) {
+    return data;
+  }
+  return data;
+}
+
+export async function saveAcademyProgress(
+  completedLessons: string[],
+): Promise<AcademyProgressOk | ApiError> {
+  const token = loadApiToken();
+  if (!token) {
+    return { ok: false, error: "Sem sessão ativa." };
+  }
+
+  const response = await apiFetch("/api/dj/academy-progress", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ completedLessons }),
+  });
+
+  const data = await parseJson<AcademyProgressOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    return data;
+  }
+  return { ok: false, error: "Não foi possível gravar o progresso da academia." };
+}
+
+export function isApiReachableError(error: unknown): boolean {
+  return error instanceof TypeError;
+}

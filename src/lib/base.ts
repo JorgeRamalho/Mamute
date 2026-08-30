@@ -5,6 +5,15 @@ export function normalizeLiveServerUrl(): void {
   window.history.replaceState(null, "", next || "/");
 }
 
+const APP_SEGMENTS = new Set([
+  "mixer",
+  "academia",
+  "radio",
+  "catalogo",
+  "cadastro",
+  "dj",
+]);
+
 export function appBasename(): string {
   const { pathname, port } = window.location;
   if (/^517\d$/.test(port) || port === "4173") return "/";
@@ -13,10 +22,9 @@ export function appBasename(): string {
     ? pathname.slice(0, -"index.html".length)
     : pathname;
 
-  const known = new Set(["mixer", "academia", "radio", "catalogo", "dj"]);
   const segments = path.split("/").filter(Boolean);
   const first = segments[0];
-  if (first && !known.has(first)) {
+  if (first && !APP_SEGMENTS.has(first)) {
     return `/${first}/`;
   }
 

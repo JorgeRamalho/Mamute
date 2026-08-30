@@ -34,7 +34,14 @@ test.describe("Identidade visual e responsividade", () => {
       await menu.click();
     }
     await expect(page.getByRole("navigation", { name: "Principal" })).toBeVisible();
-    await page.getByRole("link", { name: "Mixer CDJ" }).click();
+    await expect(page.getByRole("navigation", { name: "Principal" }).getByRole("link")).toHaveText([
+      "Início",
+      "Área DJ",
+      "Sala de Aula",
+      "Mixer CDJ",
+      "Plataformas",
+    ]);
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Mixer CDJ" }).click();
     await expect(page).toHaveURL(/\/mixer/);
   });
 });

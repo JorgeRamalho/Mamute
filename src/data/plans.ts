@@ -112,7 +112,7 @@ export const PLAN_FAQS: PlanFaq[] = [
       "Compare só o essencial na tabela acima antes de decidir.",
       "Upgrade no próximo ciclo; progresso e perfil ficam no mesmo visor.",
     ],
-    route: "/dj",
+    route: "/cadastro",
     routeLabel: "Cadastro de cabine",
   },
   {
@@ -164,7 +164,7 @@ export const PLAN_FAQS: PlanFaq[] = [
       "Cadastro de 8 seções registra equipamento, press kit e residências.",
       "Quando tiver hardware, os hábitos de cue e trim já vêm da academia.",
     ],
-    route: "/dj",
+    route: "/cadastro",
     routeLabel: "Formulário de cabine",
   },
   {
@@ -192,7 +192,7 @@ export const PLAN_FAQS: PlanFaq[] = [
       "Perfis Bronze (1), Prata (3) e Ouro (5) ficam no dispositivo até sync futuro.",
       "Suporte: 72 h Bronze · 48 h Prata · 12 h Ouro — conforme comparativo.",
     ],
-    route: "/dj",
+    route: "/cadastro",
     routeLabel: "Escolher combo no cadastro",
   },
 ];

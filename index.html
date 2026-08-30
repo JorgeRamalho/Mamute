@@ -126,6 +126,7 @@
         var JS_HREF = "./dist/assets/main.js";
         var MAX_TRIES = 8;
         var TRY_MS = 400;
+        var LIVE_PORT = port === "5500";
 
         function showHint() {
           var root = document.getElementById("root");
@@ -219,6 +220,11 @@
           location.replace(VITE_ORIGIN + livePath());
         }
 
+        if (LIVE_PORT) {
+          goDist();
+          return;
+        }
+
         var viteTimer = setTimeout(goDist, 600);
 
         fetch(VITE_ORIGIN + "/src/main.tsx", { cache: "no-store", mode: "cors" })
@@ -231,7 +237,7 @@
             clearTimeout(viteTimer);
             goDist();
           });
-                      })();
+      })();
     </script>
   </body>
 </html>

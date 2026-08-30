@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import { AppShell } from "../components/layout/AppShell";
 import { appBasename } from "../lib/base";
 import { AcademyPage } from "../pages/AcademyPage";
+import { CadastroPage } from "../pages/CadastroPage";
+import { ConfirmEmailPage } from "../pages/ConfirmEmailPage";
 import { CatalogPage } from "../pages/CatalogPage";
 import { DjPage } from "../pages/DjPage";
 import { HomePage } from "../pages/HomePage";
@@ -15,7 +17,9 @@ const TITLES: Record<string, string> = {
   "/academia": "Academia DJ · iniciante ao avançado — Mamute DJPLAYER",
   "/radio": "Mamute FM · rádio em modo clipe",
   "/catalogo": "Plataformas · Beatport, Deezer, SoundCloud, YouTube e Spotify — Mamute DJPLAYER",
-  "/dj": "Área do DJ · cadastro de cabine — Mamute DJPLAYER",
+  "/cadastro": "Cadastro DJ · perfil de cabine — Mamute DJPLAYER",
+  "/cadastro/confirmar-email": "Confirmar e-mail · cadastro DJ — Mamute DJPLAYER",
+  "/dj": "Área do DJ · login do portal — Mamute DJPLAYER",
 };
 
 function RouteMeta() {
@@ -39,6 +43,8 @@ export default function App() {
           <Route path="/academia" element={<AcademyPage />} />
           <Route path="/radio" element={<RadioPage />} />
           <Route path="/catalogo" element={<CatalogPage />} />
+          <Route path="/cadastro" element={<CadastroPage />} />
+          <Route path="/cadastro/confirmar-email" element={<ConfirmEmailPage />} />
           <Route path="/dj" element={<DjPage />} />
         </Routes>
       </AppShell>

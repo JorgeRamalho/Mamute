@@ -5,26 +5,35 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "netlify dev",
     "build": "tsc -b && vite build",
     "live": "tsc -b && vite build && vite preview --host --port 5500",
     "live:watch": "vite build --watch",
     "lint": "oxlint",
     "preview": "vite preview",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "netlify database migrations apply",
     "test": "playwright test --config config/playwright.config.ts",
     "test:ui": "playwright test --ui --config config/playwright.config.ts",
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@netlify/database": "^2.0.0",
+    "@netlify/functions": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^1.0.0-beta.22",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
+    "drizzle-kit": "^1.0.0-beta.22",
     "oxlint": "^1.79.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"

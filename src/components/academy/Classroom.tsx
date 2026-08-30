@@ -1,8 +1,8 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { NavLink } from "react-router";
 import { COURSE_MODULES } from "../../data/courses";
 import { EXERCISES, TIPS } from "../../data/academy";
-import { completionRatio, loadProgress, toggleLesson } from "../../lib/academy";
+import { completionRatio, hydrateAcademyProgress, loadProgress, toggleLessonAsync } from "../../lib/academy";
 import type { CourseLevel, LessonReference } from "../../types/academy";
 
 const LEVEL_META: Record<CourseLevel, { label: string; accent: string }> = {
@@ -43,6 +43,12 @@ function ReadingBlock({ kicker, items }: { kicker: string; items: LessonReferenc
 export function Classroom() {
   const [done, setDone] = useState<string[]>(() => loadProgress());
   const [activeId, setActiveId] = useState(COURSE_MODULES[0]?.lessons[0]?.id ?? "l-01");
+
+  useEffect(() => {
+    void hydrateAcademyProgress().then((merged) => {
+      if (merged) setDone(merged);
+    });
+  }, []);
 
   const lesson = useMemo(() => {
     for (const module of COURSE_MODULES) {
@@ -242,7 +248,7 @@ export function Classroom() {
             <button
               className="btn btn-solid"
               type="button"
-              onClick={() => setDone(toggleLesson(lesson.lesson.id))}
+              onClick={() => void toggleLessonAsync(lesson.lesson.id).then(setDone)}
             >
               {isDone ? "Desmarcar aula" : "Concluir aula"}
             </button>

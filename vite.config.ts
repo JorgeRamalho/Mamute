@@ -45,6 +45,10 @@ export default defineConfig({
     host: true,
     cors: true,
     proxy: {
+      "/api/dj": {
+        target: "http://localhost:8888",
+        changeOrigin: true,
+      },
       "/api/deezer": {
         target: "https://api.deezer.com",
         changeOrigin: true,

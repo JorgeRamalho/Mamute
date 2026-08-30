@@ -1,21 +1,53 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function dismissPrivacyBanner(page: Page): Promise<void> {
+  const accept = page.getByRole("button", { name: "Aceitar" });
+  if (await accept.isVisible()) {
+    await accept.click();
+  }
+}
 
 test.describe("Usabilidade e função", () => {
-  test("header leva à área DJ e o formulário tem oito seções", async ({ page }) => {
+  test("header leva ao cadastro DJ e o formulário tem oito seções", async ({ page }) => {
     await page.goto("/");
+    await dismissPrivacyBanner(page);
     await page.getByRole("link", { name: "Cadastrar DJ" }).click();
-    await expect(page).toHaveURL(/\/dj/);
+    await expect(page).toHaveURL(/\/cadastro/);
     await expect(page.getByRole("heading", { name: "1. Identidade" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "8. Termos" })).toBeVisible();
     await page.getByRole("textbox", { name: "Nome artístico" }).fill("DJ Visor");
     await page.getByRole("textbox", { name: "Nome completo" }).fill("Ana Mamute");
     await page.getByRole("textbox", { name: "E-mail" }).fill("ana@mamutedjplayerm.app");
+    await page.getByLabel("Senha", { exact: true }).fill("cabine123");
+    await page.getByRole("button", { name: "Mostrar senha" }).first().click();
+    await expect(page.getByRole("button", { name: "Ocultar senha" }).first()).toBeVisible();
+    await expect(page.getByLabel("Senha", { exact: true })).toHaveValue("cabine123");
+    await page.getByLabel("Confirmar senha").fill("cabine123");
     await page.getByRole("textbox", { name: "Cidade" }).fill("São Paulo");
     await page.getByRole("textbox", { name: "Bio" }).fill("Sets de melodic e techno.");
     await page.getByText("Tenho 18 anos ou mais").click();
     await page.getByText("Aceito os termos de uso").click();
     await page.getByRole("button", { name: "Gravar perfil de cabine" }).click();
-    await expect(page.getByText("Perfil salvo no visor Mamute.")).toBeVisible();
+    await expect(page).toHaveURL(/\/dj\?cadastrado=1/);
+    await expect(page.getByText(/Perfil salvo no visor Mamute/)).toBeVisible();
+    await page.getByLabel("Senha", { exact: true }).fill("cabine123");
+    await page.getByRole("button", { name: "Entrar no portal" }).click();
+    await expect(page.getByRole("heading", { name: "Portal da cabine" })).toBeVisible();
+    await expect(page.getByText("DJ Visor").first()).toBeVisible();
+    await expect(page.getByText("Ana Mamute").first()).toBeVisible();
+    await expect(page.getByText("Sets de melodic e techno.")).toBeVisible();
+    await expect(page.getByText("São Paulo").first()).toBeVisible();
+    await expect(page.getByText("ana@mamutedjplayerm.app").first()).toBeVisible();
+    await expect(page.locator(".header-cta").getByRole("link", { name: "DJ Visor" })).toBeVisible();
+    await expect(page.locator(".header-cta").getByRole("link", { name: "Cadastrar DJ" })).toHaveCount(0);
+    await page.getByRole("link", { name: "Mamute DJPLAYER" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator(".header-cta").getByRole("link", { name: "DJ Visor" })).toBeVisible();
+    await expect(page.locator(".header-cta").getByRole("link", { name: "DJ Visor" })).toHaveAttribute(
+      "href",
+      /\/dj$/,
+    );
+    await expect(page.getByRole("link", { name: "Cadastrar DJ" })).toHaveCount(0);
   });
 
   test("mixer expõe play, EQ e crossfader", async ({ page }) => {
@@ -55,7 +87,7 @@ test.describe("Usabilidade e função", () => {
     await page.locator("#assinatura").getByRole("button", { name: /Anual/ }).click();
     await expect(page.getByText("R$ 590")).toBeVisible();
     await page.getByRole("link", { name: "Assinar Prata" }).click();
-    await expect(page).toHaveURL(/\/dj\?plano=prata/);
+    await expect(page).toHaveURL(/\/cadastro\?plano=prata/);
     await expect(page.getByText(/Combo escolhido no visor: Prata/)).toBeVisible();
   });
 });
