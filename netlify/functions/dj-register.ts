@@ -42,8 +42,8 @@ async function respondWithVerification(
     profile,
     message:
       emailSent
-        ? "Cadastro gravado. Enviamos um e-mail de confirmação — abra o link para entrar no portal."
-        : "Cadastro gravado. Confirme o e-mail pelo link enviado (ou peça reenvio na Área do DJ).",
+        ? "Cadastro gravado. Enviamos um código de verificação e um link — use um dos dois para entrar no portal."
+        : "Cadastro gravado. Confirme o e-mail pelo código ou pelo link (peça reenvio na Área do DJ).",
   });
 }
 

@@ -12,6 +12,7 @@ const APP_SEGMENTS = new Set([
   "catalogo",
   "cadastro",
   "dj",
+  "politicas",
 ]);
 
 export function appBasename(): string {

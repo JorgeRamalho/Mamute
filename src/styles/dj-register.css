@@ -28,13 +28,20 @@
 .dj-login {
   max-width: 28rem;
   display: grid;
-  gap: 1rem;
+  justify-items: stretch;
+  gap: 1.05rem;
   padding: clamp(1.1rem, 2.4vw, 1.5rem);
 }
 
 .dj-login h2 {
   margin: 0;
   font-size: 1.2rem;
+  text-align: center;
+}
+
+.dj-login > .lede {
+  margin: 0 auto;
+  text-align: center;
 }
 
 .dj-login-form {
@@ -43,8 +50,10 @@
 }
 
 .dj-login-form .btn-solid {
-  justify-self: start;
-  margin-top: 0.2rem;
+  justify-self: stretch;
+  width: 100%;
+  margin-top: 0.35rem;
+  text-align: center;
 }
 
 .dj-login-error {
@@ -59,6 +68,53 @@
 
 .dj-login-banner {
   max-width: 40rem;
+}
+
+.dj-login-extras {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7rem 1.4rem;
+  text-align: center;
+}
+
+.dj-login .dj-page-switch {
+  text-align: center;
+}
+
+.dj-login-text-btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cyan);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.dj-login-text-btn:hover,
+.dj-login-text-btn:focus-visible {
+  color: color-mix(in srgb, var(--cyan) 70%, white);
+  outline: none;
+}
+
+.dj-login-text-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.dj-login-code {
+  font-family: var(--font-hud);
+  font-size: 1.15rem;
+  letter-spacing: 0.28em;
+  text-align: center;
 }
 
 .dj-portal {

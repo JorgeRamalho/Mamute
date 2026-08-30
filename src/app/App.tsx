@@ -8,6 +8,7 @@ import { ConfirmEmailPage } from "../pages/ConfirmEmailPage";
 import { CatalogPage } from "../pages/CatalogPage";
 import { DjPage } from "../pages/DjPage";
 import { HomePage } from "../pages/HomePage";
+import { LegalPage } from "../pages/LegalPage";
 import { MixerPage } from "../pages/MixerPage";
 import { RadioPage } from "../pages/RadioPage";
 
@@ -20,6 +21,7 @@ const TITLES: Record<string, string> = {
   "/cadastro": "Cadastro DJ · perfil de cabine — Mamute DJPLAYER",
   "/cadastro/confirmar-email": "Confirmar e-mail · cadastro DJ — Mamute DJPLAYER",
   "/dj": "Área do DJ · login do portal — Mamute DJPLAYER",
+  "/politicas": "Política de privacidade e cookies — Mamute DJPLAYER",
 };
 
 function RouteMeta() {
@@ -46,6 +48,7 @@ export default function App() {
           <Route path="/cadastro" element={<CadastroPage />} />
           <Route path="/cadastro/confirmar-email" element={<ConfirmEmailPage />} />
           <Route path="/dj" element={<DjPage />} />
+          <Route path="/politicas" element={<LegalPage />} />
         </Routes>
       </AppShell>
     </BrowserRouter>

@@ -152,10 +152,10 @@
 .brand-product {
   display: block;
   font-family: var(--font-hud);
-  font-size: 0.58rem;
-  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: none;
   background: linear-gradient(180deg, var(--magenta-hot), var(--magenta));
   -webkit-background-clip: text;
   background-clip: text;

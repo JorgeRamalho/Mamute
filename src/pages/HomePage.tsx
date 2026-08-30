@@ -1,23 +1,29 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Hero } from "../components/hero/Hero";
 import { MamuteSpotlightSection } from "../components/home/MamuteSpotlightSection";
 import { CabinetLayersSection } from "../components/home/CabinetLayersSection";
 import { VisorTechSection } from "../components/home/VisorTechSection";
-import { LegalSection } from "../components/legal/LegalSection";
 import { BoothFaqSection } from "../components/plans/BoothFaqSection";
 import { PlansSection } from "../components/plans/PlansSection";
 
+const LEGAL_HASHES = new Set(["#privacidade", "#cookies"]);
+
 export function HomePage() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!location.hash) return;
+    if (LEGAL_HASHES.has(location.hash)) {
+      navigate(`/politicas${location.hash}`, { replace: true });
+      return;
+    }
     const target = document.querySelector(location.hash);
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [location.hash]);
+  }, [location.hash, navigate]);
 
   return (
     <div className="page">
@@ -27,7 +33,6 @@ export function HomePage() {
       <CabinetLayersSection />
       <BoothFaqSection />
       <PlansSection />
-      <LegalSection />
     </div>
   );
 }

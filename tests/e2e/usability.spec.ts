@@ -8,6 +8,25 @@ async function dismissPrivacyBanner(page: Page): Promise<void> {
 }
 
 test.describe("Usabilidade e função", () => {
+  test("Área do DJ oferece esqueci a senha e código de verificação", async ({ page }) => {
+    await page.goto("/dj");
+    await dismissPrivacyBanner(page);
+    await expect(page.getByRole("heading", { name: "Entrar no portal" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Esqueci a senha" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Enviar código de verificação" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Esqueci a senha" }).click();
+    await expect(page.getByRole("heading", { name: "Esqueci a senha" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Enviar código", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Voltar ao login" }).click();
+
+    await page.getByRole("button", { name: "Enviar código de verificação" }).click();
+    await expect(page.getByRole("heading", { name: "Código de verificação" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Enviar código de verificação" })).toBeVisible();
+    await page.getByRole("button", { name: "Voltar ao login" }).click();
+    await expect(page.getByRole("heading", { name: "Login da cabine" })).toBeVisible();
+  });
+
   test("header leva ao cadastro DJ e o formulário tem oito seções", async ({ page }) => {
     await page.goto("/");
     await dismissPrivacyBanner(page);
@@ -29,7 +48,9 @@ test.describe("Usabilidade e função", () => {
     await page.getByText("Aceito os termos de uso").click();
     await page.getByRole("button", { name: "Gravar perfil de cabine" }).click();
     await expect(page).toHaveURL(/\/dj\?cadastrado=1/);
-    await expect(page.getByText(/Perfil salvo no visor Mamute/)).toBeVisible();
+    await expect(page.getByText(/Perfil salvo no visor Mamute|Perfil salvo no Mamute/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Esqueci a senha" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Enviar código de verificação" })).toBeVisible();
     await page.getByLabel("Senha", { exact: true }).fill("cabine123");
     await page.getByRole("button", { name: "Entrar no portal" }).click();
     await expect(page.getByRole("heading", { name: "Portal da cabine" })).toBeVisible();
@@ -40,7 +61,7 @@ test.describe("Usabilidade e função", () => {
     await expect(page.getByText("ana@mamutedjplayerm.app").first()).toBeVisible();
     await expect(page.locator(".header-cta").getByRole("link", { name: "DJ Visor" })).toBeVisible();
     await expect(page.locator(".header-cta").getByRole("link", { name: "Cadastrar DJ" })).toHaveCount(0);
-    await page.getByRole("link", { name: "Mamute DJPLAYER" }).click();
+    await page.getByRole("link", { name: "MAMUTE PlayerDJ" }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.locator(".header-cta").getByRole("link", { name: "DJ Visor" })).toBeVisible();
     await expect(page.locator(".header-cta").getByRole("link", { name: "DJ Visor" })).toHaveAttribute(
@@ -89,5 +110,19 @@ test.describe("Usabilidade e função", () => {
     await page.getByRole("link", { name: "Assinar Prata" }).click();
     await expect(page).toHaveURL(/\/cadastro\?plano=prata/);
     await expect(page.getByText(/Combo escolhido no visor: Prata/)).toBeVisible();
+  });
+
+  test("políticas de privacidade e cookies só abrem quando o usuário pede", async ({ page }) => {
+    await page.goto("/");
+    await dismissPrivacyBanner(page);
+    await expect(page.getByRole("heading", { name: "Privacidade e cookies" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Política de privacidade" })).toHaveCount(0);
+    await page.getByRole("contentinfo").getByRole("link", { name: "Política de privacidade" }).click();
+    await expect(page).toHaveURL(/\/politicas#privacidade/);
+    await expect(page.getByRole("heading", { name: "Privacidade e cookies" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Política de privacidade" })).toBeVisible();
+    await page.getByRole("contentinfo").getByRole("link", { name: "Política de cookies" }).click();
+    await expect(page).toHaveURL(/\/politicas#cookies/);
+    await expect(page.getByRole("heading", { name: "Política de cookies" })).toBeVisible();
   });
 });

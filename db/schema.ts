@@ -16,7 +16,11 @@ export const djAccounts = pgTable("dj_accounts", {
   emailVerified: boolean("email_verified").notNull().default(false),
   emailVerificationToken: varchar("email_verification_token", { length: 64 }),
   emailVerificationExpiresAt: timestamp("email_verification_expires_at", { withTimezone: true }),
+  emailVerificationCodeHash: varchar("email_verification_code_hash", { length: 64 }),
+  emailVerificationCodeExpiresAt: timestamp("email_verification_code_expires_at", { withTimezone: true }),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+  passwordResetCodeHash: varchar("password_reset_code_hash", { length: 64 }),
+  passwordResetExpiresAt: timestamp("password_reset_expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -30,8 +30,8 @@ export function AppShell({ children }: AppShellProps) {
         <p>MAMUTE DJPLAYER · visor do dancefloor · mixer pedagógico, não substitui licenças oficiais.</p>
         <p>Beatport, Spotify, SoundCloud, Deezer e YouTube são marcas de seus respectivos donos.</p>
         <nav className="site-footer-legal" aria-label="Legal">
-          <Link to="/#privacidade">Política de privacidade</Link>
-          <Link to="/#cookies">Política de cookies</Link>
+          <Link to="/politicas#privacidade">Política de privacidade</Link>
+          <Link to="/politicas#cookies">Política de cookies</Link>
         </nav>
       </footer>
       <CookieConsent />

@@ -40,7 +40,7 @@ export function CookieConsent() {
           <button type="button" className="btn" onClick={() => respond("essential")}>
             Apenas necessários
           </button>
-          <Link className="cookie-banner-link" to="/#cookies">
+          <Link className="cookie-banner-link" to="/politicas#cookies">
             Ver política de cookies
           </Link>
         </div>

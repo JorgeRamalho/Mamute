@@ -4,11 +4,16 @@ import { and, eq, gt, lt } from "drizzle-orm";
 import { db } from "../../../db/index.js";
 import { djAccounts, djAcademyProgress, djProfiles, djSessions } from "../../../db/schema.js";
 import {
+  AUTH_CODE_TTL_MS,
+  authCodeMatches,
   buildVerificationUrl,
+  createAuthCode,
+  hashAuthCode,
+  sendPasswordResetEmail,
   sendVerificationEmail,
   VERIFICATION_TTL_MS,
 } from "./email.js";
-import { normalizeEmail } from "./dj.js";
+import { normalizeEmail, profileRowToClient } from "./dj.js";
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const BCRYPT_ROUNDS = 12;
@@ -23,6 +28,7 @@ export async function issueEmailVerification(
   artistName: string,
 ): Promise<{ token: string; emailSent: boolean }> {
   const token = createVerificationTokenValue();
+  const code = createAuthCode();
   const expiresAt = new Date(Date.now() + VERIFICATION_TTL_MS);
   const now = new Date();
 
@@ -32,13 +38,109 @@ export async function issueEmailVerification(
       emailVerified: false,
       emailVerificationToken: token,
       emailVerificationExpiresAt: expiresAt,
+      emailVerificationCodeHash: hashAuthCode(code),
+      emailVerificationCodeExpiresAt: new Date(Date.now() + AUTH_CODE_TTL_MS),
       emailVerifiedAt: null,
       updatedAt: now,
     })
     .where(eq(djAccounts.id, accountId));
 
-  const sendResult = await sendVerificationEmail(email, artistName, buildVerificationUrl(token));
+  const sendResult = await sendVerificationEmail(email, artistName, buildVerificationUrl(token), code);
   return { token, emailSent: sendResult.sent };
+}
+
+export async function markEmailVerified(accountId: string): Promise<void> {
+  const now = new Date();
+  await db
+    .update(djAccounts)
+    .set({
+      emailVerified: true,
+      emailVerifiedAt: now,
+      emailVerificationToken: null,
+      emailVerificationExpiresAt: null,
+      emailVerificationCodeHash: null,
+      emailVerificationCodeExpiresAt: null,
+      updatedAt: now,
+    })
+    .where(eq(djAccounts.id, accountId));
+}
+
+export async function verifyEmailCode(
+  email: string,
+  code: string,
+): Promise<{ accountId: string; email: string } | null> {
+  const account = await findAccountByEmail(email);
+  if (!account?.emailVerificationCodeHash || !account.emailVerificationCodeExpiresAt) {
+    return null;
+  }
+  if (account.emailVerificationCodeExpiresAt.getTime() <= Date.now()) {
+    return null;
+  }
+  if (!authCodeMatches(code, account.emailVerificationCodeHash)) {
+    return null;
+  }
+
+  await markEmailVerified(account.id);
+  return { accountId: account.id, email: account.email };
+}
+
+export async function issuePasswordReset(
+  accountId: string,
+  email: string,
+  artistName: string,
+): Promise<{ emailSent: boolean }> {
+  const code = createAuthCode();
+  const expiresAt = new Date(Date.now() + AUTH_CODE_TTL_MS);
+  const now = new Date();
+
+  await db
+    .update(djAccounts)
+    .set({
+      passwordResetCodeHash: hashAuthCode(code),
+      passwordResetExpiresAt: expiresAt,
+      updatedAt: now,
+    })
+    .where(eq(djAccounts.id, accountId));
+
+  const sendResult = await sendPasswordResetEmail(email, artistName, code);
+  return { emailSent: sendResult.sent };
+}
+
+export async function resetPasswordWithCode(
+  email: string,
+  code: string,
+  passwordHash: string,
+): Promise<{ accountId: string; email: string } | null> {
+  const account = await findAccountByEmail(email);
+  if (!account?.passwordResetCodeHash || !account.passwordResetExpiresAt) {
+    return null;
+  }
+  if (account.passwordResetExpiresAt.getTime() <= Date.now()) {
+    return null;
+  }
+  if (!authCodeMatches(code, account.passwordResetCodeHash)) {
+    return null;
+  }
+
+  const now = new Date();
+  await db
+    .update(djAccounts)
+    .set({
+      passwordHash,
+      passwordResetCodeHash: null,
+      passwordResetExpiresAt: null,
+      emailVerified: true,
+      emailVerifiedAt: account.emailVerifiedAt ?? now,
+      emailVerificationToken: null,
+      emailVerificationExpiresAt: null,
+      emailVerificationCodeHash: null,
+      emailVerificationCodeExpiresAt: null,
+      updatedAt: now,
+    })
+    .where(eq(djAccounts.id, account.id));
+
+  await db.delete(djSessions).where(eq(djSessions.accountId, account.id));
+  return { accountId: account.id, email: account.email };
 }
 
 export async function verifyEmailToken(token: string): Promise<{ accountId: string; email: string } | null> {
@@ -58,18 +160,7 @@ export async function verifyEmailToken(token: string): Promise<{ accountId: stri
 
   if (!account) return null;
 
-  const now = new Date();
-  await db
-    .update(djAccounts)
-    .set({
-      emailVerified: true,
-      emailVerifiedAt: now,
-      emailVerificationToken: null,
-      emailVerificationExpiresAt: null,
-      updatedAt: now,
-    })
-    .where(eq(djAccounts.id, account.id));
-
+  await markEmailVerified(account.id);
   return { accountId: account.id, email: account.email };
 }
 
@@ -114,6 +205,24 @@ export async function createSession(accountId: string): Promise<{ token: string;
   });
 
   return { token, expiresAt };
+}
+
+export async function createAuthenticatedPayload(accountId: string, email: string) {
+  const profile = await getProfileByAccountId(accountId);
+  if (!profile) return null;
+
+  const session = await createSession(accountId);
+  return {
+    ok: true as const,
+    token: session.token,
+    expiresAt: session.expiresAt.toISOString(),
+    session: {
+      email,
+      artistName: profile.artistName,
+      loggedInAt: Date.now(),
+    },
+    profile: profileRowToClient(profile, email),
+  };
 }
 
 export async function findAccountByEmail(email: string) {

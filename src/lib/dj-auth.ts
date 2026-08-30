@@ -7,7 +7,11 @@ import {
   logoutProfile,
   loadApiToken,
   registerProfile,
+  requestPasswordReset,
   resendVerificationEmail,
+  resetPasswordWithCode,
+  sendVerificationCode,
+  confirmVerificationCode,
   verifyEmailToken,
 } from "./dj-api";
 import { loadProfile, saveProfile, saveSelectedPlan } from "./storage";
@@ -17,6 +21,11 @@ const SESSION_KEY = "mamute.dj.session";
 const SESSION_CHANGE_EVENT = "mamute-dj-session-change";
 
 export const MIN_PASSWORD_LENGTH = 8;
+export const AUTH_CODE_LENGTH = 6;
+
+export function normalizeAuthCode(code: string): string {
+  return code.replace(/\D/g, "").slice(0, AUTH_CODE_LENGTH);
+}
 
 export interface DjCredentials {
   email: string;
@@ -307,6 +316,101 @@ export async function resendEmailVerification(
     return {
       ok: false,
       message: "Sem conexão com o servidor. Tente reenviar em alguns minutos.",
+    };
+  }
+}
+
+export type AuthCodeResult = { ok: true; message: string } | { ok: false; message: string };
+
+export async function sendDjVerificationCode(email: string): Promise<AuthCodeResult> {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return { ok: false, message: "Informe o e-mail cadastrado." };
+  }
+  try {
+    const remote = await sendVerificationCode(trimmed);
+    if (remote.ok) {
+      return { ok: true, message: remote.message };
+    }
+    return { ok: false, message: remote.error };
+  } catch {
+    return {
+      ok: false,
+      message: "Sem conexão com o servidor. Tente enviar o código em alguns minutos.",
+    };
+  }
+}
+
+export async function confirmDjVerificationCode(email: string, code: string): Promise<LoginResult> {
+  const normalized = normalizeAuthCode(code);
+  if (normalized.length !== AUTH_CODE_LENGTH) {
+    return { ok: false, message: "O código de verificação precisa ter 6 dígitos." };
+  }
+  try {
+    const remote = await confirmVerificationCode(email, normalized);
+    if (remote.ok) {
+      saveProfile(remote.profile);
+      saveSession(remote.session);
+      await hydrateAcademyProgress();
+      return { ok: true, session: remote.session };
+    }
+    return { ok: false, message: remote.error };
+  } catch {
+    return {
+      ok: false,
+      message: "Sem conexão com o servidor. Tente confirmar o código novamente.",
+    };
+  }
+}
+
+export async function sendDjPasswordReset(email: string): Promise<AuthCodeResult> {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return { ok: false, message: "Informe o e-mail cadastrado." };
+  }
+  try {
+    const remote = await requestPasswordReset(trimmed);
+    if (remote.ok) {
+      return { ok: true, message: remote.message };
+    }
+    return { ok: false, message: remote.error };
+  } catch {
+    return {
+      ok: false,
+      message: "Sem conexão com o servidor. Tente enviar o código em alguns minutos.",
+    };
+  }
+}
+
+export async function resetDjPassword(
+  email: string,
+  code: string,
+  password: string,
+): Promise<LoginResult> {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      ok: false,
+      message: `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+    };
+  }
+  const normalized = normalizeAuthCode(code);
+  if (normalized.length !== AUTH_CODE_LENGTH) {
+    return { ok: false, message: "O código de verificação precisa ter 6 dígitos." };
+  }
+  try {
+    const remote = await resetPasswordWithCode(email, normalized, password);
+    if (remote.ok) {
+      saveProfile(remote.profile);
+      await saveCredentials(remote.profile.email, password);
+      saveSession(remote.session);
+      await hydrateAcademyProgress();
+      return { ok: true, session: remote.session };
+    }
+    return { ok: false, message: remote.error };
+  } catch {
+    return {
+      ok: false,
+      message: "Sem conexão com o servidor. Tente redefinir a senha novamente.",
     };
   }
 }

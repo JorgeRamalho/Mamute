@@ -1,4 +1,3 @@
-import { NavLink } from "react-router";
 import { MamutePortrait } from "./MamutePortrait";
 
 export function MamuteSpotlightSection() {
@@ -21,20 +20,6 @@ export function MamuteSpotlightSection() {
             A cara do Mamute DJPLAYER: fones no ouvido, visor de club e presença de palco — identidade
             refinada para quem leva mix, academia e rádio a sério.
           </p>
-          <ul className="mamute-spotlight-tags" aria-label="Destaques da identidade">
-            <li>CDJ virtual</li>
-            <li>Academia guiada</li>
-            <li>Rádio em clipe</li>
-            <li>Catálogo honesto</li>
-          </ul>
-          <div className="mamute-spotlight-actions">
-            <NavLink className="btn btn-solid" to="/mixer">
-              Ver a cabine
-            </NavLink>
-            <NavLink className="btn btn-magenta" to="/academia">
-              Começar aula
-            </NavLink>
-          </div>
         </div>
 
         <figure className="mamute-spotlight-art">

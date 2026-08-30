@@ -35,6 +35,19 @@ type ResendVerificationOk = {
   emailSent?: boolean;
   message: string;
 };
+type SendCodeOk = {
+  ok: true;
+  alreadyVerified?: boolean;
+  emailSent?: boolean;
+  message: string;
+};
+type ConfirmCodeOk = {
+  ok: true;
+  token: string;
+  expiresAt: string;
+  session: DjSession;
+  profile: DjProfile;
+};
 type ProfileOk = {
   ok: true;
   profile: DjProfile;
@@ -168,6 +181,79 @@ export async function resendVerificationEmail(
     return data;
   }
   return { ok: false, error: "Não foi possível reenviar o e-mail de confirmação." };
+}
+
+export async function sendVerificationCode(email: string): Promise<SendCodeOk | ApiError> {
+  const response = await apiFetch("/api/dj/send-verification-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await parseJson<SendCodeOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    return data;
+  }
+  return { ok: false, error: "Não foi possível enviar o código de verificação." };
+}
+
+export async function confirmVerificationCode(
+  email: string,
+  code: string,
+): Promise<ConfirmCodeOk | ApiError> {
+  const response = await apiFetch("/api/dj/confirm-verification-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  const data = await parseJson<ConfirmCodeOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    saveApiToken(data.token, data.expiresAt);
+    return data;
+  }
+  return { ok: false, error: "Não foi possível confirmar o código." };
+}
+
+export async function requestPasswordReset(email: string): Promise<SendCodeOk | ApiError> {
+  const response = await apiFetch("/api/dj/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await parseJson<SendCodeOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    return data;
+  }
+  return { ok: false, error: "Não foi possível enviar o código para redefinir a senha." };
+}
+
+export async function resetPasswordWithCode(
+  email: string,
+  code: string,
+  password: string,
+): Promise<ConfirmCodeOk | ApiError> {
+  const response = await apiFetch("/api/dj/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code, password }),
+  });
+  const data = await parseJson<ConfirmCodeOk>(response);
+  if (!response.ok && "error" in data) {
+    return data;
+  }
+  if ("ok" in data && data.ok) {
+    saveApiToken(data.token, data.expiresAt);
+    return data;
+  }
+  return { ok: false, error: "Não foi possível redefinir a senha." };
 }
 
 export async function fetchRemoteProfile(): Promise<ProfileOk | ApiError | null> {

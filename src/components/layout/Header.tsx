@@ -91,11 +91,11 @@ export function Header() {
   return (
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
       <div className="header-inner">
-        <NavLink to="/" className="brand" aria-label="Mamute DJPLAYER">
+        <NavLink to="/" className="brand" aria-label="MAMUTE PlayerDJ">
           <BrandMark />
           <span className="brand-lockup">
             <span className="brand-name">Mamute</span>
-            <span className="brand-product">DJPLAYER</span>
+            <span className="brand-product">PlayerDJ</span>
           </span>
         </NavLink>
         <nav id="site-nav" className={open ? "nav open" : "nav"} aria-label="Principal">

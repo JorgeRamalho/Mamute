@@ -9,7 +9,7 @@ const PRIVACY_SECTIONS = [
   },
   {
     title: "Finalidade do tratamento",
-    body: "Usamos essas informações para personalizar o visor, sugerir exercícios, manter sua fila de rádio e, se você concordar, enviar avisos de aulas e eventos. Não vendemos dados pessoais nem usamos perfil de DJ para publicidade comportamental.",
+    body: "Usamos essas informações para personalizar o visor, sugerir exercícios, manter sua fila de rádio, confirmar o e-mail e redefinir a senha da Área do DJ, e, se você concordar, enviar avisos de aulas e eventos. Não vendemos dados pessoais nem usamos perfil de DJ para publicidade comportamental.",
   },
   {
     title: "Base legal (LGPD)",
@@ -91,7 +91,7 @@ export function LegalSection() {
     <section className="legal-home" aria-labelledby="legal-home-title">
       <header className="legal-home-head">
         <p className="kicker">Transparência · visor Mamute</p>
-        <h2 id="legal-home-title">Privacidade e cookies</h2>
+        <h1 id="legal-home-title">Privacidade e cookies</h1>
         <p className="legal-home-lead">
           Como o Mamute DJPLAYER trata seus dados no navegador, o que fica salvo localmente e quando
           serviços de terceiros entram em cena.
@@ -105,14 +105,14 @@ export function LegalSection() {
             01
           </span>
           <div>
-            <h3 id="privacy-title">Política de privacidade</h3>
+            <h2 id="privacy-title">Política de privacidade</h2>
             <p>Tratamento de dados pessoais em conformidade com a LGPD (Lei nº 13.709/2018).</p>
           </div>
         </header>
         <div className="legal-card-body">
           {PRIVACY_SECTIONS.map((block) => (
             <div className="legal-block" key={block.title}>
-              <h4>{block.title}</h4>
+              <h3>{block.title}</h3>
               <p>{block.body}</p>
             </div>
           ))}
@@ -125,7 +125,7 @@ export function LegalSection() {
             02
           </span>
           <div>
-            <h3 id="cookies-title">Política de cookies</h3>
+            <h2 id="cookies-title">Política de cookies</h2>
             <p>
               Cookies são pequenos arquivos; aqui também listamos chaves de{" "}
               <strong>localStorage</strong> usadas pelo visor no seu dispositivo.
@@ -164,7 +164,7 @@ export function LegalSection() {
             </table>
           </div>
           <div className="legal-block">
-            <h4>Como gerenciar</h4>
+            <h3>Como gerenciar</h3>
             <p>
               Você pode recusar cookies opcionais no banner ao entrar no site, limpar dados do
               navegador a qualquer momento ou usar modo anônimo. Recusar itens funcionais pode impedir

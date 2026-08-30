@@ -58,7 +58,7 @@ export function ConfirmEmailPage() {
         <h1>Confirme seu e-mail</h1>
         <p className="lede">
           A autenticação da Área do DJ exige confirmação do e-mail cadastrado. Abra o link que
-          enviamos ou peça um novo abaixo.
+          enviamos, use o código de 6 dígitos na Área do DJ ou peça um novo envio abaixo.
         </p>
       </header>
 

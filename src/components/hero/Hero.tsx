@@ -6,8 +6,8 @@ export function Hero() {
       <div className="hero-copy">
         <p className="kicker">Mamute OS · a cabine do mamute</p>
         <h1>
-          Mixer player para quem está
-          <span> começando</span> e para quem já fecha a noite.
+          Mamute PlayerDJ
+          <span> o melhor da música eletrônica</span>
         </h1>
         <p className="lede">
           Um painel de cabine com CDJ e controladora virtuais, academia do iniciante
