@@ -6,16 +6,18 @@ import { platformSearchUrl } from "./radio-youtube-map";
 
 export const RADIO_PLATFORM_ORDER: PlatformId[] = [
   "spotify",
-  "deezer",
+  "soundcloud",
   "youtube",
   "beatport",
+  "deezer",
 ];
 
 export const RADIO_IMPORT_PLATFORMS: PlatformId[] = [
   "spotify",
-  "deezer",
+  "soundcloud",
   "youtube",
   "beatport",
+  "deezer",
 ];
 
 export const RADIO_EQ_BANDS: RadioEqBand[] = [
@@ -91,6 +93,32 @@ export const RADIO_CLIPS: RadioClip[] = [
     sourceUrl: "https://music.youtube.com/search?q=swedish+house+mafia+don%27t+you+worry+child",
     caption: "Clipe oficial · YouTube Music no widescreen da cabine.",
     platform: "youtube",
+  },
+  {
+    id: "radio-soundcloud-01",
+    title: "places",
+    artist: "Fred again..",
+    genre: "UK Garage",
+    bpm: 130,
+    key: "8A",
+    duration: "3:24",
+    youtubeId: "4KBrBLoBIIY",
+    sourceUrl: "https://soundcloud.com/search?q=fred%20again%20places",
+    caption: "Cena SoundCloud · UKG vocal · referência de groove contemporâneo.",
+    platform: "soundcloud",
+  },
+  {
+    id: "radio-soundcloud-02",
+    title: "Running",
+    artist: "Anyma",
+    genre: "Melodic Techno",
+    bpm: 126,
+    key: "7A",
+    duration: "4:12",
+    youtubeId: "h8T8M8b5hQY",
+    sourceUrl: "https://soundcloud.com/search?q=anyma%20running",
+    caption: "Upload / cena SoundCloud · arco Afterlife no dial Mamute.",
+    platform: "soundcloud",
   },
   {
     id: "radio-beatport-01",

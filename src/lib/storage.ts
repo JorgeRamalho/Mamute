@@ -66,6 +66,17 @@ export function saveProfile(profile: DjProfile): void {
   localStorage.setItem(KEY, JSON.stringify(profile));
 }
 
+/** Perfil em branco para nova ficha de cadastro (não infla o cartão de visita). */
+export const BLANK_CADASTRO_PROFILE: DjProfile = {
+  ...EMPTY_PROFILE,
+  country: "",
+  languages: "",
+  weeklyHours: "",
+  yearsDJing: "",
+  setsPerMonth: "",
+  software: [],
+};
+
 export function loadSelectedPlan(): string | null {
   const raw = localStorage.getItem(PLAN_KEY);
   return raw && raw.trim() ? raw : null;

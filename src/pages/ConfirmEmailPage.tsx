@@ -38,7 +38,7 @@ export function ConfirmEmailPage() {
     setResendError("");
     setResendMessage("");
     if (!resendEmail.trim() || !password) {
-      setResendError("Informe o e-mail cadastrado e a senha para reenviar o link.");
+      setResendError("Informe o e-mail cadastrado e a senha para reenviar o código e o link.");
       return;
     }
     setResendPending(true);
@@ -58,7 +58,7 @@ export function ConfirmEmailPage() {
         <h1>Confirme seu e-mail</h1>
         <p className="lede">
           A autenticação da Área do DJ exige confirmação do e-mail cadastrado. Abra o link que
-          enviamos, use o código de 6 dígitos na Área do DJ ou peça um novo envio abaixo.
+          enviamos, use o código de 6 dígitos em Receber código na Área do DJ ou peça um novo envio abaixo.
         </p>
       </header>
 
@@ -77,8 +77,8 @@ export function ConfirmEmailPage() {
           <h2 id="confirm-email-title">Aguardando confirmação</h2>
           {emailSent ? (
             <p className="form-status dj-login-banner" role="status">
-              Enviamos um e-mail de confirmação{email ? ` para ${email}` : ""}. Abra o link na
-              mensagem para liberar o login.
+              Enviamos um código de verificação e um link de confirmação{email ? ` para ${email}` : ""}.
+              Use um dos dois para liberar o login na Área do DJ.
             </p>
           ) : (
             <p className="lede">
@@ -118,7 +118,7 @@ export function ConfirmEmailPage() {
               <p className="form-status" role="status">{resendMessage}</p>
             ) : null}
             <button className="btn btn-solid" type="button" disabled={resendPending} onClick={() => void onResend()}>
-              {resendPending ? "Reenviando…" : "Reenviar e-mail de confirmação"}
+              {resendPending ? "Reenviando…" : "Reenviar código e link de confirmação"}
             </button>
           </div>
         </section>

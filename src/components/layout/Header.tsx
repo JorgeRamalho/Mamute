@@ -4,13 +4,14 @@ import { onDjSessionChange, sessionIdentityName } from "../../lib/dj-auth";
 
 const SCROLL_ACTIVATE_PX = 10;
 
-const LINKS = [
+const NAV_LINKS = [
   { to: "/", label: "Início" },
-  { to: "/dj", label: "Área DJ" },
   { to: "/academia", label: "Sala de Aula" },
   { to: "/mixer", label: "Mixer CDJ" },
   { to: "/catalogo", label: "Plataformas" },
 ];
+
+const AREA_DJ_LINK = { to: "/dj", label: "Área DJ" } as const;
 
 const MARK_M =
   "M14.6 46.8V15.4h8.35L32 35.6 41.05 15.4H49.4v31.4h-7.05V29.6L32 48.8 21.65 29.6v17.2H14.6z";
@@ -99,13 +100,23 @@ export function Header() {
           </span>
         </NavLink>
         <nav id="site-nav" className={open ? "nav open" : "nav"} aria-label="Principal">
-          {LINKS.map((link) => (
+          {NAV_LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} end={link.to === "/"} onClick={() => setOpen(false)}>
               {link.label}
             </NavLink>
           ))}
+          <NavLink
+            className="nav-area-dj"
+            to={AREA_DJ_LINK.to}
+            onClick={() => setOpen(false)}
+          >
+            {AREA_DJ_LINK.label}
+          </NavLink>
         </nav>
         <div className="header-cta">
+          <NavLink className="btn header-area-dj" to={AREA_DJ_LINK.to} onClick={() => setOpen(false)}>
+            {AREA_DJ_LINK.label}
+          </NavLink>
           {identity ? (
             <NavLink
               className="btn btn-solid header-identity"

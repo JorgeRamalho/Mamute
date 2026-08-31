@@ -48,7 +48,7 @@ export default async (req: Request) => {
 
   if (!account.emailVerified) {
     return errorResponse(
-      "Confirme o e-mail antes de entrar. Verifique sua caixa de entrada ou peça um novo link.",
+      "Confirme o e-mail antes de entrar. Use Receber código na Área do DJ ou abra o link enviado na sua caixa de entrada.",
       403,
       "EMAIL_NOT_VERIFIED",
     );

@@ -1,5 +1,19 @@
+import fs from "node:fs";
+import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
+
+function liveBundleStamp(): Plugin {
+  return {
+    name: "live-bundle-stamp",
+    apply: "build",
+    closeBundle() {
+      const stamp = { builtAt: new Date().toISOString() };
+      fs.mkdirSync("dist", { recursive: true });
+      fs.writeFileSync(path.join("dist", "live-bundle.json"), JSON.stringify(stamp), "utf8");
+    },
+  };
+}
 
 function injectViteEntry(): Plugin {
   return {
@@ -24,6 +38,7 @@ export default defineConfig({
   plugins: [
     react(),
     injectViteEntry(),
+    liveBundleStamp(),
     {
       name: "ensure-bundle-in-html",
       apply: "build",

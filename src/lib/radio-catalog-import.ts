@@ -49,8 +49,14 @@ function guessGenre(platform: PlatformId): string {
       return "Rádio editorial";
     case "youtube":
       return "Clipe oficial";
-    default:
+    case "soundcloud":
+      return "Underground / Mix";
+    case "mamute":
       return "Electronic";
+    default: {
+      const _exhaustive: never = platform;
+      return _exhaustive;
+    }
   }
 }
 
@@ -158,7 +164,7 @@ export async function syncBeginnerDjToStorage(): Promise<RadioClip[]> {
 }
 
 export async function importAllPlatformCatalogs(
-  platforms: PlatformId[] = ["spotify", "deezer", "youtube", "beatport"],
+  platforms: PlatformId[] = ["spotify", "soundcloud", "deezer", "youtube", "beatport"],
 ): Promise<RadioClip[]> {
   const batches = await Promise.all(platforms.map((platform) => importPlatformCatalog(platform)));
   return dedupeClips(batches.flat());

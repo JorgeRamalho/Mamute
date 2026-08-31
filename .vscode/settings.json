@@ -7,7 +7,6 @@
   "liveServer.settings.ignoreFiles": [
     ".vscode/**",
     "node_modules/**",
-    "src/**",
     "tests/**",
     "docs/**",
     "config/**",

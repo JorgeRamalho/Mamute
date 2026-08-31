@@ -13,6 +13,7 @@ import {
   sendVerificationEmail,
   VERIFICATION_TTL_MS,
 } from "./email.js";
+import { authCodeCooldownRemaining } from "./rate-limit.js";
 import { normalizeEmail, profileRowToClient } from "./dj.js";
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -26,7 +27,16 @@ export async function issueEmailVerification(
   accountId: string,
   email: string,
   artistName: string,
-): Promise<{ token: string; emailSent: boolean }> {
+  options?: { skipCooldown?: boolean },
+): Promise<{ token: string; emailSent: boolean; cooldownMs?: number }> {
+  const account = await getAccountById(accountId);
+  if (!options?.skipCooldown && account) {
+    const cooldownMs = authCodeCooldownRemaining(account.emailVerificationCodeExpiresAt);
+    if (cooldownMs > 0) {
+      return { token: account.emailVerificationToken ?? "", emailSent: false, cooldownMs };
+    }
+  }
+
   const token = createVerificationTokenValue();
   const code = createAuthCode();
   const expiresAt = new Date(Date.now() + VERIFICATION_TTL_MS);
@@ -88,7 +98,15 @@ export async function issuePasswordReset(
   accountId: string,
   email: string,
   artistName: string,
-): Promise<{ emailSent: boolean }> {
+): Promise<{ emailSent: boolean; cooldownMs?: number }> {
+  const account = await getAccountById(accountId);
+  if (account) {
+    const cooldownMs = authCodeCooldownRemaining(account.passwordResetExpiresAt);
+    if (cooldownMs > 0) {
+      return { emailSent: false, cooldownMs };
+    }
+  }
+
   const code = createAuthCode();
   const expiresAt = new Date(Date.now() + AUTH_CODE_TTL_MS);
   const now = new Date();

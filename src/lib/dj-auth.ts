@@ -320,7 +320,27 @@ export async function resendEmailVerification(
   }
 }
 
-export type AuthCodeResult = { ok: true; message: string } | { ok: false; message: string };
+export type AuthCodeResult =
+  | {
+      ok: true;
+      message: string;
+      emailSent?: boolean;
+      alreadyVerified?: boolean;
+      cooldownMs?: number;
+    }
+  | { ok: false; message: string };
+
+function mapSendCodeResult(
+  remote: { ok: true; message: string; emailSent?: boolean; alreadyVerified?: boolean; cooldownMs?: number },
+): AuthCodeResult {
+  return {
+    ok: true,
+    message: remote.message,
+    emailSent: remote.emailSent,
+    alreadyVerified: remote.alreadyVerified,
+    cooldownMs: remote.cooldownMs,
+  };
+}
 
 export async function sendDjVerificationCode(email: string): Promise<AuthCodeResult> {
   const trimmed = email.trim();
@@ -330,7 +350,7 @@ export async function sendDjVerificationCode(email: string): Promise<AuthCodeRes
   try {
     const remote = await sendVerificationCode(trimmed);
     if (remote.ok) {
-      return { ok: true, message: remote.message };
+      return mapSendCodeResult(remote);
     }
     return { ok: false, message: remote.error };
   } catch {
@@ -371,7 +391,7 @@ export async function sendDjPasswordReset(email: string): Promise<AuthCodeResult
   try {
     const remote = await requestPasswordReset(trimmed);
     if (remote.ok) {
-      return { ok: true, message: remote.message };
+      return mapSendCodeResult(remote);
     }
     return { ok: false, message: remote.error };
   } catch {

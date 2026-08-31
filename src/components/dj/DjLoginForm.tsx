@@ -48,6 +48,26 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
     setPanel(next);
   };
 
+  const applySendCodeResult = (
+    result: { ok: true; message: string; emailSent?: boolean; alreadyVerified?: boolean } | { ok: false; message: string },
+  ): boolean => {
+    if (!result.ok) {
+      setError(result.message);
+      return false;
+    }
+    setStatus(result.message);
+    if (result.alreadyVerified) {
+      setCodeSent(false);
+      return true;
+    }
+    if (result.emailSent) {
+      setCodeSent(true);
+      return true;
+    }
+    setCodeSent(false);
+    return true;
+  };
+
   const onLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetMessages();
@@ -56,6 +76,9 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
     setPending(false);
     if (!result.ok) {
       setError(result.message);
+      if (result.code === "EMAIL_NOT_VERIFIED") {
+        setStatus("Use Receber código abaixo ou confirme pelo link enviado ao seu e-mail.");
+      }
       return;
     }
     onLoggedIn(result.session);
@@ -66,12 +89,7 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
     setPending(true);
     const result = await sendDjVerificationCode(email);
     setPending(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    setCodeSent(true);
-    setStatus(result.message);
+    applySendCodeResult(result);
   };
 
   const onConfirmVerificationCode = async (event: FormEvent<HTMLFormElement>) => {
@@ -92,12 +110,7 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
     setPending(true);
     const result = await sendDjPasswordReset(email);
     setPending(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    setCodeSent(true);
-    setStatus(result.message);
+    applySendCodeResult(result);
   };
 
   const onResetPassword = async (event: FormEvent<HTMLFormElement>) => {
@@ -165,8 +178,8 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
 
       {justRegistered ? (
         <p className="form-status dj-login-banner" role="status">
-          Perfil salvo no Mamute. Se ainda não confirmou o e-mail, envie o código de verificação
-          abaixo ou abra o link da caixa de entrada.
+          Perfil salvo no Mamute. Confirme o e-mail com o código enviado (Receber código) ou pelo link na
+          sua caixa de entrada antes de entrar no portal.
         </p>
       ) : null}
 
@@ -193,6 +206,11 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
                 {error}
               </p>
             ) : null}
+            {status ? (
+              <p className="form-status" role="status">
+                {status}
+              </p>
+            ) : null}
             <button className="btn btn-solid" type="submit" disabled={pending}>
               {pending ? "Entrando…" : "Entrar no portal"}
             </button>
@@ -202,7 +220,7 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
               Esqueci a senha
             </button>
             <button className="dj-login-text-btn" type="button" onClick={() => switchPanel("verify")}>
-              Enviar código de verificação
+              Receber código
             </button>
           </div>
           <p className="dj-page-switch">

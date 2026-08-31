@@ -37,3 +37,13 @@ export function buildYoutubeEmbedSrc(videoId: string, options: YoutubeEmbedOptio
 
   return `https://${host}/embed/${videoId}?${params.toString()}`;
 }
+
+export type YoutubePlayerCommand = "playVideo" | "pauseVideo" | "stopVideo";
+
+export function postYoutubeCommand(iframe: HTMLIFrameElement, func: YoutubePlayerCommand): void {
+  const win = iframe.contentWindow;
+  if (!win) return;
+  const payload = JSON.stringify({ event: "command", func, args: [] });
+  win.postMessage(payload, "https://www.youtube.com");
+  win.postMessage(payload, "https://www.youtube-nocookie.com");
+}

@@ -30,6 +30,12 @@ export const PLATFORM_IMPORT_QUERIES: Partial<Record<PlatformId, string[]>> = {
     "skrillex bangarang",
     "calvin harris feel so close",
   ],
+  soundcloud: [
+    "fred again places",
+    "anyma running",
+    "mochakk jealous type",
+    "disclosure latch",
+  ],
 };
 
 function normalizeKey(artist: string, title: string): string {
@@ -89,7 +95,13 @@ export function platformSearchUrl(platform: PlatformId, artist: string, title: s
       return `https://www.deezer.com/search/${q}`;
     case "youtube":
       return `https://music.youtube.com/search?q=${q}`;
-    default:
-      return `https://www.deezer.com/search/${q}`;
+    case "soundcloud":
+      return `https://soundcloud.com/search?q=${q}`;
+    case "mamute":
+      return "/radio";
+    default: {
+      const _exhaustive: never = platform;
+      return _exhaustive;
+    }
   }
 }

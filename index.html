@@ -133,7 +133,7 @@
           if (!root) return;
           if (root.childElementCount && !root.querySelector("[data-live-wait]")) return;
           root.innerHTML =
-            '<section style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">O index.html não é a app</h1><p>Este arquivo só carrega o React. Para ver academia, mixer e EQ ao vivo, rode <code>npm run dev</code> e abra <a href="http://127.0.0.1:5173/" style="color:#00e8ff">http://127.0.0.1:5173/</a>. O Go Live na porta 5500 usa o último <code>npm run build</code> em <code>dist/</code> — sem rebuild a página fica desatualizada.</p></section>';
+            '<section style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">Bundle desatualizado</h1><p>O Go Live (porta 5500) usa o arquivo compilado em <code>dist/</code>. Rode no terminal: <code>npm run live:sync</code> (recompila ao salvar) ou <code>npm run live:build</code> (uma vez). Depois recarregue com <strong>Ctrl+Shift+R</strong>.</p><p>Alternativa com hot reload: <code>npm run dev</code> e abra <a href="http://127.0.0.1:5173/" style="color:#00e8ff">127.0.0.1:5173</a>.</p></section>';
         }
 
         function showWait() {
@@ -221,7 +221,17 @@
         }
 
         if (LIVE_PORT) {
-          goDist();
+          var liveTimer = setTimeout(goDist, 500);
+          fetch(VITE_ORIGIN + "/src/main.tsx", { cache: "no-store", mode: "cors" })
+            .then(function (res) {
+              if (!res.ok) throw new Error("vite off");
+              clearTimeout(liveTimer);
+              goVite();
+            })
+            .catch(function () {
+              clearTimeout(liveTimer);
+              goDist();
+            });
           return;
         }
 

@@ -16,7 +16,7 @@ const TITLES: Record<string, string> = {
   "/": "Mamute DJPLAYER — Mixer player para DJs iniciantes e avançados",
   "/mixer": "Mixer CDJ e controladora — Mamute DJPLAYER",
   "/academia": "Academia DJ · iniciante ao avançado — Mamute DJPLAYER",
-  "/radio": "Mamute FM · rádio em modo clipe",
+  "/radio": "Mamute FM · rádio contínua de eletrônica",
   "/catalogo": "Plataformas · Beatport, Deezer, SoundCloud, YouTube e Spotify — Mamute DJPLAYER",
   "/cadastro": "Cadastro DJ · perfil de cabine — Mamute DJPLAYER",
   "/cadastro/confirmar-email": "Confirmar e-mail · cadastro DJ — Mamute DJPLAYER",

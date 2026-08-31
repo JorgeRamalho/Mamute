@@ -4,6 +4,7 @@ import { bindStageLight } from "../../lib/stage-light";
 import { CookieConsent } from "./CookieConsent";
 import { Header } from "./Header";
 import { StatusBar } from "./StatusBar";
+import { RadioFmBalloon } from "../radio/RadioFmBalloon";
 
 interface AppShellProps {
   children: ReactNode;
@@ -35,6 +36,7 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
       </footer>
       <CookieConsent />
+      <RadioFmBalloon />
     </div>
   );
 }

@@ -37,6 +37,9 @@
   --ticker-duration: 93s;
   --layout-max: 1180px;
   --layout-gutter: 1rem;
+  --cookie-banner-h: 0px;
+  --radio-fm-gap: 0.75rem;
+  --radio-fm-width: min(15.5rem, calc(100vw - 2.5rem));
   --font-display: "Syne", sans-serif;
   --font-hud: "Orbitron", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;

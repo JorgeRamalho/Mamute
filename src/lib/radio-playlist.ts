@@ -16,7 +16,7 @@ export function getPlayableClips(clips: RadioClip[]): RadioClip[] {
   return clips.filter(isPlayableClip);
 }
 
-/** Ordem editorial da rádio: alterna Spotify → Deezer → YouTube Music → Beatport. */
+/** Ordem editorial da rádio: alterna Spotify → SoundCloud → YouTube Music → Beatport → Deezer. */
 export function buildRadioProgramming(clips: RadioClip[]): RadioClip[] {
   const groups = RADIO_PLATFORM_ORDER.map((platformId) =>
     clips
@@ -36,21 +36,38 @@ export function buildRadioProgramming(clips: RadioClip[]): RadioClip[] {
   return programming;
 }
 
+function programmingPool(clips: RadioClip[], scopeIds?: string[]): RadioClip[] {
+  const pool =
+    scopeIds && scopeIds.length > 0
+      ? clips.filter((clip) => scopeIds.includes(clip.id))
+      : clips;
+  return buildRadioProgramming(pool);
+}
+
 export function getNextPlayableClip(
   clips: RadioClip[],
   currentId: string,
   scopeIds?: string[],
 ): RadioClip | null {
-  const pool =
-    scopeIds && scopeIds.length > 0
-      ? clips.filter((clip) => scopeIds.includes(clip.id))
-      : clips;
-  const programming = buildRadioProgramming(pool);
+  const programming = programmingPool(clips, scopeIds);
   if (programming.length === 0) return null;
 
   const currentIndex = programming.findIndex((clip) => clip.id === currentId);
   const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % programming.length;
   return programming[nextIndex] ?? null;
+}
+
+export function getPreviousPlayableClip(
+  clips: RadioClip[],
+  currentId: string,
+  scopeIds?: string[],
+): RadioClip | null {
+  const programming = programmingPool(clips, scopeIds);
+  if (programming.length === 0) return null;
+
+  const currentIndex = programming.findIndex((clip) => clip.id === currentId);
+  const prevIndex = currentIndex < 0 ? 0 : (currentIndex - 1 + programming.length) % programming.length;
+  return programming[prevIndex] ?? null;
 }
 
 export function getFirstClipForPlatform(clips: RadioClip[], platformId: PlatformId): RadioClip | undefined {

@@ -39,6 +39,7 @@ type SendCodeOk = {
   ok: true;
   alreadyVerified?: boolean;
   emailSent?: boolean;
+  cooldownMs?: number;
   message: string;
 };
 type ConfirmCodeOk = {

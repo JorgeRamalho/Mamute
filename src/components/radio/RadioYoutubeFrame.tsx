@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { buildYoutubeEmbedSrc } from "../../lib/youtube-embed";
+import { buildYoutubeEmbedSrc, postYoutubeCommand } from "../../lib/youtube-embed";
 
 type RadioYoutubeFrameProps = {
   videoId: string;
   title: string;
   autoplay: boolean;
+  paused?: boolean;
   className?: string;
   unavailableAfterMs?: number;
   onEnded: () => void;
@@ -51,6 +52,7 @@ export function RadioYoutubeFrame({
   videoId,
   title,
   autoplay,
+  paused = false,
   className,
   unavailableAfterMs = 9_000,
   onEnded,
@@ -65,6 +67,8 @@ export function RadioYoutubeFrame({
   const onReadyRef = useRef(onReady);
   const onPlayingRef = useRef(onPlaying);
   const autoplayRef = useRef(autoplay);
+  const pausedRef = useRef(paused);
+  const readyRef = useRef(false);
   const endedRef = useRef(false);
   const unavailableRef = useRef(false);
   const wasPlayingRef = useRef(false);
@@ -78,6 +82,7 @@ export function RadioYoutubeFrame({
   onReadyRef.current = onReady;
   onPlayingRef.current = onPlaying;
   autoplayRef.current = autoplay;
+  pausedRef.current = paused;
 
   const markUnavailable = () => {
     if (unavailableRef.current || endedRef.current) return;
@@ -89,6 +94,7 @@ export function RadioYoutubeFrame({
     endedRef.current = false;
     unavailableRef.current = false;
     wasPlayingRef.current = false;
+    readyRef.current = false;
     trackStartedAtRef.current = Date.now();
     setEmbedSrc(
       buildYoutubeEmbedSrc(videoId, {
@@ -159,17 +165,36 @@ export function RadioYoutubeFrame({
     const iframe = iframeRef.current;
     if (!iframe) return;
 
+    const applyPaused = () => {
+      if (!readyRef.current) return;
+      postYoutubeCommand(iframe, pausedRef.current ? "pauseVideo" : "playVideo");
+    };
+
     const armListener = () => {
       iframe.contentWindow?.postMessage(
         JSON.stringify({ event: "listening", id: frameId }),
         "https://www.youtube.com",
       );
+      iframe.contentWindow?.postMessage(
+        JSON.stringify({ event: "listening", id: frameId }),
+        "https://www.youtube-nocookie.com",
+      );
+      readyRef.current = true;
       onReadyRef.current?.();
+      if (pausedRef.current) {
+        window.setTimeout(applyPaused, 250);
+      }
     };
 
     iframe.addEventListener("load", armListener);
     return () => iframe.removeEventListener("load", armListener);
   }, [videoId, frameId]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !readyRef.current) return;
+    postYoutubeCommand(iframe, paused ? "pauseVideo" : "playVideo");
+  }, [paused]);
 
   return (
     <iframe

@@ -1,13 +1,14 @@
 import type { Config } from "@netlify/functions";
 import { findAccountByEmail, getProfileByAccountId, issueEmailVerification } from "./_shared/auth.js";
 import { errorResponse, jsonResponse, normalizeEmail } from "./_shared/dj.js";
+import { cooldownMessage } from "./_shared/rate-limit.js";
 
 type SendCodeBody = {
   email?: string;
 };
 
 const GENERIC_MESSAGE =
-  "Se este e-mail estiver cadastrado e pendente, enviamos um código de verificação.";
+  "Se este e-mail estiver cadastrado e pendente de confirmação, enviamos um código de verificação.";
 
 export default async (req: Request) => {
   if (req.method !== "POST") {
@@ -28,19 +29,39 @@ export default async (req: Request) => {
 
   const account = await findAccountByEmail(email);
   if (!account) {
-    return jsonResponse({ ok: true, alreadyVerified: false, message: GENERIC_MESSAGE });
+    return jsonResponse({
+      ok: true,
+      alreadyVerified: false,
+      emailSent: false,
+      message: GENERIC_MESSAGE,
+    });
   }
 
   if (account.emailVerified) {
     return jsonResponse({
       ok: true,
       alreadyVerified: true,
-      message: "Este e-mail já está confirmado. Você pode entrar no portal.",
+      emailSent: false,
+      message: "Este e-mail já está confirmado. Use sua senha para entrar no portal.",
     });
   }
 
   const profile = await getProfileByAccountId(account.id);
-  const { emailSent } = await issueEmailVerification(account.id, account.email, profile?.artistName ?? "");
+  const { emailSent, cooldownMs } = await issueEmailVerification(
+    account.id,
+    account.email,
+    profile?.artistName ?? "",
+  );
+
+  if (cooldownMs) {
+    return jsonResponse({
+      ok: true,
+      alreadyVerified: false,
+      emailSent: false,
+      cooldownMs,
+      message: cooldownMessage(cooldownMs),
+    });
+  }
 
   return jsonResponse({
     ok: true,

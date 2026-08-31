@@ -6,6 +6,7 @@ import {
   verifyPassword,
 } from "./_shared/auth.js";
 import { errorResponse, jsonResponse, normalizeEmail } from "./_shared/dj.js";
+import { cooldownMessage } from "./_shared/rate-limit.js";
 
 type ResendBody = {
   email?: string;
@@ -51,14 +52,24 @@ export default async (req: Request) => {
 
   const profile = await getProfileByAccountId(account.id);
   const artistName = profile?.artistName ?? "";
-  const { emailSent } = await issueEmailVerification(account.id, account.email, artistName);
+  const { emailSent, cooldownMs } = await issueEmailVerification(account.id, account.email, artistName);
+
+  if (cooldownMs) {
+    return jsonResponse({
+      ok: true,
+      alreadyVerified: false,
+      emailSent: false,
+      cooldownMs,
+      message: cooldownMessage(cooldownMs),
+    });
+  }
 
   return jsonResponse({
     ok: true,
     alreadyVerified: false,
     emailSent,
     message: emailSent
-      ? "Enviamos um novo link de confirmação para o seu e-mail."
+      ? "Enviamos um novo código de verificação e um link de confirmação para o seu e-mail."
       : "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.",
   });
 };

@@ -1,6 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { findAccountByEmail, getProfileByAccountId, issuePasswordReset } from "./_shared/auth.js";
 import { errorResponse, jsonResponse, normalizeEmail } from "./_shared/dj.js";
+import { cooldownMessage } from "./_shared/rate-limit.js";
 
 type ForgotBody = {
   email?: string;
@@ -28,18 +29,35 @@ export default async (req: Request) => {
 
   const account = await findAccountByEmail(email);
   if (!account) {
-    return jsonResponse({ ok: true, message: GENERIC_MESSAGE });
+    return jsonResponse({
+      ok: true,
+      emailSent: false,
+      message: GENERIC_MESSAGE,
+    });
   }
 
   const profile = await getProfileByAccountId(account.id);
-  const { emailSent } = await issuePasswordReset(account.id, account.email, profile?.artistName ?? "");
+  const { emailSent, cooldownMs } = await issuePasswordReset(
+    account.id,
+    account.email,
+    profile?.artistName ?? "",
+  );
+
+  if (cooldownMs) {
+    return jsonResponse({
+      ok: true,
+      emailSent: false,
+      cooldownMs,
+      message: cooldownMessage(cooldownMs),
+    });
+  }
 
   return jsonResponse({
     ok: true,
     emailSent,
     message: emailSent
       ? "Enviamos um código para redefinir a senha. Ele vale por 15 minutos."
-      : GENERIC_MESSAGE,
+      : "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.",
   });
 };
 

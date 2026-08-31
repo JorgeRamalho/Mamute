@@ -3,6 +3,51 @@ import { expect, test } from "@playwright/test";
 const LIVE_URL = "http://127.0.0.1:5500/";
 
 test.describe("Live Server (porta 5500)", () => {
+  test("cadastro novo não herda perfil salvo no visor", async ({ page }) => {
+    const response = await page
+      .goto(LIVE_URL, {
+        waitUntil: "domcontentloaded",
+        timeout: 12_000,
+      })
+      .catch(() => null);
+
+    test.skip(!response || !response.ok(), "Live Server ausente na porta 5500");
+
+    await page.evaluate(() => {
+      localStorage.setItem(
+        "mamute.dj.profile",
+        JSON.stringify({
+          fullName: "DJ Antigo",
+          artistName: "DJ Live Server",
+          email: "antigo@mamute.test",
+          city: "Recife",
+          country: "Brasil",
+          bio: "Não deve aparecer na ficha nova.",
+          terms: true,
+          over18: true,
+        }),
+      );
+      sessionStorage.removeItem("mamute.dj.session");
+    });
+
+    await page.goto(`${LIVE_URL}cadastro`);
+    const accept = page.getByRole("button", { name: "Aceitar" });
+    if (await accept.isVisible()) await accept.click();
+
+    await expect(page.getByText("Visor atual: DJ Live Server")).toHaveCount(0);
+    await expect(page.getByRole("textbox", { name: "Nome artístico" })).toHaveValue("");
+    await expect(page.getByText("0%")).toBeVisible();
+  });
+
+  test("header mostra Área DJ ao lado de Cadastrar DJ", async ({ page }) => {
+    const response = await page.goto(LIVE_URL, { waitUntil: "domcontentloaded", timeout: 12_000 }).catch(() => null);
+    test.skip(!response?.ok(), "Live Server ausente na porta 5500");
+
+    const cta = page.locator(".header-cta");
+    await expect(cta.getByRole("link", { name: "Área DJ" })).toBeVisible();
+    await expect(cta.getByRole("link", { name: "Cadastrar DJ" })).toBeVisible();
+  });
+
   test("serve o cadastro e os dados novos do visor", async ({ page }) => {
     const response = await page.goto(LIVE_URL, {
       waitUntil: "domcontentloaded",
@@ -27,6 +72,6 @@ test.describe("Live Server (porta 5500)", () => {
     await page.getByRole("link", { name: "Cadastrar DJ" }).click();
     await expect(page).toHaveURL(/\/cadastro/);
     await expect(page.getByRole("heading", { name: "1. Identidade" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "8. Termos" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "08 · Termos" })).toBeVisible();
   });
 });

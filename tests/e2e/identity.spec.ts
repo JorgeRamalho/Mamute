@@ -29,19 +29,27 @@ test.describe("Identidade visual e responsividade", () => {
 
   test("header oferece navegação em qualquer projeto", async ({ page }) => {
     await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Principal" });
     const menu = page.getByRole("button", { name: "Menu" });
     if (await menu.isVisible()) {
       await menu.click();
+      await expect(nav.getByRole("link")).toHaveText([
+        "Início",
+        "Sala de Aula",
+        "Mixer CDJ",
+        "Plataformas",
+        "Área DJ",
+      ]);
+    } else {
+      await expect(nav.getByRole("link")).toHaveText([
+        "Início",
+        "Sala de Aula",
+        "Mixer CDJ",
+        "Plataformas",
+      ]);
+      await expect(page.locator(".header-cta").getByRole("link", { name: "Área DJ" })).toBeVisible();
     }
-    await expect(page.getByRole("navigation", { name: "Principal" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Principal" }).getByRole("link")).toHaveText([
-      "Início",
-      "Área DJ",
-      "Sala de Aula",
-      "Mixer CDJ",
-      "Plataformas",
-    ]);
-    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Mixer CDJ" }).click();
+    await nav.getByRole("link", { name: "Mixer CDJ" }).click();
     await expect(page).toHaveURL(/\/mixer/);
   });
 });

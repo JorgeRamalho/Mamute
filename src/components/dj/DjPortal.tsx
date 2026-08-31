@@ -22,7 +22,7 @@ const PORTAL_LINKS = [
   { to: "/academia", label: "Academia", hint: "Trilha do primeiro beat" },
   { to: "/radio", label: "Rádio", hint: "Mamute FM em modo clipe" },
   { to: "/catalogo", label: "Plataformas", hint: "Catálogo e limites oficiais" },
-  { to: "/cadastro", label: "Atualizar mural", hint: "Editar perfil de cabine" },
+  { to: "/cadastro?editar=1", label: "Atualizar mural", hint: "Editar perfil de cabine" },
 ] as const;
 
 type DjPortalProps = {
@@ -161,7 +161,7 @@ export function DjPortal({ session, onLogout }: DjPortalProps) {
             ) : null}
           </div>
           <div className="dj-profile-hero-actions">
-            <Link className="btn" to="/cadastro">
+            <Link className="btn" to="/cadastro?editar=1">
               Editar mural
             </Link>
             <button className="btn" type="button" onClick={onLogout}>

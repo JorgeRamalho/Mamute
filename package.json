@@ -8,6 +8,8 @@
     "dev:api": "netlify dev",
     "build": "tsc -b && vite build",
     "live": "tsc -b && vite build && vite preview --host --port 5500",
+    "live:build": "tsc -b && vite build",
+    "live:sync": "tsc -b && vite build && vite build --watch",
     "live:watch": "vite build --watch",
     "lint": "oxlint",
     "preview": "vite preview",

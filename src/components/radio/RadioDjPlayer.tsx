@@ -290,7 +290,7 @@ export function RadioDjPlayer({
 
       <p className="radio-dj-caption">
         {continuous
-          ? "Rádio contínua — cada faixa toca por inteiro e a programação avança sozinha entre Spotify, Deezer, YouTube Music e Beatport."
+          ? "Rádio contínua — cada faixa toca por inteiro e a programação avança sozinha entre Spotify, SoundCloud, YouTube Music, Beatport e Deezer."
           : active.caption}
       </p>
 
