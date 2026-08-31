@@ -17,6 +17,7 @@ import {
   profileInputToRow,
   profileRowToClient,
 } from "./_shared/dj.js";
+import { isNetlifyLocalDev, localDevCodeMessage } from "./_shared/email.js";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -33,16 +34,19 @@ async function respondWithVerification(
   profile: DjProfile,
   mode: "created" | "updated",
 ) {
-  const { emailSent } = await issueEmailVerification(accountId, email, artistName);
+  const { emailSent, code } = await issueEmailVerification(accountId, email, artistName);
+  const localCode = isNetlifyLocalDev() && !emailSent ? code : undefined;
   return jsonResponse({
     ok: true,
     mode,
     emailVerificationRequired: true,
     emailSent,
+    ...(localCode ? { devCode: localCode } : {}),
     profile,
-    message:
-      emailSent
-        ? "Cadastro gravado. Enviamos um código de verificação e um link — use um dos dois para entrar no portal."
+    message: emailSent
+      ? "Cadastro gravado. Enviamos um código de verificação e um link — use um dos dois para entrar no portal."
+      : localCode
+        ? `Cadastro gravado. ${localDevCodeMessage(localCode)}`
         : "Cadastro gravado. Confirme o e-mail pelo código ou pelo link (peça reenvio na Área do DJ).",
   });
 }

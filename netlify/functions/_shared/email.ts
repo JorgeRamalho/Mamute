@@ -1,10 +1,35 @@
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
+import { appendFile, mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
 const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const AUTH_CODE_TTL_MS = 15 * 60 * 1000;
 const AUTH_CODE_LENGTH = 6;
 
+export function isNetlifyLocalDev(): boolean {
+  if (process.env.NETLIFY_DEV === "true") return true;
+  const context = process.env.CONTEXT ?? process.env.NETLIFY_CONTEXT;
+  if (context === "production" || context === "deploy-preview" || context === "branch-deploy") {
+    return false;
+  }
+  if (process.env.NETLIFY === "true") return false;
+  if (process.env.AWS_LAMBDA_FUNCTION_NAME) return false;
+  return process.env.NODE_ENV !== "production";
+}
+
+export const ACCOUNT_NOT_FOUND_MESSAGE =
+  "Não há conta com este e-mail no servidor. Se você já preencheu o Cadastro DJ neste navegador, o e-mail do visor precisa ser o mesmo — informe a senha para sincronizar. Caso contrário, conclua o cadastro.";
+
+export function localDevCodeMessage(code: string): string {
+  return `E-mail ainda não configurado (falta RESEND_API_KEY). Use o código ${code} — vale 15 minutos.`;
+}
+
 export function getSiteUrl(): string {
+  if (isNetlifyLocalDev()) {
+    const local = process.env.URL?.replace(/\/$/, "") ?? "";
+    if (/localhost|127\.0\.0\.1/.test(local)) return local;
+    return "http://localhost:8888";
+  }
   const configured = process.env.SITE_URL ?? process.env.URL;
   if (configured) {
     return configured.replace(/\/$/, "");
@@ -41,6 +66,34 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
+type DevMailPayload = {
+  to: string;
+  subject: string;
+  fallbackLog: string;
+};
+
+async function persistDevMail(payload: DevMailPayload): Promise<void> {
+  if (!isNetlifyLocalDev() || process.env.MAMUTE_DEV_MAIL === "0") return;
+
+  const codeMatch = payload.fallbackLog.match(/\b(\d{6})\b/);
+  const urlMatch = payload.fallbackLog.match(/(https?:\/\/\S+)/);
+  const entry = {
+    ...payload,
+    code: codeMatch?.[1],
+    verificationUrl: urlMatch?.[1],
+    at: new Date().toISOString(),
+  };
+
+  try {
+    const dir = join(process.cwd(), ".dev", "mail");
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "latest.json"), `${JSON.stringify(entry, null, 2)}\n`, "utf8");
+    await appendFile(join(dir, "log.ndjson"), `${JSON.stringify(entry)}\n`, "utf8");
+  } catch (error) {
+    console.warn("[mamute-email] dev mail sink indisponível:", error);
+  }
+}
+
 export type SendEmailResult =
   | { sent: true }
   | { sent: false; reason: "missing_api_key" | "provider_error" };
@@ -51,6 +104,7 @@ async function sendEmail(to: string, subject: string, html: string, fallbackLog:
 
   if (!apiKey) {
     console.warn(`[mamute-email] RESEND_API_KEY ausente. ${fallbackLog}`);
+    await persistDevMail({ to, subject, fallbackLog });
     return { sent: false, reason: "missing_api_key" };
   }
 

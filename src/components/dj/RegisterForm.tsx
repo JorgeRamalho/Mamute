@@ -177,6 +177,7 @@ type WelcomeState = {
   email: string;
   emailVerificationRequired: boolean;
   emailSent: boolean;
+  localCode?: string;
 };
 
 type RegisterFormProps = {
@@ -313,6 +314,7 @@ export function RegisterForm({ selectedPlan = null, onJourneyComplete }: Registe
         email: payload.email,
         emailVerificationRequired: Boolean(result.emailVerificationRequired),
         emailSent: Boolean(result.emailSent),
+        localCode: result.localCode,
       });
       onJourneyComplete?.();
       return;
@@ -328,6 +330,7 @@ export function RegisterForm({ selectedPlan = null, onJourneyComplete }: Registe
           email={welcome.email}
           emailVerificationRequired={welcome.emailVerificationRequired}
           emailSent={welcome.emailSent}
+          localCode={welcome.localCode}
         />
       </div>
     );
@@ -388,6 +391,7 @@ export function RegisterForm({ selectedPlan = null, onJourneyComplete }: Registe
         ref={formRef}
         className="form-grid dj-register-form"
         name="mamute-cadastro"
+        autoComplete="off"
         onSubmit={(event) => {
           void onSubmit(event);
         }}

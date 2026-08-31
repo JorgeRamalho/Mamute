@@ -9,17 +9,53 @@ npm install
 npx playwright install chromium
 ```
 
+## Automação (cadastro + código + login)
+
+O fluxo pode rodar **sem intervenção manual** em desenvolvimento e nos testes:
+
+| Comando | O que faz sozinho |
+| --- | --- |
+| `npm run setup` | Cria `.env` (se faltar), aplica migrações do banco |
+| `npm run dev` | Bootstrap + `netlify dev` (API + banco + frontend em **8888**) |
+| `npm run test:auth` | Testa cadastro → código → login (API e UI) |
+
+### Sem `RESEND_API_KEY` (modo dev automático)
+
+1. O servidor devolve `devCode` na resposta da API.
+2. A UI preenche o código automaticamente em **Receber código**.
+3. Os códigos também são gravados em `.dev/mail/latest.json` (sink local).
+
+### Com `RESEND_API_KEY` (produção)
+
+1. Cadastro grava no banco e dispara e-mail real via Resend.
+2. O usuário confirma pelo link ou pelo código de 6 dígitos.
+3. Login só libera após `emailVerified`.
+
+### Health check
+
+`GET /api/dj/health` — confirma API + banco. Usado pelo bootstrap e pelos testes.
+
+### Único passo externo (uma vez)
+
+- Criar conta no [Resend](https://resend.com) e colar `RESEND_API_KEY` no `.env` e no painel Netlify (produção).
+- Vincular o site: `npx netlify init` + ativar Netlify Database.
+
+Depois disso, `npm run dev` e `npm run test:auth` cobrem o ciclo completo.
+
 ## Scripts
 
 | Script | Função |
 | --- | --- |
-| `npm run dev` | Vite em `http://127.0.0.1:5173` |
+| `npm run setup` | Bootstrap: `.env` + migrações |
+| `npm run dev` | Bootstrap + Netlify dev com API + banco local em **http://localhost:8888** |
+| `npm run dev:vite` | Só frontend Vite (sem API de e-mail) |
 | `npm run build` | `tsc -b` + bundle em `dist/` |
 | `npm run live` | Build + preview na porta 5500 |
 | `npm run preview` | Preview Vite (4173) |
 | `npm run typecheck` | TypeScript sem emit |
 | `npm run lint` | oxlint |
 | `npm test` | Playwright (`config/playwright.config.ts`) |
+| `npm run test:auth` | Fluxo automático cadastro → código → login |
 | `npm run test:ui` | Playwright UI |
 
 ## Live Server (VS Code)
@@ -58,5 +94,16 @@ Não há secrets no cliente. Para a Área do DJ com backend ativo (Netlify Funct
 | `SITE_URL` | URL pública do site (links de confirmação no e-mail) |
 
 Sem `RESEND_API_KEY`, o cadastro e o login local continuam funcionando; os códigos por e-mail não são enviados.
+
+### Ativar envio de código por e-mail (passo a passo)
+
+1. **Vincule o projeto ao Netlify** (uma vez): `npx netlify init`
+2. **Ative a Netlify Database** no painel do site (ou via CLI)
+3. **Aplique as migrações**: `npm run db:migrate`
+4. **Crie `.env` na raiz** (copie de `.env.example`) com `RESEND_API_KEY`, `EMAIL_FROM` e `SITE_URL`
+5. **Inicie o dev com API**: `npm run dev` e abra **http://localhost:8888/dj** (não use a porta 5173 sozinha)
+6. Use **Receber código** com o e-mail do cadastro DJ
+
+> Não use Go Live (porta 5500) para testar e-mail — essa porta não executa a API.
 
 APIs de parceiro (Beatport, Spotify, YouTube Data) exigem backend e ficam fora do escopo atual — ver [pesquisa/plataformas.md](pesquisa/plataformas.md).

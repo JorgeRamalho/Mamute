@@ -19,11 +19,14 @@ export async function fillCadastroJourney(page: Page, suffix: string): Promise<v
 
   await expect(page.getByRole("heading", { name: "3. Perfil artístico" })).toBeVisible();
   await page.getByRole("textbox", { name: "Bio" }).fill(`Bio ${suffix}`);
+  await page.getByLabel("Techno").click();
   await continueCadastro(page);
 
   await expect(page.getByRole("heading", { name: "4. Equipamento" })).toBeVisible();
+  await page.getByLabel("CDJ").click();
   await continueCadastro(page);
   await expect(page.getByRole("heading", { name: "5. Presença digital" })).toBeVisible();
+  await page.getByRole("textbox", { name: "Instagram" }).fill(`@${suffix}`);
   await continueCadastro(page);
   await expect(page.getByRole("heading", { name: "6. Carreira" })).toBeVisible();
   await continueCadastro(page);

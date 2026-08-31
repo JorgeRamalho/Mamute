@@ -1,24 +1,45 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { PasswordField } from "../components/forms/PasswordField";
-import { confirmEmailWithToken, resendEmailVerification, type LoginResult } from "../lib/dj-auth";
+import { confirmEmailWithToken, getLoginEmailPrefill, resendEmailVerification, type LoginResult } from "../lib/dj-auth";
 
 type VerifyState = "pending" | "success" | "error" | "idle";
 
+function resolveConfirmEmail(emailParam: string | null, emailSent: boolean): string {
+  return getLoginEmailPrefill({
+    emailParam,
+    justRegistered: emailSent || Boolean(emailParam?.trim()),
+  });
+}
+
 export function ConfirmEmailPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
-  const email = params.get("email") ?? "";
+  const emailParam = params.get("email");
   const emailSent = params.get("enviado") === "1";
 
   const [verifyState, setVerifyState] = useState<VerifyState>(token ? "pending" : "idle");
   const [verifyMessage, setVerifyMessage] = useState("");
-  const [resendEmail, setResendEmail] = useState(email);
+  const [resendEmail, setResendEmail] = useState(() => resolveConfirmEmail(emailParam, emailSent));
   const [password, setPassword] = useState("");
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
   const [resendPending, setResendPending] = useState(false);
+
+  useEffect(() => {
+    const fromUrl = emailParam?.trim() ?? "";
+    if (fromUrl) {
+      setResendEmail(fromUrl);
+      return;
+    }
+    setResendEmail(resolveConfirmEmail(emailParam, emailSent));
+  }, [emailParam, emailSent, location.key]);
+
+  const loginHref = resendEmail.trim()
+    ? `/dj?cadastrado=1&email=${encodeURIComponent(resendEmail.trim())}`
+    : "/dj";
 
   useEffect(() => {
     if (!token) return;
@@ -77,25 +98,36 @@ export function ConfirmEmailPage() {
           <h2 id="confirm-email-title">Aguardando confirmação</h2>
           {emailSent ? (
             <p className="form-status dj-login-banner" role="status">
-              Enviamos um código de verificação e um link de confirmação{email ? ` para ${email}` : ""}.
+              Enviamos um código de verificação e um link de confirmação
+              {resendEmail ? ` para ${resendEmail}` : ""}.
               Use um dos dois para liberar o login na Área do DJ.
             </p>
           ) : (
             <p className="lede">
-              {email
-                ? `Confirme ${email} pelo link do e-mail ou peça um novo envio.`
+              {resendEmail
+                ? `Confirme ${resendEmail} pelo link do e-mail ou peça um novo envio.`
                 : "Confirme o e-mail pelo link recebido ou peça um novo envio."}
             </p>
           )}
 
-          <div className="dj-login-form">
+          <form
+            className="dj-login-form"
+            autoComplete="off"
+            onSubmit={(event) => event.preventDefault()}
+          >
             <label className="field">
               E-mail cadastrado
               <input
+                key={resendEmail || "confirm-email-empty"}
                 type="email"
+                name="dj-confirm-email"
+                autoComplete="off"
+                inputMode="email"
+                data-lpignore="true"
+                data-1p-ignore
                 value={resendEmail}
                 onChange={(event) => setResendEmail(event.target.value)}
-                readOnly={Boolean(email)}
+                readOnly={Boolean(emailParam?.trim())}
                 placeholder="voce@email.com"
               />
             </label>
@@ -120,12 +152,12 @@ export function ConfirmEmailPage() {
             <button className="btn btn-solid" type="button" disabled={resendPending} onClick={() => void onResend()}>
               {resendPending ? "Reenviando…" : "Reenviar código e link de confirmação"}
             </button>
-          </div>
+          </form>
         </section>
       )}
 
       <p className="dj-page-switch">
-        Já confirmou? <Link to="/dj">Entrar na Área do DJ</Link>
+        Já confirmou? <Link to={loginHref}>Entrar na Área do DJ</Link>
       </p>
     </div>
   );

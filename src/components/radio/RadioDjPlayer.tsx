@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { PLATFORMS } from "../../data/platforms";
-import { RADIO_PLATFORM_ORDER } from "../../data/radio";
+import { RADIO_PLATFORM_ORDER, RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
 import { getFirstClipForPlatform } from "../../lib/radio-playlist";
 import type { RadioClip, RadioSource } from "../../types/radio";
 import type { PlatformId } from "../../types/platform";
@@ -231,7 +231,10 @@ export function RadioDjPlayer({
               style={{ "--platform-accent": platform?.accent } as CSSProperties}
               onClick={() => firstTrack && onSelectClip(firstTrack, { autoplay: true })}
             >
-              {platformLabel(platformId)}
+              <span className="radio-dj-platform-chip-name">{platformLabel(platformId)}</span>
+              <span className="radio-dj-platform-chip-type">
+                {RADIO_PLATFORM_STATION_TYPES[platformId]}
+              </span>
             </button>
           );
         })}

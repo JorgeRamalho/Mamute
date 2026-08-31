@@ -6,6 +6,7 @@ import {
   verifyPassword,
 } from "./_shared/auth.js";
 import { errorResponse, jsonResponse, normalizeEmail } from "./_shared/dj.js";
+import { isNetlifyLocalDev, localDevCodeMessage } from "./_shared/email.js";
 import { cooldownMessage } from "./_shared/rate-limit.js";
 
 type ResendBody = {
@@ -52,7 +53,7 @@ export default async (req: Request) => {
 
   const profile = await getProfileByAccountId(account.id);
   const artistName = profile?.artistName ?? "";
-  const { emailSent, cooldownMs } = await issueEmailVerification(account.id, account.email, artistName);
+  const { emailSent, cooldownMs, code } = await issueEmailVerification(account.id, account.email, artistName);
 
   if (cooldownMs) {
     return jsonResponse({
@@ -64,13 +65,18 @@ export default async (req: Request) => {
     });
   }
 
+  const localCode = isNetlifyLocalDev() && !emailSent ? code : undefined;
+
   return jsonResponse({
     ok: true,
     alreadyVerified: false,
     emailSent,
+    ...(localCode ? { devCode: localCode } : {}),
     message: emailSent
       ? "Enviamos um novo código de verificação e um link de confirmação para o seu e-mail."
-      : "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.",
+      : localCode
+        ? localDevCodeMessage(localCode)
+        : "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.",
   });
 };
 

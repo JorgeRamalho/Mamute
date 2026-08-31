@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
 import { syncBeginnerDjToStorage } from "../../lib/radio-catalog-import";
 import { markBeginnerPlaylistLoaded } from "../../lib/radio-user-playlist";
 import type { RadioClip } from "../../types/radio";
@@ -23,7 +24,7 @@ type RadioVirtualDisplayProps = {
 
 function platformCode(id?: PlatformId): string {
   if (!id) return "SYS";
-  if (id === "youtube") return "YTM";
+  if (id === "youtube") return "YT";
   return id.slice(0, 3).toUpperCase();
 }
 
@@ -147,8 +148,13 @@ export function RadioVirtualDisplay({
     >
       <div className="radio-hud-bezel">
         <div className="radio-hud-bezel-top">
-          <span className="radio-hud-brand">MAMUTE · HUD</span>
+          <span className="radio-hud-brand">MAMUTE · STUDIO HUD</span>
           <span className="radio-hud-chip">{platformCode(clip?.platform)}</span>
+          {clip?.platform ? (
+            <span className="radio-hud-station-type">
+              {RADIO_PLATFORM_STATION_TYPES[clip.platform]}
+            </span>
+          ) : null}
           <span className="radio-hud-live" role="status">
             {isPlaying && catalogReady ? "STREAM" : catalogReady ? "STANDBY" : "SYNC"}
           </span>

@@ -1,12 +1,12 @@
 /* Visor digital virtual — Mamute FM HUD */
 
 .radio-hud {
-  margin: 0.75rem 0 1rem;
+  margin: 0.45rem 0 0.65rem;
 }
 
 .radio-hud-bezel {
   position: relative;
-  border-radius: 20px;
+  border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--hud-accent, var(--cyan)) 35%, var(--line));
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--hud-accent, var(--cyan)) 12%, transparent), transparent 70%),
@@ -38,15 +38,32 @@
 .radio-hud-bezel-top {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.55rem 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.45rem;
+  padding: 0.42rem 0.65rem;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+}
+
+.radio-hud-station-type {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  padding: 0.18rem 0.42rem;
+  border-radius: 6px;
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .radio-hud-brand {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.18em;
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
   color: var(--muted);
 }
 
@@ -64,9 +81,9 @@
 .radio-hud-live {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
-  padding: 0.28rem 0.5rem;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.42rem;
   border-radius: 999px;
   color: var(--hud-accent, var(--cyan));
   border: 1px solid color-mix(in srgb, var(--hud-accent, var(--cyan)) 45%, var(--line));
@@ -93,21 +110,25 @@
 }
 
 .radio-hud-screen {
-  padding: 0.65rem 0.75rem 0.75rem;
+  padding: 0.45rem 0.55rem 0.55rem;
 }
 
 .radio-hud-screen-inner {
   position: relative;
   display: grid;
-  grid-template-columns: 1.1rem 1fr 1.1rem;
-  gap: 0.5rem;
-  min-height: 10.5rem;
-  padding: 0.75rem 0.5rem;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: #020408;
+  grid-template-columns: 0.45rem 1fr 0.45rem;
+  gap: 0.35rem;
+  min-height: 7.75rem;
+  padding: 0.5rem 0.35rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--hud-accent, var(--cyan)) 22%, var(--line));
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 35%, color-mix(in srgb, var(--hud-accent, var(--cyan)) 6%, transparent), transparent 72%),
+    #020408;
   overflow: hidden;
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    inset 0 0 50px rgba(0, 0, 0, 0.7),
+    inset 0 0 24px color-mix(in srgb, var(--hud-accent, var(--cyan)) 4%, transparent);
 }
 
 .radio-hud-scan {
@@ -235,7 +256,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.3rem;
   align-content: center;
   min-width: 0;
 }
@@ -249,7 +270,7 @@
   display: inline-block;
   white-space: nowrap;
   font-family: var(--font-hud);
-  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  font-size: clamp(0.76rem, 1.8vw, 0.92rem);
   letter-spacing: 0.06em;
   color: color-mix(in srgb, var(--hud-accent, var(--cyan)) 75%, white);
   text-shadow: 0 0 20px color-mix(in srgb, var(--hud-accent, var(--cyan)) 40%, transparent);
@@ -273,7 +294,7 @@
 
 .radio-hud-wave {
   width: 100%;
-  height: 3.2rem;
+  height: 2.15rem;
   display: block;
   opacity: 0.9;
 }
@@ -281,14 +302,14 @@
 .radio-hud-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .radio-hud-metric {
   display: grid;
-  gap: 0.1rem;
-  padding: 0.35rem 0.4rem;
-  border-radius: 8px;
+  gap: 0.06rem;
+  padding: 0.24rem 0.28rem;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(0, 0, 0, 0.35);
   text-align: center;
@@ -303,7 +324,7 @@
 
 .radio-hud-metric-value {
   font-family: var(--font-hud);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   letter-spacing: 0.05em;
   color: color-mix(in srgb, var(--hud-accent, var(--cyan)) 80%, white);
   overflow: hidden;
@@ -314,7 +335,7 @@
 .radio-hud-status {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.56rem;
   letter-spacing: 0.06em;
   color: var(--muted);
   text-align: center;
@@ -325,10 +346,10 @@
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 2.8rem;
-  margin-top: 0.55rem;
-  padding: 0.45rem 0.5rem;
-  border-radius: 10px;
+  height: 1.85rem;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.38rem;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: #010306;
 }
@@ -367,8 +388,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.55rem;
-  padding: 0.55rem 0.85rem 0.7rem;
+  gap: 0.45rem;
+  padding: 0.42rem 0.65rem 0.55rem;
   border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
 }
 
@@ -442,8 +463,8 @@
   }
 
   .radio-hud-screen-inner {
-    grid-template-columns: 0.6rem 1fr 0.6rem;
-    min-height: 9rem;
+    grid-template-columns: 0.35rem 1fr 0.35rem;
+    min-height: 7rem;
   }
 }
 

@@ -12,6 +12,18 @@ export const RADIO_PLATFORM_ORDER: PlatformId[] = [
   "deezer",
 ];
 
+/** Tipo de programação Mamute FM em cada hub (rótulo no visor flutuante). */
+export const RADIO_PLATFORM_STATION_TYPES: Record<
+  (typeof RADIO_PLATFORM_ORDER)[number],
+  string
+> = {
+  spotify: "Playlists editoriais",
+  soundcloud: "Sets e uploads",
+  youtube: "Clipes oficiais",
+  beatport: "Charts DJ",
+  deezer: "Rádio editorial",
+};
+
 export const RADIO_IMPORT_PLATFORMS: PlatformId[] = [
   "spotify",
   "soundcloud",

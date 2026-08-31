@@ -1,9 +1,11 @@
-import { useState, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { PasswordField } from "../forms/PasswordField";
 import {
   AUTH_CODE_LENGTH,
   confirmDjVerificationCode,
+  getLoginEmailPrefill,
+  localCadastroForEmail,
   loginWithPassword,
   MIN_PASSWORD_LENGTH,
   normalizeAuthCode,
@@ -12,7 +14,6 @@ import {
   sendDjVerificationCode,
   type DjSession,
 } from "../../lib/dj-auth";
-import { loadProfile } from "../../lib/storage";
 
 type DjLoginFormProps = {
   onLoggedIn: (session: DjSession) => void;
@@ -20,12 +21,17 @@ type DjLoginFormProps = {
 
 type LoginPanel = "login" | "forgot" | "verify";
 
+function resolveLoginEmail(emailParam: string | null, justRegistered: boolean): string {
+  return getLoginEmailPrefill({ emailParam, justRegistered });
+}
+
 export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
+  const location = useLocation();
   const [params] = useSearchParams();
   const justRegistered = params.get("cadastrado") === "1";
-  const saved = loadProfile();
+  const emailParam = params.get("email");
   const [panel, setPanel] = useState<LoginPanel>("login");
-  const [email, setEmail] = useState(saved.email);
+  const [email, setEmail] = useState(() => resolveLoginEmail(emailParam, justRegistered));
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [code, setCode] = useState("");
@@ -33,6 +39,20 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
   const [status, setStatus] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [pending, setPending] = useState(false);
+  const [needsPasswordSync, setNeedsPasswordSync] = useState(false);
+
+  useEffect(() => {
+    const fromUrl = emailParam?.trim() ?? "";
+    if (fromUrl) {
+      setEmail(fromUrl);
+      setPassword("");
+      setCode("");
+      setError("");
+      setStatus("");
+      return;
+    }
+    setEmail(resolveLoginEmail(emailParam, justRegistered));
+  }, [emailParam, justRegistered, location.key]);
 
   const resetMessages = () => {
     setError("");
@@ -42,30 +62,56 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
   const switchPanel = (next: LoginPanel) => {
     resetMessages();
     setCode("");
-    setPassword("");
-    setPasswordConfirm("");
+    if (next !== "verify") {
+      setPassword("");
+      setPasswordConfirm("");
+    }
     setCodeSent(false);
+    setNeedsPasswordSync(false);
     setPanel(next);
   };
 
   const applySendCodeResult = (
-    result: { ok: true; message: string; emailSent?: boolean; alreadyVerified?: boolean } | { ok: false; message: string },
+    result: {
+      ok: true;
+      message: string;
+      emailSent?: boolean;
+      alreadyVerified?: boolean;
+      cooldownMs?: number;
+      devCode?: string;
+    } | { ok: false; message: string; code?: string },
   ): boolean => {
     if (!result.ok) {
       setError(result.message);
+      if (result.code === "LOCAL_ONLY_PROFILE") {
+        setNeedsPasswordSync(true);
+      }
       return false;
     }
-    setStatus(result.message);
+    setNeedsPasswordSync(false);
     if (result.alreadyVerified) {
+      setStatus(result.message);
       setCodeSent(false);
       return true;
     }
-    if (result.emailSent) {
+    if (result.devCode) {
+      setStatus(result.message);
+      setCode(normalizeAuthCode(result.devCode));
       setCodeSent(true);
       return true;
     }
+    if (result.emailSent) {
+      setStatus(result.message);
+      setCodeSent(true);
+      return true;
+    }
+    if (result.cooldownMs) {
+      setStatus(result.message);
+      return true;
+    }
+    setError(result.message);
     setCodeSent(false);
-    return true;
+    return false;
   };
 
   const onLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -87,7 +133,7 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
   const onSendVerificationCode = async () => {
     resetMessages();
     setPending(true);
-    const result = await sendDjVerificationCode(email);
+    const result = await sendDjVerificationCode(email, password || undefined);
     setPending(false);
     applySendCodeResult(result);
   };
@@ -134,9 +180,15 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
     <label className="field">
       E-mail
       <input
+        key={`${panel}-${email || "login-email-empty"}`}
         type="email"
-        name="email"
-        autoComplete="username"
+        name="dj-cabine-email"
+        autoComplete="off"
+        inputMode="email"
+        autoCorrect="off"
+        spellCheck={false}
+        data-lpignore="true"
+        data-1p-ignore
         required
         placeholder="voce@email.com"
         value={email}
@@ -186,7 +238,7 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
       {panel === "login" ? (
         <section className="dj-login card" aria-labelledby="dj-login-title">
           <h2 id="dj-login-title">Login da cabine</h2>
-          <form className="dj-login-form" onSubmit={(event) => void onLogin(event)}>
+          <form className="dj-login-form" autoComplete="off" onSubmit={(event) => void onLogin(event)}>
             {emailField}
             <label className="field">
               Senha
@@ -203,7 +255,8 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
             </label>
             {error ? (
               <p className="dj-login-error" role="alert">
-                {error}
+                {error}{" "}
+                {error.includes("Cadastro DJ") ? <Link to="/cadastro">Abrir cadastro</Link> : null}
               </p>
             ) : null}
             {status ? (
@@ -237,6 +290,7 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
           </p>
           <form
             className="dj-login-form"
+            autoComplete="off"
             onSubmit={(event) => {
               event.preventDefault();
               if (codeSent) {
@@ -280,7 +334,8 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
             ) : null}
             {error ? (
               <p className="dj-login-error" role="alert">
-                {error}
+                {error}{" "}
+                {error.includes("Cadastro DJ") ? <Link to="/cadastro">Abrir cadastro</Link> : null}
               </p>
             ) : null}
             {status ? (
@@ -310,10 +365,12 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
         <section className="dj-login card" aria-labelledby="dj-verify-title">
           <h2 id="dj-verify-title">Código de verificação</h2>
           <p className="lede">
-            Envie o código para o e-mail cadastrado e confirme para liberar o acesso ao portal.
+            Se o cadastro ficou só neste navegador, informe a senha da ficha para gravar no servidor e
+            gerar o código. Sem envio de e-mail configurado, o código de 6 dígitos aparece nesta tela.
           </p>
           <form
             className="dj-login-form"
+            autoComplete="off"
             onSubmit={(event) => {
               event.preventDefault();
               if (codeSent) {
@@ -324,10 +381,26 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
             }}
           >
             {emailField}
+            {!codeSent && (needsPasswordSync || Boolean(localCadastroForEmail(email))) ? (
+              <label className="field">
+                Senha do cadastro
+                <PasswordField
+                  name="sync-password"
+                  aria-label="Senha do cadastro"
+                  autoComplete="current-password"
+                  required
+                  minLength={MIN_PASSWORD_LENGTH}
+                  placeholder="Senha definida no Cadastro DJ"
+                  value={password}
+                  onChange={setPassword}
+                />
+              </label>
+            ) : null}
             {codeSent ? codeField : null}
             {error ? (
               <p className="dj-login-error" role="alert">
-                {error}
+                {error}{" "}
+                {error.includes("Cadastro DJ") ? <Link to="/cadastro">Abrir cadastro</Link> : null}
               </p>
             ) : null}
             {status ? (

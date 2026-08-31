@@ -5,6 +5,7 @@ type CadastroWelcomeProps = {
   email: string;
   emailVerificationRequired: boolean;
   emailSent: boolean;
+  localCode?: string;
 };
 
 export function CadastroWelcome({
@@ -12,6 +13,7 @@ export function CadastroWelcome({
   email,
   emailVerificationRequired,
   emailSent,
+  localCode,
 }: CadastroWelcomeProps) {
   const displayName = artistName.trim() || "DJ";
   const confirmQuery = new URLSearchParams({ email });
@@ -35,7 +37,9 @@ export function CadastroWelcome({
         <p className="form-status dj-register-welcome-status" role="status">
           {emailSent
             ? `Enviamos a confirmação para ${email}. Confirme o e-mail para liberar o login.`
-            : `Confirme ${email} pelo código ou pelo link para entrar na Área do DJ.`}
+            : localCode
+              ? `Cadastro gravado no servidor. E-mail de envio ainda não está configurado — use o código ${localCode} na Área do DJ.`
+              : `Confirme ${email} pelo código ou pelo link para entrar na Área do DJ.`}
         </p>
       ) : (
         <p className="form-status dj-register-welcome-status" role="status">
@@ -44,17 +48,26 @@ export function CadastroWelcome({
       )}
       <div className="dj-register-welcome-actions">
         {emailVerificationRequired ? (
-          <Link className="btn btn-solid" to={`/cadastro/confirmar-email?${confirmQuery.toString()}`}>
+          <Link
+            className="btn btn-solid"
+            to={`/cadastro/confirmar-email?${confirmQuery.toString()}`}
+          >
             Confirmar e-mail
           </Link>
         ) : (
-          <Link className="btn btn-solid" to="/dj">
+          <Link className="btn btn-solid" to={`/dj?cadastrado=1&email=${encodeURIComponent(email)}`}>
             Entrar na Área do DJ
           </Link>
         )}
-        <Link className="btn" to="/mixer">
-          Abrir o mixer
-        </Link>
+        {!emailVerificationRequired ? (
+          <Link className="btn" to="/mixer">
+            Abrir o mixer
+          </Link>
+        ) : (
+          <Link className="btn" to={`/dj?cadastrado=1&email=${encodeURIComponent(email)}`}>
+            Ir para login
+          </Link>
+        )}
       </div>
     </section>
   );

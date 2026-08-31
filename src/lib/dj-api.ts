@@ -14,6 +14,7 @@ type RegisterOk = {
   profile: DjProfile;
   token?: string;
   expiresAt?: string;
+  devCode?: string;
 };
 type LoginOk = {
   ok: true;
@@ -34,6 +35,7 @@ type ResendVerificationOk = {
   alreadyVerified: boolean;
   emailSent?: boolean;
   message: string;
+  devCode?: string;
 };
 type SendCodeOk = {
   ok: true;
@@ -41,6 +43,7 @@ type SendCodeOk = {
   emailSent?: boolean;
   cooldownMs?: number;
   message: string;
+  devCode?: string;
 };
 type ConfirmCodeOk = {
   ok: true;
@@ -85,14 +88,48 @@ export function clearApiToken(): void {
   sessionStorage.removeItem(TOKEN_EXPIRES_KEY);
 }
 
-async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
-  if (window.location.port === "5500") {
-    throw new TypeError("API indisponível neste visor.");
+export class ApiUnavailableError extends TypeError {
+  constructor(message: string) {
+    super(message);
+    this.name = "ApiUnavailableError";
   }
-  const response = await fetch(input, init);
+}
+
+function apiUnavailableMessage(): string {
+  const port = window.location.port;
+  if (port === "5500") {
+    return "O Live Server (porta 5500) não executa a API de e-mail. Rode npm run dev e abra http://127.0.0.1:5173.";
+  }
+  if (port === "4173") {
+    return "O preview estático não executa a API. Use npm run dev para testar o envio de código.";
+  }
+  return "O servidor da API não respondeu. Rode npm run dev no terminal e abra http://localhost:8888/dj.";
+}
+
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  if (window.location.port === "5500" || window.location.port === "4173") {
+    throw new ApiUnavailableError(apiUnavailableMessage());
+  }
+  let response: Response;
+  try {
+    response = await fetch(input, init);
+  } catch {
+    throw new ApiUnavailableError(apiUnavailableMessage());
+  }
   const type = response.headers.get("content-type") ?? "";
   if (!type.toLowerCase().includes("application/json")) {
-    throw new TypeError("API indisponível neste visor.");
+    const fallbackText = await response.text().catch(() => "");
+    if (fallbackText.includes("NETLIFY_DB_URL")) {
+      throw new ApiUnavailableError(
+        "Banco local não iniciado. No terminal: npm run dev — depois abra http://localhost:8888/dj (não use a porta 5173).",
+      );
+    }
+    if (response.status >= 500) {
+      throw new ApiUnavailableError(
+        "O servidor respondeu com erro. Use npm run dev (não dev:vite), confira npm run db:migrate e configure RESEND_API_KEY no .env.",
+      );
+    }
+    throw new ApiUnavailableError(apiUnavailableMessage());
   }
   return response;
 }
@@ -351,5 +388,15 @@ export async function saveAcademyProgress(
 }
 
 export function isApiReachableError(error: unknown): boolean {
-  return error instanceof TypeError;
+  return error instanceof ApiUnavailableError || error instanceof TypeError;
+}
+
+export function getApiConnectionMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiUnavailableError) {
+    return error.message;
+  }
+  if (isApiReachableError(error)) {
+    return apiUnavailableMessage();
+  }
+  return fallback;
 }

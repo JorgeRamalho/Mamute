@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import netlify from "@netlify/vite-plugin";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
@@ -37,6 +38,8 @@ function injectViteEntry(): Plugin {
 export default defineConfig({
   plugins: [
     react(),
+    // Keep platform env/config, but do not intercept /api/* — Vite proxies DJ APIs to netlify dev (8888 + local DB).
+    netlify({ middleware: false }),
     injectViteEntry(),
     liveBundleStamp(),
     {

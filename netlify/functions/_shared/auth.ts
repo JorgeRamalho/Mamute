@@ -28,7 +28,7 @@ export async function issueEmailVerification(
   email: string,
   artistName: string,
   options?: { skipCooldown?: boolean },
-): Promise<{ token: string; emailSent: boolean; cooldownMs?: number }> {
+): Promise<{ token: string; emailSent: boolean; cooldownMs?: number; code?: string }> {
   const account = await getAccountById(accountId);
   if (!options?.skipCooldown && account) {
     const cooldownMs = authCodeCooldownRemaining(account.emailVerificationCodeExpiresAt);
@@ -56,7 +56,7 @@ export async function issueEmailVerification(
     .where(eq(djAccounts.id, accountId));
 
   const sendResult = await sendVerificationEmail(email, artistName, buildVerificationUrl(token), code);
-  return { token, emailSent: sendResult.sent };
+  return { token, emailSent: sendResult.sent, code };
 }
 
 export async function markEmailVerified(accountId: string): Promise<void> {
@@ -98,7 +98,7 @@ export async function issuePasswordReset(
   accountId: string,
   email: string,
   artistName: string,
-): Promise<{ emailSent: boolean; cooldownMs?: number }> {
+): Promise<{ emailSent: boolean; cooldownMs?: number; code?: string }> {
   const account = await getAccountById(accountId);
   if (account) {
     const cooldownMs = authCodeCooldownRemaining(account.passwordResetExpiresAt);
@@ -121,7 +121,7 @@ export async function issuePasswordReset(
     .where(eq(djAccounts.id, accountId));
 
   const sendResult = await sendPasswordResetEmail(email, artistName, code);
-  return { emailSent: sendResult.sent };
+  return { emailSent: sendResult.sent, code };
 }
 
 export async function resetPasswordWithCode(

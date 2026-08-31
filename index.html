@@ -128,6 +128,13 @@
         var TRY_MS = 400;
         var LIVE_PORT = port === "5500";
 
+        function viteIsReady(res) {
+          if (!res.ok) return false;
+          var type = res.headers.get("content-type") || "";
+          if (/html/i.test(type)) return false;
+          return /javascript|typescript|ecmascript|module/i.test(type) || type === "";
+        }
+
         function showHint() {
           var root = document.getElementById("root");
           if (!root) return;
@@ -224,7 +231,7 @@
           var liveTimer = setTimeout(goDist, 500);
           fetch(VITE_ORIGIN + "/src/main.tsx", { cache: "no-store", mode: "cors" })
             .then(function (res) {
-              if (!res.ok) throw new Error("vite off");
+              if (!viteIsReady(res)) throw new Error("vite off");
               clearTimeout(liveTimer);
               goVite();
             })
@@ -239,7 +246,7 @@
 
         fetch(VITE_ORIGIN + "/src/main.tsx", { cache: "no-store", mode: "cors" })
           .then(function (res) {
-            if (!res.ok) throw new Error("vite off");
+            if (!viteIsReady(res)) throw new Error("vite off");
             clearTimeout(viteTimer);
             goVite();
           })

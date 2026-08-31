@@ -14,14 +14,15 @@ test.describe("Mamute FM — balão flutuante", () => {
 
     const balloon = page.getByRole("complementary", { name: "Mamute FM" });
     await expect(balloon).toBeVisible();
-
-    await balloon.getByRole("button", { name: "Abrir Mamute FM" }).click();
     await expect(balloon.getByRole("heading", { level: 2 })).toBeVisible();
+
     const dial = balloon.getByLabel("Plataformas da programação");
     await expect(dial.getByText("Spotify", { exact: true })).toBeVisible();
     await expect(dial.getByText("SoundCloud", { exact: true })).toBeVisible();
-    await expect(dial.getByText("YouTube Music", { exact: true })).toBeVisible();
+    await expect(dial.getByText("YouTube", { exact: true })).toBeVisible();
     await expect(dial.getByText("Beatport", { exact: true })).toBeVisible();
+    await expect(dial.getByText("Clipes oficiais", { exact: true })).toBeVisible();
+    await expect(balloon.getByText("Hubs da programação")).toBeVisible();
     await expect(balloon.getByRole("button", { name: /Ligar rádio|Pausar rádio/ })).toBeVisible();
     await expect(balloon.getByRole("link", { name: "Cabine completa" })).toHaveAttribute("href", /\/radio$/);
   });

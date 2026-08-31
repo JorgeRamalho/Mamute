@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { PLAN_NAMES, isPlanId } from "../../data/plans";
 import { completionRatio, hydrateAcademyProgress, loadProgress } from "../../lib/academy";
-import { hydrateProfileFromServer, type DjSession } from "../../lib/dj-auth";
+import { hydrateProfileFromServer, profileMatchesSession, type DjSession } from "../../lib/dj-auth";
 import {
   HARDWARE_LABELS,
   SOCIAL_FIELDS,
@@ -86,7 +86,10 @@ export function DjPortal({ session, onLogout }: DjPortalProps) {
     });
   }, []);
 
-  const displayName = profile.artistName || session.artistName;
+  const displayName = profileMatchesSession(session)
+    ? profile.artistName.trim() || session.artistName
+    : session.artistName;
+  const displayFullName = profileMatchesSession(session) ? profile.fullName : "";
   const cityLine = [profile.city, profile.country].filter(hasText).join(" · ");
   const academyPercent = Math.round(completionRatio(done) * 100);
   const planName = plan && isPlanId(plan) ? PLAN_NAMES[plan] : null;
@@ -154,7 +157,7 @@ export function DjPortal({ session, onLogout }: DjPortalProps) {
           <div className="dj-profile-hero-copy">
             <p className="dj-portal-eyebrow">Perfil ativo</p>
             <h2 id="dj-portal-profile">{displayName}</h2>
-            <p>{profile.fullName || session.email}</p>
+            <p>{displayFullName || session.email}</p>
             {cityLine ? <p className="dj-portal-meta">{cityLine}</p> : null}
             {profile.pronouns.trim() ? (
               <p className="dj-portal-meta">{profile.pronouns}</p>

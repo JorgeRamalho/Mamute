@@ -4,8 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "setup": "node scripts/bootstrap.mjs --migrate",
+    "dev": "node scripts/bootstrap.mjs --migrate --skip-env-copy && netlify dev",
+    "dev:vite": "vite",
     "dev:api": "netlify dev",
+    "bootstrap": "node scripts/bootstrap.mjs --migrate",
+    "bootstrap:check": "node scripts/bootstrap.mjs --check-only",
+    "resend:configure": "node scripts/configure-resend.mjs",
     "build": "tsc -b && vite build",
     "live": "tsc -b && vite build && vite preview --host --port 5500",
     "live:build": "tsc -b && vite build",
@@ -16,6 +21,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",
     "test": "playwright test --config config/playwright.config.ts",
+    "test:auth": "playwright test --config config/playwright.config.ts tests/e2e/dj-auth-flow.spec.ts --project=desktop-chrome",
     "test:ui": "playwright test --ui --config config/playwright.config.ts",
     "typecheck": "tsc -b --noEmit"
   },
@@ -29,6 +35,7 @@
     "react-router": "^8.3.0"
   },
   "devDependencies": {
+    "@netlify/vite-plugin": "^3.0.1",
     "@playwright/test": "^1.62.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.13.3",
@@ -36,6 +43,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "drizzle-kit": "^1.0.0-beta.22",
+    "netlify-cli": "^27.4.1",
     "oxlint": "^1.79.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
