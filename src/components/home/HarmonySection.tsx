@@ -58,9 +58,9 @@ export function HarmonySection() {
         <p className="kicker">Harmonia · roda Camelot</p>
         <h2 id="harmony-title">Navegue em boa sintonia</h2>
         <p>
-          A escala Camelot traduz o círculo de quintas em relógio: B no anel de fora (maior), A no
-          de dentro (menor). Clique uma fatia — os vizinhos acendem. É o mapa para o aluno sentir
-          que pode viajar de tom em tom sem desafinar a pista.
+          A escala Camelot vira um globo: norte B (maior), sul A (menor). Cada meridiano é uma hora
+          do relógio — clique um fuso e os vizinhos acendem. É o mapa para viajar de tom em tom sem
+          desafinar a pista.
         </p>
       </div>
 

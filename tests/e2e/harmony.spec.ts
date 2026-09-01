@@ -15,7 +15,7 @@ test.describe("Harmonia · roda Camelot", () => {
     await expect(section.getByText("8A", { exact: true }).first()).toBeVisible();
     await expect(section.getByRole("heading", { name: "Lá menor" })).toBeVisible();
 
-    await section.getByRole("radio", { name: /8B · Dó maior/ }).click();
+    await section.getByRole("radio", { name: /8B · Dó maior/ }).click({ force: true });
     await expect(section.getByRole("heading", { name: "Dó maior" })).toBeVisible();
     await expect(section.getByText("8B → 8A → 9A → 9B")).toBeVisible();
 

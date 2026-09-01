@@ -12,12 +12,13 @@
 }
 
 .camelot-scene {
-  --gyro-x: 16deg;
-  --gyro-y: -6deg;
+  --sphere-x: 24deg;
+  --sphere-y: -240deg;
   --glint-x: 48%;
   --glint-y: 24%;
   --beat-pulse: 0.6;
   --key-color: #f5b04a;
+  --sphere-r: 148px;
   display: grid;
   gap: 0.7rem;
   padding: 0.15rem 0.2rem 0.35rem;
@@ -78,11 +79,10 @@
 .camelot-gyro {
   --scene-size: min(100%, 26rem);
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: var(--scene-size);
-  perspective: 1480px;
-  perspective-origin: 50% 42%;
+  display: block;
+  height: var(--scene-size);
+  perspective: 720px;
+  perspective-origin: 50% 46%;
   outline: none;
   touch-action: pan-y;
 }
@@ -90,6 +90,13 @@
 .camelot-gyro:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 70%, white);
   border-radius: 18px;
+}
+
+.camelot-space {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform-style: preserve-3d;
 }
 
 .camelot-halo {
@@ -102,7 +109,8 @@
     radial-gradient(circle at 70% 72%, rgba(0, 232, 255, 0.16), transparent 48%);
   filter: blur(22px);
   transform: translateZ(-72px);
-  opacity: calc(0.55 + var(--beat-pulse) * 0.35);
+  opacity: 0.7;
+  animation: camelot-breathe calc(4 * var(--beat-ms)) ease-in-out infinite;
 }
 
 .camelot-orbit {
@@ -116,22 +124,22 @@
 }
 
 .camelot-orbit-outer {
-  --ring-x: 74deg;
-  --ring-z: -56px;
-  width: 94%;
-  height: 46%;
-  margin: -23% 0 0 -47%;
+  --ring-x: 76deg;
+  --ring-z: 8px;
+  width: 92%;
+  height: 42%;
+  margin: -21% 0 0 -46%;
   border: 1px solid color-mix(in srgb, var(--key-color) 55%, var(--magenta));
   box-shadow: 0 0 22px color-mix(in srgb, var(--key-color) 28%, transparent);
   animation-duration: 22s;
 }
 
 .camelot-orbit-mid {
-  --ring-x: 74deg;
-  --ring-z: -28px;
+  --ring-x: 68deg;
+  --ring-z: 18px;
   width: 78%;
-  height: 36%;
-  margin: -18% 0 0 -39%;
+  height: 34%;
+  margin: -17% 0 0 -39%;
   border: 1px solid color-mix(in srgb, var(--cyan) 55%, white);
   animation-duration: 15s;
   animation-direction: reverse;
@@ -139,25 +147,13 @@
 }
 
 .camelot-orbit-inner {
-  --ring-x: 74deg;
-  --ring-z: -8px;
-  width: 58%;
-  height: 24%;
-  margin: -12% 0 0 -29%;
+  --ring-x: 82deg;
+  --ring-z: -12px;
+  width: 62%;
+  height: 22%;
+  margin: -11% 0 0 -31%;
   border: 1px solid color-mix(in srgb, var(--violet) 60%, white);
   animation-duration: 11s;
-}
-
-.camelot-rig {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 26rem);
-  aspect-ratio: 1;
-  transform-style: preserve-3d;
-  transform:
-    rotateX(var(--gyro-x))
-    rotateY(var(--gyro-y));
-  will-change: transform;
 }
 
 .camelot-floor {
@@ -175,148 +171,169 @@
     transparent 72%
   );
   filter: blur(16px);
-  transform: translateZ(-48px) rotateX(78deg) scale(1.12);
   opacity: 0.85;
 }
 
-.camelot-core-side {
+.camelot-sphere {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: calc(var(--sphere-r) * 2);
+  height: calc(var(--sphere-r) * 2);
+  margin: calc(var(--sphere-r) * -1) 0 0 calc(var(--sphere-r) * -1);
+  transform-style: preserve-3d;
+  transform: rotateX(var(--sphere-x)) rotateY(var(--sphere-y));
+  will-change: transform;
+}
+
+.camelot-sphere-nucleus {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  z-index: 1;
+  width: calc(var(--sphere-r) * 1.92);
+  height: calc(var(--sphere-r) * 1.92);
+  margin: calc(var(--sphere-r) * -0.96) 0 0 calc(var(--sphere-r) * -0.96);
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 32% 26%, #4a5b74 0%, #1a2230 38%, #070910 72%),
+    radial-gradient(circle at 70% 78%, color-mix(in srgb, var(--key-color) 28%, transparent), transparent 52%);
+  box-shadow:
+    inset -22px -28px 48px rgba(0, 0, 0, 0.72),
+    inset 12px 14px 28px rgba(255, 255, 255, 0.08),
+    0 0 36px color-mix(in srgb, var(--key-color) 22%, transparent);
+}
+
+.camelot-equator {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--key-color) 38%, rgba(255, 255, 255, 0.35));
+  transform: rotateX(90deg);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--key-color) 35%, transparent);
+}
+
+.camelot-panel {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 30%;
-  height: 30%;
-  margin: -15% 0 0 -15%;
-  border-radius: 50%;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--key-color) 35%, #1a1420),
-    #05060b 70%
-  );
-  transform: translateZ(18px) rotateX(76deg) scaleY(0.42);
-  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.45);
-}
-
-.camelot-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  width: var(--pw);
+  height: var(--ph);
+  margin: calc(var(--ph) / -2) 0 0 calc(var(--pw) / -2);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0.5px solid rgba(4, 6, 12, 0.55);
+  border-radius: 3px;
+  transform: rotateY(var(--lon)) rotateX(var(--lat)) translateZ(var(--sphere-r));
   transform-style: preserve-3d;
+  backface-visibility: hidden;
+  cursor: pointer;
+  color: #070910;
+  font-family: var(--font-hud);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--panel-color) 36%, #080a12),
+      var(--panel-color) 48%,
+      color-mix(in srgb, var(--panel-color) 36%, #080a12)
+    );
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.38),
+    0 0 10px color-mix(in srgb, var(--panel-color) 28%, transparent);
+  transition:
+    filter 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.camelot-panel span {
   pointer-events: none;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.camelot-layer-b {
-  transform: translateZ(22px);
-  filter: drop-shadow(0 16px 14px rgba(0, 0, 0, 0.42));
+.camelot-panel[data-ring="B"] {
+  filter: brightness(1.14) saturate(1.05);
 }
 
-.camelot-layer-a {
-  transform: translateZ(8px);
-  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.38));
+.camelot-panel[data-ring="A"] {
+  filter: brightness(0.76) saturate(1.18);
 }
 
-.camelot-layer-hub {
-  transform: translateZ(36px);
-  pointer-events: none;
-  filter: drop-shadow(0 10px 16px color-mix(in srgb, var(--key-color) 35%, transparent));
+.camelot-panel[data-state="related"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--cyan) 70%, white),
+    0 0 16px var(--panel-color);
 }
 
-.camelot-glass {
+.camelot-panel[data-state="selected"] {
+  background: var(--panel-color);
+  box-shadow:
+    inset 0 0 0 1.5px #fff,
+    0 0 22px var(--panel-color);
+  z-index: 2;
+}
+
+.camelot-panel:hover {
+  filter: brightness(1.2) saturate(1.12);
+}
+
+.camelot-sphere-shade {
   position: absolute;
-  inset: 14%;
+  inset: 18% 16% 14%;
   border-radius: 50%;
   pointer-events: none;
-  transform: translateZ(40px);
+  z-index: 3;
   background:
     radial-gradient(
       circle at var(--glint-x) var(--glint-y),
-      rgba(255, 255, 255, 0.28),
-      transparent 38%
+      rgba(255, 255, 255, 0.32),
+      transparent 34%
     ),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 46%);
+    radial-gradient(circle at 72% 78%, rgba(0, 0, 0, 0.42), transparent 52%);
   mix-blend-mode: screen;
-  opacity: calc(0.42 + var(--beat-pulse) * 0.28);
+  opacity: 0.62;
+  animation: camelot-breathe calc(4 * var(--beat-ms)) ease-in-out infinite;
 }
 
-.camelot-sector {
-  fill: color-mix(in srgb, var(--sector-color) 62%, #0a0d14);
-  stroke: rgba(5, 6, 11, 0.55);
-  stroke-width: 1.2;
-  cursor: pointer;
-  pointer-events: auto;
-  transition:
-    fill 0.22s ease,
-    stroke 0.22s ease,
-    filter 0.22s ease;
-}
-
-.camelot-sector[data-ring="B"] {
-  fill: color-mix(in srgb, var(--sector-color) 86%, white 6%);
-}
-
-.camelot-sector[data-ring="A"] {
-  fill: color-mix(in srgb, var(--sector-color) 58%, #070910);
-}
-
-.camelot-sector[data-state="related"] {
-  fill: color-mix(in srgb, var(--sector-color) 92%, white 10%);
-  stroke: color-mix(in srgb, var(--cyan) 70%, white);
-  stroke-width: 1.6;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--sector-color) 55%, transparent));
-}
-
-.camelot-sector[data-state="selected"] {
-  fill: var(--sector-color);
-  stroke: #fff;
-  stroke-width: 2.1;
-  filter: drop-shadow(0 0 12px var(--sector-color));
-}
-
-.camelot-sector:hover {
-  fill: color-mix(in srgb, var(--sector-color) 96%, white 8%);
-}
-
-.camelot-sector-code,
-.camelot-sector-name {
+.camelot-core-badge {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  gap: 0.12rem;
+  padding: 0.55rem 0.85rem 0.6rem;
+  border-radius: 999px;
   pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, rgba(12, 16, 26, 0.72), rgba(5, 7, 12, 0.86));
+  border: 1px solid color-mix(in srgb, var(--key-color) 55%, white);
+  box-shadow:
+    0 0 24px color-mix(in srgb, var(--key-color) 35%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.camelot-core-badge strong {
   font-family: var(--font-hud);
-  fill: #0a0d14;
-}
-
-.camelot-sector-code {
-  font-size: 0.72rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.camelot-sector-name {
-  font-size: 0.48rem;
-  letter-spacing: 0.02em;
-  opacity: 0.82;
-}
-
-.camelot-hub-ring {
-  fill: none;
-  stroke: color-mix(in srgb, var(--amber) 55%, white);
-  stroke-width: 1.4;
-}
-
-.camelot-hub-code {
-  font-family: var(--font-hud);
-  font-size: 1.35rem;
-  font-weight: 700;
-  fill: var(--text);
   letter-spacing: 0.08em;
+  color: var(--text);
 }
 
-.camelot-hub-mode {
+.camelot-core-badge span {
   font-family: var(--font-mono);
   font-size: 0.58rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  fill: var(--amber);
+  color: var(--key-color);
 }
 
 .camelot-wheel-legend {
@@ -722,16 +739,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .camelot-sector-name {
-    display: none;
-  }
-
-  .camelot-sector-code {
-    font-size: 0.8rem;
+  .camelot-panel {
+    font-size: 0.54rem;
   }
 
   .camelot-gyro {
     --scene-size: min(100%, 22rem);
+  }
+
+  .camelot-scene {
+    --sphere-r: 128px;
   }
 
   .harmony-prism-scene {
@@ -743,6 +760,16 @@
   .harmony-neighbors,
   .harmony-journey ol {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@keyframes camelot-breathe {
+  0%,
+  100% {
+    opacity: 0.48;
+  }
+  50% {
+    opacity: 0.82;
   }
 }
 
@@ -766,17 +793,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .camelot-sector {
+  .camelot-panel {
     transition: none;
   }
 
   .camelot-orbit,
+  .camelot-halo,
+  .camelot-sphere-shade,
   .harmony-prism-rig {
     animation: none;
   }
 
-  .camelot-rig {
+  .camelot-sphere {
     will-change: auto;
-    transform: none;
   }
 }
