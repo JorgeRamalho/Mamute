@@ -16,7 +16,14 @@ export async function cueRadioPlatform(page: Page, platformId: string): Promise<
   const title = player.locator(".radio-dj-title");
   const next = player.getByRole("button", { name: "Próxima faixa" });
 
-  for (let step = 0; step < 16; step += 1) {
+  const queued = player.locator(`button.radio-dj-queue-item[data-platform="${platformId}"]`).first();
+  if ((await queued.count()) > 0) {
+    await queued.click({ force: true });
+    await expect(onAir).toHaveAttribute("data-platform", platformId, { timeout: 8_000 });
+    return;
+  }
+
+  for (let step = 0; step < 40; step += 1) {
     if ((await onAir.getAttribute("data-platform")) === platformId) {
       return;
     }

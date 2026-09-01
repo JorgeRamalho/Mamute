@@ -8,6 +8,7 @@ import { ConfirmEmailPage } from "../pages/ConfirmEmailPage";
 import { CatalogPage } from "../pages/CatalogPage";
 import { DjPage } from "../pages/DjPage";
 import { HomePage } from "../pages/HomePage";
+import { HarmonyPage } from "../pages/HarmonyPage";
 import { LegalPage } from "../pages/LegalPage";
 import { MixerPage } from "../pages/MixerPage";
 import { RadioPage } from "../pages/RadioPage";
@@ -16,7 +17,7 @@ const TITLES: Record<string, string> = {
   "/": "Mamute DJPLAYER — Mixer player para DJs iniciantes e avançados",
   "/mixer": "Mixer CDJ e controladora — Mamute DJPLAYER",
   "/academia": "Academia DJ · iniciante ao avançado — Mamute DJPLAYER",
-  "/radio": "Mamute FM · rádio contínua de eletrônica",
+  "/harmonia": "Harmonia · roda Camelot — Mamute DJPLAYER",
   "/catalogo": "Plataformas · Beatport, Deezer, SoundCloud, YouTube e Spotify — Mamute DJPLAYER",
   "/cadastro": "Cadastro DJ · perfil de cabine — Mamute DJPLAYER",
   "/cadastro/confirmar-email": "Confirmar e-mail · cadastro DJ — Mamute DJPLAYER",
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/mixer" element={<MixerPage />} />
           <Route path="/academia" element={<AcademyPage />} />
+          <Route path="/harmonia" element={<HarmonyPage />} />
           <Route path="/radio" element={<RadioPage />} />
           <Route path="/catalogo" element={<CatalogPage />} />
           <Route path="/cadastro" element={<CadastroPage />} />

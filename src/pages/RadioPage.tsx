@@ -7,7 +7,7 @@ export function RadioPage() {
       <p className="kicker">Mamute FM</p>
       <h1>Rádio integrada</h1>
       <p className="lede">
-        Flow contínuo das plataformas — só a que está tocando aparece no visor, marcada AO VIVO.
+        A rádio liga sozinha ao abrir o site e toca eletrônica em MP3, no aleatório, sem parar.
       </p>
       <RadioErrorBoundary>
         <RadioStudio />

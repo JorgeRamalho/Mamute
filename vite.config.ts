@@ -35,11 +35,13 @@ function injectViteEntry(): Plugin {
   };
 }
 
+const liveFrontend = process.env.MAMUTE_LIVE_VITE === "1";
+
 export default defineConfig({
   plugins: [
     react(),
     // Keep platform env/config, but do not intercept /api/* — Vite proxies DJ APIs to netlify dev (8888 + local DB).
-    netlify({ middleware: false }),
+    ...(liveFrontend ? [] : [netlify({ middleware: false })]),
     injectViteEntry(),
     liveBundleStamp(),
     {

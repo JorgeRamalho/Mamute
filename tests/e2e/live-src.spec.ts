@@ -25,7 +25,7 @@ async function waitForSrcApp(page: Page) {
   expect(fromSrc).toBe(true);
 }
 
-test.describe("Go Live lê src/ via Vite, nunca dist/ atrasado", () => {
+test.describe("Go Live prefere Vite e cai para dist/", () => {
   let server: http.Server;
 
   test.beforeAll(async () => {
@@ -38,22 +38,22 @@ test.describe("Go Live lê src/ via Vite, nunca dist/ atrasado", () => {
     });
   });
 
-  test("sem Vite não monta o bundle de dist/", async ({ page }) => {
+  test("sem Vite monta o bundle de dist/", async ({ page }) => {
     await page.route("http://127.0.0.1:5173/**", (route) => route.abort());
     await page.goto(`${LIVE_ORIGIN}/`, { waitUntil: "domcontentloaded" });
 
-    await expect(page.locator("[data-live-src-required]")).toBeVisible({ timeout: 12_000 });
-    await expect(page.getByRole("link", { name: "Cadastrar DJ" })).toHaveCount(0);
-    await expect(page.locator("script[src*='dist/assets/main.js']")).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Go Live precisa do Vite" })).toBeVisible({
-      timeout: 8_000,
+    await expect(page.locator("script[src*='dist/assets/main.js']")).toHaveCount(1);
+    const accept = page.getByRole("button", { name: "Aceitar" });
+    await accept.click({ timeout: 8_000 }).catch(() => undefined);
+    await expect(page.getByRole("banner").getByRole("link", { name: "Cadastrar DJ" })).toBeVisible({
+      timeout: 25_000,
     });
   });
 
-  test("index.html nunca volta a injetar dist/", () => {
+  test("index.html tenta Vite e cai para dist/", () => {
     const html = fs.readFileSync(INDEX_HTML, "utf8");
-    expect(html).not.toMatch(/dist\/assets\/main\.js/);
-    expect(html).not.toMatch(/tryLoadDist/);
+    expect(html).toMatch(/dist\/assets\/main\.js/);
+    expect(html).toContain("tryLoadDist");
     expect(html).toContain("/@react-refresh");
     expect(html).toContain("/src/main.tsx");
   });

@@ -3,12 +3,12 @@ import type { RadioClip } from "../types/radio";
 import { RADIO_PLATFORM_ORDER } from "../data/radio";
 
 export function isPlayableClip(clip: RadioClip): boolean {
-  return Boolean(clip.youtubeId || clip.previewUrl);
+  return Boolean(clip.previewUrl);
 }
 
 function clipPlaybackRank(clip: RadioClip): number {
-  if (clip.youtubeId) return 2;
-  if (clip.previewUrl) return 1;
+  if (clip.previewUrl) return 2;
+  if (clip.youtubeId) return 1;
   return 0;
 }
 

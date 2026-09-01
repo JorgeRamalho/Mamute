@@ -6,7 +6,7 @@ const SCROLL_ACTIVATE_PX = 10;
 
 const NAV_LINKS = [
   { to: "/", label: "Início" },
-  { to: "/#harmonia", label: "Harmonia", hash: "harmonia" },
+  { to: "/harmonia", label: "Harmonia" },
   { to: "/academia", label: "Sala de Aula" },
   { to: "/mixer", label: "Mixer CDJ" },
   { to: "/catalogo", label: "Plataformas" },
@@ -101,25 +101,17 @@ export function Header() {
           </span>
         </NavLink>
         <nav id="site-nav" className={open ? "nav open" : "nav"} aria-label="Principal">
-          {NAV_LINKS.map((link) => {
-            const hash = "hash" in link ? link.hash : undefined;
-            const harmonyOpen = location.pathname === "/" && location.hash === "#harmonia";
-            return (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.to === "/"}
-                className={({ isActive }) => {
-                  if (hash) return harmonyOpen ? "active" : undefined;
-                  if (link.to === "/" && harmonyOpen) return undefined;
-                  return isActive ? "active" : undefined;
-                }}
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </NavLink>
-            );
-          })}
+          {NAV_LINKS.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
+              className={({ isActive }) => (isActive ? "active" : undefined)}
+              onClick={() => setOpen(false)}
+            >
+              {link.label}
+            </NavLink>
+          ))}
           <NavLink
             className="nav-area-dj"
             to={AREA_DJ_LINK.to}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
 import { getCamelotKey } from "../../lib/musical-key";
 import { syncBeginnerDjToStorage } from "../../lib/radio-catalog-import";
@@ -23,6 +23,7 @@ type RadioVirtualDisplayProps = {
   playlistOnly: boolean;
   onPlaylistOnlyChange: (value: boolean) => void;
   onCatalogUpdated: () => void;
+  stream?: ReactNode;
 };
 
 function platformCode(id?: PlatformId): string {
@@ -43,6 +44,7 @@ export function RadioVirtualDisplay({
   playlistOnly,
   onPlaylistOnlyChange,
   onCatalogUpdated,
+  stream,
 }: RadioVirtualDisplayProps) {
   const [busy, setBusy] = useState(false);
   const [statusLine, setStatusLine] = useState<string | null>(null);
@@ -115,7 +117,8 @@ export function RadioVirtualDisplay({
         </div>
 
         <div className="radio-hud-screen">
-          <div className="radio-hud-screen-inner">
+          <div className="radio-hud-screen-inner" data-stream={stream ? "true" : "false"}>
+            {stream ? <div className="radio-hud-stream">{stream}</div> : null}
             <RadioPulseGrid
               accent={accent}
               keyColor={keyColor}

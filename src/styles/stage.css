@@ -75,22 +75,13 @@
   z-index: 1;
 }
 
-.app-shell:has(.radio-fm-balloon) > main,
-.app-shell:has(.radio-fm-balloon) > .site-footer {
-  padding-bottom: var(--radio-fm-reserve-h, 0px);
-}
-
-.app-shell:has(.radio-fm-balloon) > .site-footer {
-  padding-inline-end: max(
-    var(--layout-gutter),
-    calc(var(--radio-fm-reserve-w, 0px) + var(--radio-fm-gap))
-  );
+.app-shell:has(.radio-fm-balloon) .site-footer-bar {
+  padding-inline: max(1.25rem, var(--radio-fm-reserve-w, 0px));
 }
 
 .app-shell:has(.radio-fm-balloon) .plans,
 .app-shell:has(.radio-fm-balloon) .dj-page,
 .app-shell:has(.radio-fm-balloon) .booth-faq {
-  padding-bottom: var(--radio-fm-reserve-h, 0px);
   scroll-margin-bottom: calc(var(--radio-fm-reserve-h, 0px) + 0.5rem);
 }
 
@@ -175,26 +166,9 @@
   }
 }
 
-@media (max-width: 900px) {
-  .app-shell:has(.radio-fm-balloon) > .site-footer {
-    padding-bottom: calc(var(--radio-fm-reserve-h, 0px) + 0.35rem);
-    padding-inline-end: max(
-      var(--layout-gutter),
-      calc(var(--radio-fm-reserve-w, 0px) + var(--radio-fm-gap))
-    );
-  }
-
-  .app-shell:has(.radio-fm-balloon) .site-footer-legal {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.45rem;
-  }
-}
-
 @media (max-width: 720px) {
   .app-shell:has(.radio-fm-balloon) > .site-footer {
-    padding-bottom: calc(var(--radio-fm-reserve-h, 0px) + 0.35rem);
+    padding-bottom: var(--radio-fm-reserve-h, 0px);
   }
 
   .card,

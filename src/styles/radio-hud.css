@@ -167,6 +167,67 @@
     inset 0 0 24px color-mix(in srgb, var(--hud-accent, var(--cyan)) 4%, transparent);
 }
 
+.radio-hud-stream {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  height: 2.6rem;
+  z-index: 8;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.radio-hud-stream .radio-mp3-host,
+.radio-hud-stream .radio-mp3-el {
+  pointer-events: auto;
+}
+
+.radio-mp3-host {
+  position: relative;
+  width: 100%;
+  height: 2.4rem;
+  z-index: 8;
+  display: flex;
+  align-items: flex-end;
+}
+
+.radio-mp3-el {
+  width: 100%;
+  height: 2.4rem;
+  display: block;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.radio-hud-stream-frame,
+.radio-hud-stream iframe,
+.radio-hud-stream .radio-live-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  object-fit: cover;
+}
+
+.radio-hud-stream .radio-live-preview {
+  opacity: 0;
+}
+
+.radio-hud-screen-inner[data-stream="true"] .radio-hud-pulse {
+  opacity: 0.42;
+}
+
+.radio-hud[data-playing="true"] .radio-hud-screen-inner[data-stream="true"] .radio-hud-pulse {
+  opacity: 0.22;
+}
+
+.radio-hud[data-playing="true"] .radio-hud-screen-inner[data-stream="true"] .radio-hud-core {
+  background: linear-gradient(180deg, rgba(2, 4, 8, 0.28), rgba(2, 4, 8, 0.62));
+}
+
 .radio-hud-pulse {
   position: absolute;
   inset: 0;

@@ -62,11 +62,11 @@ Depois disso, `npm run dev` e `npm run test:auth` cobrem o ciclo completo.
 
 ## Live Server (VS Code)
 
-O Go Live (**porta 5500**) **não usa `dist/`**. Ele monta o app a partir de `src/` via Vite em `http://127.0.0.1:5173` (integração backend: preamble React + `@vite/client` + `src/main.tsx`). Sem o Vite, a página espera e explica — nunca mostra um bundle atrasado.
+O Go Live (**porta 5500**) tenta o Vite em `http://127.0.0.1:5173` (hot reload de `src/`). Se o Vite não responder, monta o bundle em `dist/`.
 
-1. No terminal: `npm run live:vite` (ou `npm run dev`) — ou **Ctrl+Shift+B** (tarefa *Mamute: Vite para Go Live*)
-2. Com `index.html` aberto, **Go Live**
-3. Salve arquivos em `src/` — o hot reload do Vite atualiza a página
+1. Com `index.html` aberto, **Go Live** — se `dist/` já existir, o app abre
+2. Hot reload: `npm run live:vite` (ou **Ctrl+Shift+B**) e recarregue
+3. Sem `dist/`: `npm run live:build`, depois recarregue com **Ctrl+Shift+R**
 
 `.vscode/settings.json` ignora `src/` no Live Server para não dar reload cheio e brigar com o HMR.
 

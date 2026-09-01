@@ -2,6 +2,67 @@
   --show-accent: #f5b04a;
 }
 
+.harmony-panel {
+  --show-accent: #f5b04a;
+}
+
+.harmony-panel-head-link {
+  display: block;
+  margin: 0;
+  padding: 0.15rem 0.35rem;
+  border-radius: calc(var(--radius) + 2px);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.harmony-panel-head-link:hover,
+.harmony-panel-head-link:focus-visible {
+  color: var(--show-accent);
+  background: rgba(245, 176, 74, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(245, 176, 74, 0.28);
+  outline: none;
+}
+
+.harmony-panel-head-link .kicker {
+  transition: color 0.22s ease;
+}
+
+.harmony-panel-head-link:hover .kicker,
+.harmony-panel-head-link:focus-visible .kicker {
+  color: var(--magenta);
+}
+
+.harmony-info {
+  --show-accent: #5ec8ff;
+}
+
+.harmony-page-intro {
+  max-width: 46rem;
+  margin: 0 auto 1.5rem;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  text-align: center;
+}
+
+.harmony-page-intro h1 {
+  margin: 0.35rem 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4vw, 2.65rem);
+  line-height: 1.08;
+}
+
+.harmony-page .harmony-showcase {
+  margin-top: 0;
+}
+
+.harmony-page-visor {
+  padding-top: 0;
+}
+
 .harmony-stage {
   position: relative;
   z-index: 1;

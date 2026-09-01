@@ -46,6 +46,9 @@ test.describe("Rádio — melhorias do visor contínuo", () => {
   test("o flow avança entre plataformas sem listar os cinco hubs", async ({ page }) => {
     await openRadio(page);
 
+    const player = page.getByRole("region", { name: "Mamute DJ · rádio integrada" });
+    await expect(player).toHaveAttribute("data-catalog-ready", "true", { timeout: 30_000 });
+
     const title = page.locator(".radio-dj-title");
     const firstTitle = (await title.textContent()) ?? "";
 

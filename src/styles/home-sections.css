@@ -782,24 +782,28 @@
 .mamute-spotlight {
   --spot-accent: var(--cyan);
   position: relative;
-  isolation: isolate;
   margin: 0.35rem 0 1.75rem;
   padding: clamp(1.35rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.75rem);
-  border-radius: 0;
-  scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
-  overflow: visible;
   border: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 78% 42%, rgba(255, 45, 149, 0.12), transparent 58%),
-    radial-gradient(ellipse 70% 55% at 22% 38%, rgba(0, 232, 255, 0.14), transparent 60%);
+  outline: none;
   box-shadow: none;
+  background: none;
+  overflow: visible;
+  scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
+}
+
+.mamute-spotlight:focus,
+.mamute-spotlight:focus-visible,
+.mamute-spotlight:target {
+  outline: none;
 }
 
 .mamute-spotlight-ambient {
   position: absolute;
-  inset: 0;
+  inset: -18% -6%;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 0;
 }
 
 .mamute-spotlight-orb {
@@ -874,6 +878,9 @@
   position: relative;
   width: min(320px, 78vw);
   aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  clip-path: circle(50% at 50% 50%);
   animation: mamute-portrait-float calc(8 * var(--beat-ms)) ease-in-out infinite;
 }
 
@@ -895,17 +902,11 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  padding: 4px;
+  overflow: hidden;
   border-radius: 50%;
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--cyan-hot) 70%, white),
-    var(--cyan) 35%,
-    var(--magenta) 72%,
-    color-mix(in srgb, var(--violet) 80%, white)
-  );
+  clip-path: circle(50% at 50% 50%);
+  background: transparent;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12),
     0 0 36px rgba(0, 232, 255, 0.34),
     0 0 52px rgba(255, 45, 149, 0.16),
     0 20px 44px rgba(0, 0, 0, 0.48);
@@ -917,6 +918,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  clip-path: circle(50% at 50% 50%);
   background: #060910;
 }
 
@@ -925,12 +927,14 @@
   width: 100%;
   height: 100%;
   max-width: none;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
+  border-radius: 50%;
+  transform: scale(1.04);
   user-select: none;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.38));
+  filter: none;
 }
 
 .mamute-portrait__veil {

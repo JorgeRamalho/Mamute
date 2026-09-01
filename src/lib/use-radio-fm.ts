@@ -47,26 +47,25 @@ export function useRadioFmStation() {
   const accent = clip ? (platformById.get(clip.platform)?.accent ?? "#00e8ff") : "#00e8ff";
 
   const skip = useCallback(
-    (delta: 1 | -1) => {
-      setSource((current) => {
-        if (current.kind !== "clip") return current;
-        const next =
-          delta === 1
-            ? getNextPlayableClip(catalog, current.clip.id)
-            : getPreviousPlayableClip(catalog, current.clip.id);
-        if (!next) return current;
-        return { kind: "clip", clip: next, continuous: true, autoplay: true };
-      });
+    (delta: 1 | -1): RadioClip | null => {
+      if (source.kind !== "clip") return null;
+      const next =
+        delta === 1
+          ? getNextPlayableClip(catalog, source.clip.id)
+          : getPreviousPlayableClip(catalog, source.clip.id);
+      if (!next) return null;
+      setSource({ kind: "clip", clip: next, continuous: true, autoplay: true });
+      return next;
     },
-    [catalog],
+    [catalog, source],
   );
 
   const handleTrackEnded = useCallback(() => {
     const now = Date.now();
-    if (now - lastAdvanceAtRef.current < 1_500) return;
+    if (now - lastAdvanceAtRef.current < 800) return;
     lastAdvanceAtRef.current = now;
     setSource((current) => {
-      if (current.kind !== "clip" || !current.continuous) return current;
+      if (current.kind !== "clip") return current;
       const next = getNextPlayableClip(catalog, current.clip.id);
       if (!next || next.id === current.clip.id) return current;
       return { kind: "clip", clip: next, continuous: true, autoplay: true };

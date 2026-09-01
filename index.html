@@ -124,6 +124,8 @@
 
         var VITE_ORIGIN = "http://127.0.0.1:5173";
         var VITE_POLL_MS = 1500;
+        var CSS_HREF = "./dist/assets/index.css";
+        var JS_HREF = "./dist/assets/main.js";
 
         function viteIsReady(res) {
           if (!res.ok) return false;
@@ -132,11 +134,32 @@
           return /javascript|typescript|ecmascript|module/i.test(type) || type === "";
         }
 
+        function withTimeout(promise, ms) {
+          return new Promise(function (resolve, reject) {
+            var timer = setTimeout(function () {
+              reject(new Error("vite timeout"));
+            }, ms);
+            promise.then(
+              function (value) {
+                clearTimeout(timer);
+                resolve(value);
+              },
+              function (err) {
+                clearTimeout(timer);
+                reject(err);
+              },
+            );
+          });
+        }
+
         function probeVite() {
-          return fetch(VITE_ORIGIN + "/@vite/client", { cache: "no-store", mode: "cors" }).then(
-            function (res) {
-              if (!viteIsReady(res)) throw new Error("vite off");
-            },
+          return withTimeout(
+            fetch(VITE_ORIGIN + "/@vite/client", { cache: "no-store", mode: "cors" }).then(
+              function (res) {
+                if (!viteIsReady(res)) throw new Error("vite off");
+              },
+            ),
+            800,
           );
         }
 
@@ -152,16 +175,44 @@
           root.innerHTML = html;
         }
 
-        function showWait() {
+        function showHint() {
           showPanel(
-            '<p data-live-wait data-live-src-required style="font-family:Outfit,sans-serif;color:#9bb0c9;padding:2.5rem;text-align:center">Go Live lê <code>src/</code> pelo Vite. Aguardando http://127.0.0.1:5173…</p>',
+            '<section data-live-src-required style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">Go Live sem bundle</h1><p>O Live Server (porta 5500) monta o app pelo Vite em <code>src/</code> ou pelo arquivo compilado em <code>dist/</code>.</p><p>No terminal: <code>npm run live:vite</code> (hot reload) ou <code>npm run live:build</code> (gera dist/). Recarregue com <strong>Ctrl+Shift+R</strong>.</p></section>',
           );
         }
 
-        function showHint() {
-          showPanel(
-            '<section data-live-src-required style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">Go Live precisa do Vite</h1><p>A porta 5500 <strong>não</strong> usa o bundle antigo em <code>dist/</code>. Ela só monta o app a partir de <code>src/</code> via Vite.</p><p>No terminal: <code>npm run live:vite</code> ou <code>npm run dev</code>. Esta página entra sozinha quando o Vite responder em <a href="http://127.0.0.1:5173/" style="color:#00e8ff">127.0.0.1:5173</a>.</p></section>',
-          );
+        function isRealAsset(type, text) {
+          if (!text || /^\s*</.test(text)) return false;
+          if (/html/i.test(type || "")) return false;
+          return text.length > 20;
+        }
+
+        function injectDist(cssHref, jsHref) {
+          var css = document.createElement("link");
+          css.rel = "stylesheet";
+          css.href = cssHref;
+          document.head.appendChild(css);
+
+          var script = document.createElement("script");
+          script.type = "module";
+          script.src = jsHref;
+          script.onerror = showHint;
+          document.body.appendChild(script);
+        }
+
+        function tryLoadDist() {
+          var cssHref = CSS_HREF + "?t=" + Date.now();
+          var jsHref = JS_HREF + "?t=" + Date.now();
+          return fetch(jsHref, { cache: "no-store" }).then(function (res) {
+            return res.text().then(function (text) {
+              var type = res.headers.get("content-type") || "";
+              if (res.ok && isRealAsset(type, text)) {
+                injectDist(cssHref, jsHref);
+                return true;
+              }
+              return false;
+            });
+          });
         }
 
         var booted = false;
@@ -194,18 +245,41 @@
           }
         }
 
-        var started = Date.now();
         function followVite() {
           probeVite()
             .then(bootVite)
             .catch(function () {
-              if (Date.now() - started < 4000) showWait();
-              else showHint();
               setTimeout(followVite, VITE_POLL_MS);
             });
         }
 
-        followVite();
+        function followViteReload() {
+          probeVite()
+            .then(function () {
+              location.reload();
+            })
+            .catch(function () {
+              setTimeout(followViteReload, VITE_POLL_MS);
+            });
+        }
+
+        probeVite()
+          .then(bootVite)
+          .catch(function () {
+            tryLoadDist()
+              .then(function (ok) {
+                if (ok) {
+                  followViteReload();
+                  return;
+                }
+                showHint();
+                followVite();
+              })
+              .catch(function () {
+                showHint();
+                followVite();
+              });
+          });
       })();
     </script>
   </body>

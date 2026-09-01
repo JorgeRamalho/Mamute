@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, type CSSProperties } from "react";
 import { PLATFORMS } from "../../data/platforms";
 import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
-import { getNextPlayableClip, getPreviousPlayableClip, getUpcomingClips } from "../../lib/radio-playlist";
+import { getUpcomingClips } from "../../lib/radio-playlist";
+import { radioMp3Station } from "../../lib/radio-mp3-station";
+import { useRadioMp3 } from "../../lib/use-radio-mp3";
 import type { RadioClip, RadioSource } from "../../types/radio";
 import type { PlatformId } from "../../types/platform";
+import { RadioLiveStage } from "./RadioLiveStage";
 import { RadioVirtualDisplay } from "./RadioVirtualDisplay";
-import { RadioYoutubeFrame } from "./RadioYoutubeFrame";
 
 type RadioDjPlayerProps = {
   clips: RadioClip[];
@@ -19,8 +21,6 @@ type RadioDjPlayerProps = {
   onTogglePlaylistClip: (clipId: string) => void;
   onSelectClip: (clip: RadioClip, options?: { autoplay?: boolean }) => void;
   onToggleContinuous: () => void;
-  onTrackEnded: () => void;
-  onAutoplayConsumed: () => void;
 };
 
 const platformById = new Map(PLATFORMS.map((platform) => [platform.id, platform]));
@@ -42,48 +42,21 @@ export function RadioDjPlayer({
   onTogglePlaylistClip,
   onSelectClip,
   onToggleContinuous,
-  onTrackEnded,
-  onAutoplayConsumed,
 }: RadioDjPlayerProps) {
-  const activeClip = source.kind === "clip" ? source.clip : null;
+  const mp3 = useRadioMp3();
+  const activeClip = source.kind === "clip" ? (mp3.clip ?? source.clip) : null;
   const continuous = source.kind === "clip" && source.continuous;
-  const autoplay = source.kind === "clip" && source.autoplay;
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlayingFull, setIsPlayingFull] = useState(false);
-
-  const goRelative = (delta: number) => {
-    if (!activeClip) return;
-    const next =
-      delta === 1
-        ? getNextPlayableClip(clips, activeClip.id)
-        : getPreviousPlayableClip(clips, activeClip.id);
-    if (next) onSelectClip(next, { autoplay: true });
-  };
-
+  const playing = mp3.playing;
+  const paused = !playing;
+  const queue = clips.length > 0 ? clips : mp3.clips;
   const flowTracks = useMemo(
-    () => (activeClip ? getUpcomingClips(clips, activeClip.id, 12) : []),
-    [activeClip, clips],
+    () => (activeClip ? getUpcomingClips(queue, activeClip.id, 12) : []),
+    [activeClip, queue],
   );
 
-  const handlePlaybackEnded = useCallback(() => {
-    if (!continuous) return;
-    onTrackEnded();
-  }, [continuous, onTrackEnded]);
-
   useEffect(() => {
-    setIsPlayingFull(false);
-  }, [activeClip?.id]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !activeClip?.previewUrl || source.kind !== "clip") return;
-    if (activeClip.youtubeId) return;
-    if (!autoplay) return;
-
-    void audio.play().finally(() => {
-      onAutoplayConsumed();
-    });
-  }, [activeClip?.id, activeClip?.previewUrl, activeClip?.youtubeId, autoplay, onAutoplayConsumed, source.kind]);
+    if (source.kind === "upload") radioMp3Station.pause();
+  }, [source.kind]);
 
   if (source.kind === "upload") {
     return (
@@ -108,7 +81,7 @@ export function RadioDjPlayer({
     );
   }
 
-  if (clips.length === 0) {
+  if (!activeClip) {
     return (
       <section className="radio-dj-player card radio-dj-player--plain radio-dj-player--unified" aria-label="Mamute DJ · rádio integrada">
         <header className="radio-dj-head radio-dj-head--unified">
@@ -133,75 +106,59 @@ export function RadioDjPlayer({
     );
   }
 
-  const active = activeClip!;
-  const inPlaylist = playlistIds.includes(active.id);
-  const hasYoutube = Boolean(active.youtubeId);
-  const hasPreview = Boolean(active.previewUrl);
-
-  const handleYoutubeUnavailable = () => {
-    if (continuous) {
-      onTrackEnded();
-      return;
-    }
-    if (hasPreview) {
-      void audioRef.current?.play().catch(() => undefined);
-    }
-  };
-
+  const inPlaylist = playlistIds.includes(activeClip.id);
+  const liveStream = <RadioLiveStage className="radio-hud-stream-frame" />;
   const playbackLabel = !catalogReady
-    ? "Sintonizando catálogo…"
-    : hasYoutube
-      ? isPlayingFull
-        ? "Tocando faixa completa · rádio contínua"
-        : "Iniciando faixa completa…"
-      : hasPreview
-        ? "Sem clipe completo — usando áudio disponível"
-        : "Sem áudio para esta faixa — pulando na fila";
+    ? "Sintonizando catálogo eletrônico…"
+    : paused
+      ? "Standby — o próximo clique na página liga o stream aleatório."
+      : "Ao vivo · aleatório · MP3 eletrônico sem parar";
 
   return (
     <section
       className="radio-dj-player card radio-dj-player--plain radio-dj-player--unified"
       aria-label="Mamute DJ · rádio integrada"
       data-continuous={continuous ? "on" : "off"}
+      data-random="on"
       data-catalog-ready={catalogReady ? "true" : "false"}
     >
       <header className="radio-dj-head radio-dj-head--unified">
         <div>
           <p className="kicker">Mamute DJ · rádio integrada</p>
-          <h2 className="radio-dj-title">{active.title}</h2>
-          <p className="radio-dj-artist">{active.artist}</p>
+          <h2 className="radio-dj-title">{activeClip.title}</h2>
+          <p className="radio-dj-artist">{activeClip.artist}</p>
         </div>
         <div className="radio-dj-head-actions">
           <button
             type="button"
             className={inPlaylist ? "radio-dj-playlist-btn is-on" : "radio-dj-playlist-btn"}
             aria-pressed={inPlaylist}
-            onClick={() => onTogglePlaylistClip(active.id)}
+            onClick={() => onTogglePlaylistClip(activeClip.id)}
           >
             {inPlaylist ? "Na playlist" : "+ Playlist"}
           </button>
           <span
             className="radio-dj-platform"
-            data-platform={active.platform}
-            data-live={isPlayingFull ? "true" : "false"}
-            style={{ "--platform-accent": platformById.get(active.platform)?.accent } as CSSProperties}
+            data-platform={activeClip.platform}
+            data-live={playing ? "true" : "false"}
+            style={{ "--platform-accent": platformById.get(activeClip.platform)?.accent } as CSSProperties}
           >
-            {platformLabel(active.platform)}
+            {platformLabel(activeClip.platform)}
           </span>
           <span
-            className={isPlayingFull ? "radio-dj-live-badge" : "radio-dj-live-badge radio-dj-live-badge--idle"}
+            className={playing ? "radio-dj-live-badge" : "radio-dj-live-badge radio-dj-live-badge--idle"}
             role="status"
           >
-            {isPlayingFull ? "AO VIVO" : "STANDBY"}
+            {playing ? "AO VIVO" : "STANDBY"}
           </span>
         </div>
       </header>
 
       <RadioVirtualDisplay
-        clip={active}
+        clip={activeClip}
         accent={accent}
-        platformLabel={platformLabel(active.platform)}
-        isPlaying={isPlayingFull || (hasPreview && !hasYoutube)}
+        platformLabel={platformLabel(activeClip.platform)}
+        isPlaying={playing}
         catalogReady={catalogReady}
         continuous={continuous}
         playbackLabel={playbackLabel}
@@ -209,10 +166,11 @@ export function RadioDjPlayer({
         playlistOnly={playlistOnly}
         onPlaylistOnlyChange={onPlaylistOnlyChange}
         onCatalogUpdated={onCatalogUpdated}
+        stream={liveStream}
       />
 
-      {active.sourceUrl ? (
-        <a className="radio-dj-source" href={active.sourceUrl} target="_blank" rel="noreferrer">
+      {activeClip.sourceUrl ? (
+        <a className="radio-dj-source" href={activeClip.sourceUrl} target="_blank" rel="noreferrer">
           Abrir na plataforma
         </a>
       ) : null}
@@ -220,20 +178,28 @@ export function RadioDjPlayer({
       <div className="radio-dj-on-air" aria-label="Plataforma no ar">
         <span
           className="radio-dj-platform-chip is-active"
-          data-platform={active.platform}
-          data-live={isPlayingFull ? "true" : "false"}
-          style={{ "--platform-accent": platformById.get(active.platform)?.accent } as CSSProperties}
+          data-platform={activeClip.platform}
+          data-live={playing ? "true" : "false"}
+          style={{ "--platform-accent": platformById.get(activeClip.platform)?.accent } as CSSProperties}
         >
-          <span className="radio-dj-platform-chip-name">{platformLabel(active.platform)}</span>
+          <span className="radio-dj-platform-chip-name">{platformLabel(activeClip.platform)}</span>
           <span className="radio-dj-platform-chip-type">
-            {isPlayingFull ? "AO VIVO" : RADIO_PLATFORM_STATION_TYPES[active.platform]}
+            {playing ? "AO VIVO" : RADIO_PLATFORM_STATION_TYPES[activeClip.platform]}
           </span>
         </span>
       </div>
 
       <div className="radio-dj-controls">
-        <button type="button" className="radio-dj-btn" onClick={() => goRelative(-1)} aria-label="Faixa anterior">
+        <button type="button" className="radio-dj-btn" onClick={() => void mp3.skip(-1)} aria-label="Faixa anterior">
           ◀
+        </button>
+        <button
+          type="button"
+          className={`radio-dj-btn radio-dj-btn--play${paused ? "" : " is-on"}`}
+          onClick={() => void mp3.toggle()}
+          aria-label={paused ? "Ligar rádio" : "Pausar rádio"}
+        >
+          {paused ? "▶" : "❚❚"}
         </button>
         <button
           type="button"
@@ -245,48 +211,15 @@ export function RadioDjPlayer({
         >
           ⟳
         </button>
-        <button type="button" className="radio-dj-btn" onClick={() => goRelative(1)} aria-label="Próxima faixa">
+        <button type="button" className="radio-dj-btn" onClick={() => void mp3.skip(1)} aria-label="Próxima faixa">
           ▶
         </button>
       </div>
 
-      <div className="radio-dj-music-player radio-dj-music-player--engine">
-        {!catalogReady ? null : hasYoutube ? (
-          <RadioYoutubeFrame
-            videoId={active.youtubeId}
-            title={`${active.artist} — ${active.title}`}
-            autoplay={autoplay}
-            unavailableAfterMs={12_000}
-            onEnded={handlePlaybackEnded}
-            onUnavailable={handleYoutubeUnavailable}
-            onPlaying={() => setIsPlayingFull(true)}
-            onReady={autoplay ? onAutoplayConsumed : undefined}
-            className="radio-dj-youtube-engine"
-            ariaHidden
-          />
-        ) : hasPreview ? (
-          <audio
-            ref={audioRef}
-            src={active.previewUrl}
-            className="radio-dj-audio radio-dj-audio--hidden"
-            onPlay={() => setIsPlayingFull(true)}
-            onEnded={handlePlaybackEnded}
-          >
-            Seu browser não suporta áudio HTML5.
-          </audio>
-        ) : (
-          <div className="radio-dj-music-empty">
-            <button type="button" className="radio-dj-back" onClick={() => goRelative(1)}>
-              Próxima faixa
-            </button>
-          </div>
-        )}
-      </div>
-
       <p className="radio-dj-caption">
         {continuous
-          ? "Rádio contínua — o flow avança sozinho entre Spotify, SoundCloud, YouTube Music, Beatport e Deezer. Só a plataforma que está tocando aparece no visor."
-          : active.caption}
+          ? "A rádio abre no aleatório e toca qualquer faixa eletrônica em MP3, sem parar. Spotify, SoundCloud, Beatport, Deezer e YouTube Music no acervo."
+          : activeClip.caption}
       </p>
 
       <div className="radio-dj-queue radio-dj-queue--flow" aria-label="Fila contínua">
@@ -297,14 +230,17 @@ export function RadioDjPlayer({
                 type="button"
                 data-platform={clip.platform}
                 className={
-                  clip.id === active.id
+                  clip.id === activeClip.id
                     ? "radio-dj-queue-item is-active"
                     : playlistIds.includes(clip.id)
                       ? "radio-dj-queue-item is-saved"
                       : "radio-dj-queue-item"
                 }
-                aria-pressed={clip.id === active.id}
-                onClick={() => onSelectClip(clip, { autoplay: true })}
+                aria-pressed={clip.id === activeClip.id}
+                onClick={() => {
+                  onSelectClip(clip, { autoplay: true });
+                  void mp3.playClip(clip.id);
+                }}
               >
                 <strong>{clip.title}</strong>
                 <span>{clip.artist}</span>

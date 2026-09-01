@@ -36,6 +36,7 @@ const child = spawn(
     cwd: ROOT,
     stdio: "inherit",
     shell: true,
+    env: { ...process.env, MAMUTE_LIVE_VITE: "1" },
   },
 );
 

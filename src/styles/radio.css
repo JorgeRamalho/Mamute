@@ -778,6 +778,13 @@
   flex-wrap: wrap;
   gap: 0.55rem;
   margin-bottom: 0.85rem;
+  justify-content: center;
+}
+
+.radio-dj-btn--play.is-on {
+  border-color: color-mix(in srgb, var(--magenta) 55%, var(--line));
+  color: var(--magenta);
+  box-shadow: 0 0 16px rgba(255, 45, 149, 0.18);
 }
 
 .radio-dj-music-player {
@@ -1481,9 +1488,12 @@
   width: var(--radio-fm-width);
   max-width: calc(100vw - 2rem);
   max-height: min(
-    45dvh,
+    42dvh,
     calc(100dvh - var(--header-h) - var(--status-h) - var(--cookie-banner-h, 0px) - 1rem)
   );
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   pointer-events: none;
   transition: bottom 220ms ease;
 }
@@ -1495,11 +1505,16 @@
 .radio-fm-balloon-chassis {
   position: relative;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     "player"
     "shell";
   gap: 0;
+  min-height: 0;
+  max-height: inherit;
   isolation: isolate;
+  overflow: hidden;
+  border-radius: 16px;
 }
 
 .radio-fm-balloon-rail {
@@ -1508,17 +1523,11 @@
 
 .radio-fm-balloon-player-host {
   grid-area: player;
-  display: none;
   position: relative;
+  width: 100%;
+  height: 7rem;
   overflow: hidden;
   background: #030508;
-}
-
-.radio-fm-balloon[data-open="true"] .radio-fm-balloon-player-host {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 5.5rem;
   border-radius: 16px 16px 0 0;
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 48%, var(--line));
   border-bottom: 0;
@@ -1527,31 +1536,30 @@
 
 .radio-fm-balloon-viewport-label {
   position: absolute;
-  top: 0.35rem;
-  left: 0.45rem;
+  top: 0.3rem;
+  left: 0.4rem;
   z-index: 2;
   font-family: var(--font-mono);
-  font-size: 0.48rem;
+  font-size: 0.46rem;
   letter-spacing: 0.14em;
   color: color-mix(in srgb, var(--platform-accent, var(--cyan)) 80%, white);
-  padding: 0.12rem 0.35rem;
+  padding: 0.1rem 0.32rem;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 35%, transparent);
+  pointer-events: none;
 }
 
 .radio-fm-balloon-shell {
   grid-area: shell;
   width: 100%;
-  max-height: min(
-    18.5rem,
-    calc(100dvh - var(--header-h) - var(--status-h) - var(--cookie-banner-h, 0px) - 5.5rem)
-  );
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 0 0 16px 16px;
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 38%, var(--line));
+  border-top: 0;
   background:
     radial-gradient(ellipse 120% 80% at 100% 0%, color-mix(in srgb, var(--platform-accent, var(--cyan)) 14%, transparent), transparent 58%),
     radial-gradient(ellipse 70% 50% at 0% 100%, color-mix(in srgb, var(--magenta) 8%, transparent), transparent 62%),
@@ -1564,24 +1572,45 @@
     0 0 48px color-mix(in srgb, var(--platform-accent, var(--cyan)) 7%, transparent);
 }
 
-.radio-fm-balloon[data-open="true"]:has(.radio-fm-balloon-player-host) .radio-fm-balloon-shell {
-  border-radius: 0 0 18px 18px;
-  border-top: 0;
-  margin-top: -1px;
-}
-
-.radio-fm-balloon-frame {
+.radio-fm-balloon-frame,
+.radio-fm-balloon-player-host iframe,
+.radio-fm-balloon-player-host .radio-live-preview,
+.radio-fm-balloon-player-host .radio-mp3-host {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
   display: block;
+  object-fit: cover;
+}
+
+.radio-fm-balloon-player-host .radio-mp3-host {
+  display: flex;
+  align-items: flex-end;
+  object-fit: unset;
+}
+
+.radio-fm-balloon-player-host .radio-mp3-el {
+  width: 100%;
+  height: 2rem;
+  pointer-events: auto;
+}
+
+.radio-fm-balloon-player-host .radio-live-preview {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .radio-fm-balloon-panel {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  padding: 0.48rem 0.52rem 0.55rem;
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  align-content: start;
+  gap: 0.28rem;
+  padding: 0.4rem 0.45rem 0.42rem;
   scrollbar-width: none;
 }
 
@@ -1592,15 +1621,16 @@
 .radio-fm-balloon-head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.35rem 0.45rem;
+  gap: 0.28rem 0.38rem;
   align-items: start;
+  min-width: 0;
 }
 
 .radio-fm-balloon-brand {
   display: grid;
-  gap: 0.02rem;
-  padding: 0.2rem 0.3rem;
-  border-radius: 8px;
+  gap: 0;
+  padding: 0.16rem 0.26rem;
+  border-radius: 7px;
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 32%, var(--line));
   background: rgba(0, 0, 0, 0.28);
   text-align: center;
@@ -1608,14 +1638,14 @@
 
 .radio-fm-balloon-brand-mark {
   font-family: var(--font-mono);
-  font-size: 0.46rem;
+  font-size: 0.42rem;
   letter-spacing: 0.16em;
   color: var(--muted);
 }
 
 .radio-fm-balloon-brand-fm {
   font-family: var(--font-hud);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   letter-spacing: 0.12em;
   line-height: 1;
   color: color-mix(in srgb, var(--platform-accent, var(--cyan)) 85%, white);
@@ -1624,6 +1654,7 @@
 
 .radio-fm-balloon-head-copy {
   min-width: 0;
+  overflow: hidden;
 }
 
 .radio-fm-balloon-kicker {
@@ -1631,18 +1662,18 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.28rem;
   font-family: var(--font-mono);
-  font-size: 0.54rem;
-  letter-spacing: 0.12em;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .radio-fm-balloon-live {
   color: var(--magenta);
-  letter-spacing: 0.14em;
-  padding: 0.1rem 0.35rem;
+  letter-spacing: 0.12em;
+  padding: 0.06rem 0.28rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--magenta) 45%, transparent);
   background: rgba(255, 45, 149, 0.08);
@@ -1659,19 +1690,19 @@
 }
 
 .radio-fm-balloon-title {
-  margin: 0.14rem 0 0;
+  margin: 0.08rem 0 0;
   font-family: var(--font-display);
-  font-size: 0.84rem;
-  line-height: 1.2;
+  font-size: 0.78rem;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .radio-fm-balloon-artist {
-  margin: 0.08rem 0 0;
+  margin: 0.04rem 0 0;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1679,34 +1710,38 @@
 
 .radio-fm-balloon-platform {
   flex: 0 0 auto;
+  max-width: 4.8rem;
   font-family: var(--font-hud);
-  font-size: 0.54rem;
-  letter-spacing: 0.08em;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--platform-accent, var(--cyan)) 85%, white);
-  padding: 0.22rem 0.42rem;
+  padding: 0.16rem 0.32rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 40%, var(--line));
   background: color-mix(in srgb, var(--platform-accent, var(--cyan)) 12%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .radio-fm-balloon-telemetry {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.22rem;
-  margin-top: 0.38rem;
-  padding: 0.28rem;
-  border-radius: 10px;
+  gap: 0.16rem;
+  padding: 0.2rem;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(0, 0, 0, 0.28);
+  min-width: 0;
 }
 
 .radio-fm-balloon-metric {
   display: grid;
-  gap: 0.04rem;
+  gap: 0;
   min-width: 0;
-  padding: 0.14rem 0.18rem;
-  border-radius: 6px;
+  padding: 0.08rem 0.12rem;
+  border-radius: 5px;
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -1716,15 +1751,15 @@
 
 .radio-fm-balloon-metric-label {
   font-family: var(--font-mono);
-  font-size: 0.48rem;
-  letter-spacing: 0.14em;
+  font-size: 0.44rem;
+  letter-spacing: 0.12em;
   color: var(--muted);
 }
 
 .radio-fm-balloon-metric-value {
   font-family: var(--font-hud);
-  font-size: 0.58rem;
-  letter-spacing: 0.05em;
+  font-size: 0.54rem;
+  letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--platform-accent, var(--cyan)) 82%, white);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1732,23 +1767,23 @@
 }
 
 .radio-fm-balloon-dial-wrap {
-  margin-top: 0.38rem;
+  min-width: 0;
 }
 
 .radio-fm-balloon-dial-kicker {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 0.56rem;
-  letter-spacing: 0.11em;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .radio-fm-balloon-dial {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.22rem;
-  margin-top: 0.28rem;
+  flex-wrap: nowrap;
+  gap: 0.18rem;
+  margin-top: 0.18rem;
   overflow: hidden;
 }
 
@@ -1759,30 +1794,35 @@
 .radio-fm-balloon-chip {
   flex: 1 1 100%;
   display: grid;
-  gap: 0.06rem;
+  gap: 0.02rem;
   min-width: 0;
   max-width: none;
-  padding: 0.2rem 0.32rem;
-  border-radius: 8px;
+  padding: 0.14rem 0.28rem;
+  border-radius: 7px;
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 22%, var(--line));
   color: var(--muted);
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.03), transparent 55%);
 }
 
 .radio-fm-balloon-chip-name {
   font-family: var(--font-hud);
-  font-size: 0.52rem;
+  font-size: 0.5rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .radio-fm-balloon-chip-type {
-  font-size: 0.5rem;
-  line-height: 1.25;
+  font-size: 0.46rem;
+  line-height: 1.2;
   letter-spacing: 0.02em;
   opacity: 0.92;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .radio-fm-balloon-chip.is-active {
@@ -1798,10 +1838,9 @@
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 1.15rem;
-  margin-top: 0.35rem;
-  padding: 0.22rem 0.28rem;
-  border-radius: 8px;
+  height: 0.9rem;
+  padding: 0.14rem 0.22rem;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: #020408;
 }
@@ -1838,21 +1877,20 @@
 
 .radio-fm-balloon-deck {
   display: grid;
-  grid-template-columns: 2rem 1fr 2rem;
-  gap: 0.28rem;
-  margin-top: 0.38rem;
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+  gap: 0.22rem;
 }
 
 .radio-fm-balloon-deck-btn {
   font-family: var(--font-hud);
-  font-size: 0.56rem;
+  font-size: 0.52rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.2));
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 0.32rem 0.24rem;
+  border-radius: 8px;
+  padding: 0.28rem 0.18rem;
   cursor: pointer;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
@@ -1867,7 +1905,7 @@
 }
 
 .radio-fm-balloon-deck-btn--primary {
-  font-size: 0.58rem;
+  font-size: 0.54rem;
   border-color: color-mix(in srgb, var(--platform-accent, var(--cyan)) 50%, var(--line));
   background:
     radial-gradient(ellipse 80% 120% at 50% 0%, color-mix(in srgb, var(--platform-accent, var(--cyan)) 22%, transparent), transparent 68%),
@@ -1876,29 +1914,36 @@
 }
 
 .radio-fm-balloon-footer {
-  margin-top: 0.35rem;
-  padding-top: 0.32rem;
+  padding-top: 0.22rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
 }
 
 .radio-fm-balloon-note {
   margin: 0;
-  font-size: 0.58rem;
-  line-height: 1.35;
+  font-size: 0.54rem;
+  line-height: 1.3;
   color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .radio-fm-balloon-links {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-top: 0.3rem;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  margin-top: 0.18rem;
+  min-width: 0;
 }
 
 .radio-fm-balloon-links a {
-  font-size: 0.58rem;
+  font-size: 0.54rem;
   color: var(--cyan-hot);
   text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .radio-fm-balloon-links a:hover {
@@ -1931,15 +1976,25 @@
     align-items: stretch;
   }
 
-  .radio-fm-balloon[data-open="true"] .radio-fm-balloon-shell,
-  .radio-fm-balloon[data-open="true"] .radio-fm-balloon-player-host {
+  .radio-fm-balloon-player-host {
+    height: 5.5rem;
     border-radius: 14px 14px 0 0;
   }
 
   .radio-fm-balloon-shell {
-    max-height: min(
-      20rem,
-      calc(100dvh - var(--header-h) - var(--status-h) - var(--cookie-banner-h, 0px) - 4.75rem)
-    );
+    border-radius: 0 0 14px 14px;
+  }
+
+  .radio-fm-balloon-note {
+    display: none;
+  }
+
+  .radio-fm-balloon-spectrum {
+    height: 0.7rem;
+  }
+
+  .radio-fm-balloon-panel {
+    gap: 0.2rem;
+    padding: 0.32rem 0.4rem 0.36rem;
   }
 }

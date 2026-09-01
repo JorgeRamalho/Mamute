@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router";
 import { bindStageLight } from "../../lib/stage-light";
+import { bootRadioOnLaunch } from "../../lib/radio-mp3-station";
 import { CookieConsent } from "./CookieConsent";
 import { Header } from "./Header";
 import { StatusBar } from "./StatusBar";
@@ -12,6 +13,9 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   useEffect(() => bindStageLight(), []);
+  useEffect(() => {
+    bootRadioOnLaunch();
+  }, []);
 
   return (
     <div className="app-shell">
@@ -28,12 +32,14 @@ export function AppShell({ children }: AppShellProps) {
       <StatusBar />
       <main id="conteudo">{children}</main>
       <footer className="site-footer">
-        <p>MAMUTE DJPLAYER · visor do dancefloor · mixer pedagógico, não substitui licenças oficiais.</p>
-        <p>Beatport, Spotify, SoundCloud, Deezer e YouTube são marcas de seus respectivos donos.</p>
-        <nav className="site-footer-legal" aria-label="Legal">
-          <Link to="/politicas#privacidade">Política de privacidade</Link>
-          <Link to="/politicas#cookies">Política de cookies</Link>
-        </nav>
+        <div className="site-footer-bar">
+          <p>MAMUTE DJPLAYER · visor do dancefloor · mixer pedagógico, não substitui licenças oficiais.</p>
+          <p>Beatport, Spotify, SoundCloud, Deezer e YouTube são marcas de seus respectivos donos.</p>
+          <nav className="site-footer-legal" aria-label="Legal">
+            <Link to="/politicas#privacidade">Política de privacidade</Link>
+            <Link to="/politicas#cookies">Política de cookies</Link>
+          </nav>
+        </div>
       </footer>
       <CookieConsent />
       <RadioFmBalloon />

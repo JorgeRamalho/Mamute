@@ -333,20 +333,43 @@
 .page {
   width: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter)));
   margin: 0 auto;
-  padding: 2rem 0 4rem;
+  padding: 2rem 0 1.75rem;
 }
 
 .site-footer {
-  border-top: 1px solid transparent;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--magenta) 28%, var(--cyan) 40%);
-  padding: 2rem 1.25rem;
-  display: grid;
-  gap: 0.4rem;
-  text-align: center;
+  padding: 0;
+  background: none;
   color: var(--muted);
   font-family: var(--font-mono);
   font-size: 0.75rem;
+}
+
+.site-footer-bar {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.95rem max(1.25rem, var(--radio-fm-reserve-w, 0px)) 1rem;
+  border-top: 1px solid transparent;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--magenta) 28%, var(--cyan) 40%);
   background: linear-gradient(180deg, transparent, rgba(139, 124, 255, 0.06));
+}
+
+.site-footer-bar p {
+  max-width: 62ch;
+  text-wrap: balance;
+  text-align: center;
+}
+
+@media (min-width: 901px) {
+  .site-footer-bar {
+    padding-block: 0.95rem;
+  }
+
+  .site-footer-legal {
+    margin-top: 0.05rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

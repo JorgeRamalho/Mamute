@@ -1,22 +1,37 @@
-const DEEZER_API_BASE = "/api/deezer";
+const DEEZER_PROXY_BASE = "/api/deezer";
+const DEEZER_PUBLIC_BASE = "https://api.deezer.com";
 
-export function deezerApiUrl(path: string, params?: Record<string, string | number>): string {
+function buildDeezerUrl(base: string, path: string, params?: Record<string, string | number>): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${DEEZER_API_BASE}${normalized}`, window.location.origin);
+  const url = base.startsWith("http")
+    ? new URL(`${base}${normalized}`)
+    : new URL(`${base}${normalized}`, window.location.origin);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       url.searchParams.set(key, String(value));
     }
   }
-  return url.pathname + url.search;
+  return base.startsWith("http") ? url.toString() : `${url.pathname}${url.search}`;
+}
+
+export function deezerApiUrl(path: string, params?: Record<string, string | number>): string {
+  return buildDeezerUrl(DEEZER_PROXY_BASE, path, params);
 }
 
 export async function fetchDeezerJson<T>(path: string, params?: Record<string, string | number>): Promise<T | null> {
-  try {
-    const response = await fetch(deezerApiUrl(path, params));
-    if (!response.ok) return null;
-    return (await response.json()) as T;
-  } catch {
-    return null;
+  const urls = [buildDeezerUrl(DEEZER_PROXY_BASE, path, params), buildDeezerUrl(DEEZER_PUBLIC_BASE, path, params)];
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) continue;
+      const type = response.headers.get("content-type") || "";
+      if (type.includes("text/html")) continue;
+      return (await response.json()) as T;
+    } catch {
+      /* tenta o próximo endpoint */
+    }
   }
+
+  return null;
 }

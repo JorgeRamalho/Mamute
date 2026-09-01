@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, type CSSProperties } from "react";
 import { Link, useLocation } from "react-router";
 import { PLATFORMS } from "../../data/platforms";
 import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
-import { useRadioFmStation } from "../../lib/use-radio-fm";
+import { useRadioMp3 } from "../../lib/use-radio-mp3";
 import type { PlatformId } from "../../types/platform";
-import { RadioYoutubeFrame } from "./RadioYoutubeFrame";
+import { RadioLiveStage } from "./RadioLiveStage";
 
 const platformById = new Map(PLATFORMS.map((platform) => [platform.id, platform]));
-const FM_SPECTRUM_BARS = 10;
+const FM_SPECTRUM_BARS = 8;
 
 function platformLabel(id: PlatformId): string {
   if (id === "youtube") return "YouTube";
@@ -21,62 +21,38 @@ function syncRadioFmReserve(el: HTMLElement | null): void {
     return;
   }
   const rect = el.getBoundingClientRect();
-  const height = Math.ceil(rect.height);
-  const width = Math.ceil(rect.width);
-  const gapPx = Number.parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--radio-fm-gap"),
-  );
-  const gap = Number.isFinite(gapPx) ? gapPx : 12;
   const isNarrow = window.matchMedia("(max-width: 720px)").matches;
-  const reserveW = isNarrow ? 0 : width + gap;
-  const mobileBuffer = isNarrow ? 28 : 0;
-  document.documentElement.style.setProperty("--radio-fm-reserve-h", `${height + gap + mobileBuffer}px`);
+  const reserveH = Math.max(0, Math.ceil(window.innerHeight - rect.top));
+  const reserveW = isNarrow
+    ? 0
+    : Math.max(0, Math.ceil(document.documentElement.clientWidth - rect.left));
+  document.documentElement.style.setProperty("--radio-fm-reserve-h", `${reserveH}px`);
   document.documentElement.style.setProperty("--radio-fm-reserve-w", `${reserveW}px`);
 }
 
 export function RadioFmBalloon() {
   const rootRef = useRef<HTMLElement>(null);
   const location = useLocation();
-  const {
-    clip,
-    catalogReady,
-    continuous,
-    autoplay,
-    accent,
-    skip,
-    handleTrackEnded,
-    consumeAutoplay,
-    start,
-  } = useRadioFmStation();
-  const [started, setStarted] = useState(false);
-  const [paused, setPaused] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-
+  const { clip, catalogReady, playing, start, pause, skip } = useRadioMp3();
   const hidden = location.pathname === "/radio";
-  const onAir = started && !paused && isPlaying;
-  const showPlayer = started && Boolean(clip?.youtubeId);
+  const onAir = playing;
+  const accent = clip ? (platformById.get(clip.platform)?.accent ?? "#00e8ff") : "#00e8ff";
 
   const ligar = useCallback(() => {
-    setStarted(true);
-    setPaused(false);
-    start();
+    void start();
   }, [start]);
 
   const togglePause = useCallback(() => {
-    if (!started) {
-      ligar();
+    if (playing) {
+      pause();
       return;
     }
-    if (!paused) setIsPlaying(false);
-    setPaused((current) => !current);
-  }, [ligar, paused, started]);
+    ligar();
+  }, [ligar, pause, playing]);
 
   const handleSkip = useCallback(
     (delta: 1 | -1) => {
-      setPaused(false);
-      setStarted(true);
-      setIsPlaying(false);
-      skip(delta);
+      void skip(delta);
     },
     [skip],
   );
@@ -107,7 +83,7 @@ export function RadioFmBalloon() {
       window.removeEventListener("resize", update);
       syncRadioFmReserve(null);
     };
-  }, [hidden, clip, showPlayer, started]);
+  }, [hidden, clip, playing]);
 
   if (hidden || !clip) return null;
 
@@ -117,31 +93,16 @@ export function RadioFmBalloon() {
       className="radio-fm-balloon"
       data-open="true"
       data-on-air={onAir ? "true" : "false"}
+      data-random="on"
       data-mini="false"
       style={{ "--platform-accent": accent } as CSSProperties}
       aria-label="Mamute FM"
     >
       <div className="radio-fm-balloon-chassis">
-        {showPlayer ? (
-          <div className="radio-fm-balloon-player-host">
-            <span className="radio-fm-balloon-viewport-label">VISOR · STREAM</span>
-            <RadioYoutubeFrame
-              videoId={clip.youtubeId}
-              title={`${clip.artist} — ${clip.title}`}
-              autoplay={autoplay || !paused}
-              paused={paused}
-              unavailableAfterMs={12_000}
-              onEnded={handleTrackEnded}
-              onUnavailable={handleTrackEnded}
-              onPlaying={() => {
-                setIsPlaying(true);
-                setPaused(false);
-              }}
-              onReady={autoplay ? consumeAutoplay : undefined}
-              className="radio-fm-balloon-frame"
-            />
-          </div>
-        ) : null}
+        <div className="radio-fm-balloon-player-host">
+          <span className="radio-fm-balloon-viewport-label">VISOR · STREAM MP3</span>
+          <RadioLiveStage className="radio-fm-balloon-frame" />
+        </div>
 
         <div className="radio-fm-balloon-shell">
           <div className="radio-fm-balloon-panel">
@@ -152,7 +113,7 @@ export function RadioFmBalloon() {
               </div>
               <div className="radio-fm-balloon-head-copy">
                 <p className="radio-fm-balloon-kicker">
-                  {continuous ? "Rádio contínua" : "Programação editorial"}
+                  Rádio aleatória
                   {onAir ? (
                     <span className="radio-fm-balloon-live">AO VIVO</span>
                   ) : (
@@ -226,9 +187,9 @@ export function RadioFmBalloon() {
                 type="button"
                 className="radio-fm-balloon-deck-btn radio-fm-balloon-deck-btn--primary"
                 onClick={togglePause}
-                aria-label={paused ? "Ligar rádio" : "Pausar rádio"}
+                aria-label={playing ? "Pausar rádio" : "Ligar rádio"}
               >
-                {paused ? "Ligar" : "Pausar"}
+                {playing ? "Pausar" : "Ligar"}
               </button>
               <button type="button" className="radio-fm-balloon-deck-btn" onClick={() => handleSkip(1)} aria-label="Próxima faixa">
                 <span aria-hidden="true">⏭</span>
@@ -238,7 +199,7 @@ export function RadioFmBalloon() {
             <footer className="radio-fm-balloon-footer">
               <p className="radio-fm-balloon-note">
                 {catalogReady
-                  ? `Flow contínuo · ${platformLabel(clip.platform)} · playback oficial no visor.`
+                  ? `Aleatório · stream MP3 · ${platformLabel(clip.platform)}.`
                   : "Sintonizando catálogo…"}
               </p>
               <div className="radio-fm-balloon-links">

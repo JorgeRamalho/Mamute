@@ -1,15 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PLATFORMS } from "../../data/platforms";
 import { buildRadioCatalog } from "../../data/radio";
-import { enrichCatalogWithPreviews } from "../../lib/radio-catalog-enrich";
-import { syncBeginnerDjToStorage } from "../../lib/radio-catalog-import";
-import { getNextPlayableClip } from "../../lib/radio-playlist";
+import { withLiveStreamFallback } from "../../lib/radio-electronic-feed";
 import { radioEngine } from "../../lib/radio-engine";
+import { radioMp3Station } from "../../lib/radio-mp3-station";
+import { buildRadioProgramming } from "../../lib/radio-playlist";
+import { loadRadioMp3Catalog, reloadRadioMp3Catalog } from "../../lib/use-radio-mp3";
 import {
   loadUserPlaylistIds,
-  markBeginnerPlaylistLoaded,
   togglePlaylistClip,
-  wasBeginnerPlaylistLoaded,
 } from "../../lib/radio-user-playlist";
 import type { RadioClip, RadioEqLevels, RadioSource, RadioUpload } from "../../types/radio";
 import { RadioDjPlayer } from "./RadioDjPlayer";
@@ -31,7 +30,7 @@ function syncClipInCatalog(catalog: RadioClip[], clipId: string): RadioClip | un
 
 export function RadioStudio() {
   const [catalog, setCatalog] = useState<RadioClip[]>(() => buildRadioCatalog());
-  const [catalogReady, setCatalogReady] = useState(true);
+  const [catalogReady, setCatalogReady] = useState(false);
   const [playlistIds, setPlaylistIds] = useState<string[]>(() => loadUserPlaylistIds());
   const [playlistOnly, setPlaylistOnly] = useState(false);
   const [source, setSource] = useState<RadioSource>(() => ({
@@ -40,7 +39,6 @@ export function RadioStudio() {
     continuous: true,
     autoplay: false,
   }));
-  const lastAdvanceAtRef = useRef(0);
 
   const applyCatalog = useCallback((next: RadioClip[]) => {
     setCatalog(next);
@@ -52,39 +50,42 @@ export function RadioStudio() {
   }, []);
 
   const refreshCatalog = useCallback(() => {
-    void enrichCatalogWithPreviews(buildRadioCatalog()).then((enriched) => {
-      applyCatalog(enriched);
+    void reloadRadioMp3Catalog().then((clips) => {
+      applyCatalog(clips);
+      radioMp3Station.setPlaylist(clips);
       setCatalogReady(true);
     });
   }, [applyCatalog]);
 
-  const bootstrapCatalog = useCallback(async () => {
-    if (!wasBeginnerPlaylistLoaded()) {
-      await syncBeginnerDjToStorage();
-      markBeginnerPlaylistLoaded();
-    }
-    const enriched = await enrichCatalogWithPreviews(buildRadioCatalog());
-    applyCatalog(enriched);
-    setCatalogReady(true);
-    setSource((current) =>
-      current.kind === "clip" && !current.autoplay
-        ? { ...current, autoplay: true, continuous: true }
-        : current,
-    );
-  }, [applyCatalog]);
-
   useEffect(() => {
     let cancelled = false;
-    void bootstrapCatalog().then(() => {
+    void loadRadioMp3Catalog().then((clips) => {
       if (cancelled) return;
+      applyCatalog(clips);
+      radioMp3Station.setPlaylist(clips);
+      setCatalogReady(true);
+      setSource((current) =>
+        current.kind === "clip"
+          ? { ...current, clip: clips[0] ?? current.clip, autoplay: false, continuous: true }
+          : current,
+      );
     });
     return () => {
       cancelled = true;
     };
-  }, [bootstrapCatalog]);
+  }, [applyCatalog]);
 
-  const playbackScope = playlistOnly ? playlistIds : undefined;
   const visibleClips = playlistOnly ? catalog.filter((clip) => playlistIds.includes(clip.id)) : catalog;
+
+  useEffect(() => {
+    if (!catalogReady) return;
+    const next = playlistOnly
+      ? catalog.filter((clip) => playlistIds.includes(clip.id))
+      : catalog;
+    const pool = next.length > 0 ? next : catalog;
+    const programmed = buildRadioProgramming(pool);
+    radioMp3Station.setPlaylist(withLiveStreamFallback(programmed.length > 0 ? programmed : pool));
+  }, [catalog, catalogReady, playlistIds, playlistOnly]);
 
   const accent =
     source.kind === "clip"
@@ -99,9 +100,11 @@ export function RadioStudio() {
       continuous: current.kind === "clip" ? current.continuous : true,
       autoplay: options?.autoplay ?? false,
     }));
+    if (options?.autoplay) void radioMp3Station.playClip(clip.id);
   };
 
   const selectUpload = (upload: RadioUpload) => {
+    radioMp3Station.pause();
     setSource({ kind: "upload", upload });
   };
 
@@ -110,29 +113,6 @@ export function RadioStudio() {
     setSource({ ...source, continuous: !source.continuous });
   };
 
-  const advanceToNextClip = useCallback(() => {
-    const now = Date.now();
-    if (now - lastAdvanceAtRef.current < 1_500) return;
-    lastAdvanceAtRef.current = now;
-
-    setSource((current) => {
-      if (current.kind !== "clip" || !current.continuous) return current;
-      const next = getNextPlayableClip(catalog, current.clip.id, playbackScope);
-      if (!next || next.id === current.clip.id) return current;
-      return { kind: "clip", clip: next, continuous: true, autoplay: true };
-    });
-  }, [catalog, playbackScope]);
-
-  const handleTrackEnded = useCallback(() => {
-    advanceToNextClip();
-  }, [advanceToNextClip]);
-
-  const consumeAutoplay = useCallback(() => {
-    setSource((current) =>
-      current.kind === "clip" && current.autoplay ? { ...current, autoplay: false } : current,
-    );
-  }, []);
-
   const handleTogglePlaylistClip = useCallback((clipId: string) => {
     setPlaylistIds(togglePlaylistClip(clipId));
   }, []);
@@ -140,6 +120,19 @@ export function RadioStudio() {
   useEffect(() => {
     radioEngine.setEqAll(DEFAULT_EQ);
   }, []);
+
+  useEffect(() => {
+    if (source.kind !== "clip") return;
+    return radioMp3Station.subscribe((snap) => {
+      const nextClip = snap.clip;
+      if (!nextClip) return;
+      setSource((current) => {
+        if (current.kind !== "clip") return current;
+        if (current.clip.id === nextClip.id) return current;
+        return { ...current, clip: nextClip };
+      });
+    });
+  }, [source.kind]);
 
   return (
     <div className="radio-studio">
@@ -155,8 +148,6 @@ export function RadioStudio() {
         onTogglePlaylistClip={handleTogglePlaylistClip}
         onSelectClip={selectClip}
         onToggleContinuous={toggleContinuous}
-        onTrackEnded={handleTrackEnded}
-        onAutoplayConsumed={consumeAutoplay}
       />
       <RadioLoopDeck
         activeUploadId={source.kind === "upload" ? source.upload.id : null}
