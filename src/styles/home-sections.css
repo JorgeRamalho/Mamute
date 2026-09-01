@@ -35,8 +35,8 @@
 .home-showcase::after {
   content: "";
   position: absolute;
-  inset: -40% -20% auto;
-  height: 55%;
+  inset: 0 0 auto;
+  height: 42%;
   pointer-events: none;
   background: radial-gradient(
     ellipse at 50% 0%,
@@ -783,36 +783,16 @@
   --spot-accent: var(--cyan);
   position: relative;
   isolation: isolate;
-  margin: -1.2rem 0 0.5rem;
+  margin: 0.35rem 0 1.75rem;
   padding: clamp(1.35rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.75rem);
-  border-radius: calc(var(--radius) + 10px);
+  border-radius: 0;
   scroll-margin-top: calc(var(--header-h) + var(--status-h) + 1rem);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--cyan) 28%, var(--line));
+  overflow: visible;
+  border: 0;
   background:
     radial-gradient(ellipse 80% 60% at 78% 42%, rgba(255, 45, 149, 0.12), transparent 58%),
-    radial-gradient(ellipse 70% 55% at 22% 38%, rgba(0, 232, 255, 0.14), transparent 60%),
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--steel) 88%, #0a0e16) 0%,
-      var(--panel) 48%,
-      color-mix(in srgb, var(--magenta) 8%, #080b12) 100%
-    );
-  box-shadow:
-    var(--shadow-3d),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 24px 64px rgba(0, 0, 0, 0.42),
-    0 0 48px rgba(0, 232, 255, 0.06);
-}
-
-.mamute-spotlight::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.28;
-  background: var(--scan);
-  mix-blend-mode: overlay;
+    radial-gradient(ellipse 70% 55% at 22% 38%, rgba(0, 232, 255, 0.14), transparent 60%);
+  box-shadow: none;
 }
 
 .mamute-spotlight-ambient {

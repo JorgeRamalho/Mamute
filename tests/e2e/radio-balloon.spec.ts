@@ -1,43 +1,50 @@
 import { expect, test, type Page } from "@playwright/test";
+import { dismissPrivacyBanner } from "./helpers/radio";
 
-async function dismissPrivacyBanner(page: Page): Promise<void> {
-  const accept = page.getByRole("button", { name: "Aceitar" });
-  if (await accept.isVisible()) {
-    await accept.click();
-  }
+async function openMixer(page: Page): Promise<void> {
+  const menu = page.getByRole("button", { name: "Menu" });
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Mixer CDJ" }).click();
 }
 
-test.describe("Mamute FM — balão flutuante", () => {
-  test("na home o balão abre com as plataformas da programação", async ({ page }) => {
-    await page.goto("/");
+test.describe("Rádio — visor flutuante", () => {
+  test("na home o visor mostra só a plataforma no ar e não tem botão FM", async ({ page }) => {
+    test.setTimeout(45_000);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     await dismissPrivacyBanner(page);
 
     const balloon = page.getByRole("complementary", { name: "Mamute FM" });
     await expect(balloon).toBeVisible();
     await expect(balloon.getByRole("heading", { level: 2 })).toBeVisible();
 
-    const dial = balloon.getByLabel("Plataformas da programação");
-    await expect(dial.getByText("Spotify", { exact: true })).toBeVisible();
-    await expect(dial.getByText("SoundCloud", { exact: true })).toBeVisible();
-    await expect(dial.getByText("YouTube", { exact: true })).toBeVisible();
-    await expect(dial.getByText("Beatport", { exact: true })).toBeVisible();
-    await expect(dial.getByText("Clipes oficiais", { exact: true })).toBeVisible();
-    await expect(balloon.getByText("Hubs da programação")).toBeVisible();
+    await expect(page.getByRole("button", { name: "FM", exact: true })).toHaveCount(0);
+    await expect(balloon.locator(".radio-fm-balloon-fab")).toHaveCount(0);
+
+    const dial = balloon.getByLabel("Plataforma no ar");
+    await expect(dial).toBeVisible();
+    await expect(dial.locator(".radio-fm-balloon-chip")).toHaveCount(1);
+    await expect(balloon.getByText("Hubs da programação")).toHaveCount(0);
     await expect(balloon.getByRole("button", { name: /Ligar rádio|Pausar rádio/ })).toBeVisible();
     await expect(balloon.getByRole("link", { name: "Cabine completa" })).toHaveAttribute("href", /\/radio$/);
   });
 
-  test("o balão some na cabine /radio e volta no mixer", async ({ page }) => {
+  test("o visor some na cabine /radio e volta no mixer", async ({ page }) => {
+    test.setTimeout(45_000);
     await page.goto("/");
     await dismissPrivacyBanner(page);
-    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toBeVisible();
+    const balloon = page.getByRole("complementary", { name: "Mamute FM" });
+    await expect(balloon).toBeVisible();
 
-    await page.goto("/radio");
-    await dismissPrivacyBanner(page);
-    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toHaveCount(0);
+    await openMixer(page);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(balloon).toBeVisible();
+
+    await balloon.getByRole("link", { name: "Cabine completa" }).click();
     await expect(page.getByRole("heading", { name: "Rádio integrada" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toHaveCount(0);
 
-    await page.goto("/mixer");
+    await openMixer(page);
     await expect(page.getByRole("complementary", { name: "Mamute FM" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "FM", exact: true })).toHaveCount(0);
   });
 });

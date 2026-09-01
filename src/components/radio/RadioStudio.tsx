@@ -67,7 +67,9 @@ export function RadioStudio() {
     applyCatalog(enriched);
     setCatalogReady(true);
     setSource((current) =>
-      current.kind === "clip" && !current.autoplay ? { ...current, autoplay: true } : current,
+      current.kind === "clip" && !current.autoplay
+        ? { ...current, autoplay: true, continuous: true }
+        : current,
     );
   }, [applyCatalog]);
 

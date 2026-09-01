@@ -73,10 +73,9 @@ body {
   letter-spacing: 0.01em;
   background-color: var(--void);
   background-image:
-    radial-gradient(ellipse 90% 58% at 8% -10%, rgba(0, 232, 255, 0.18), transparent 54%),
-    radial-gradient(ellipse 70% 48% at 96% 0%, rgba(255, 45, 149, 0.16), transparent 50%),
-    radial-gradient(ellipse 55% 38% at 48% 108%, rgba(139, 124, 255, 0.14), transparent 56%),
-    linear-gradient(180deg, #070914 0%, #05060b 46%, #0b0714 100%);
+    radial-gradient(ellipse 90% 58% at 8% -10%, rgba(0, 232, 255, 0.16), transparent 54%),
+    radial-gradient(ellipse 70% 48% at 96% 0%, rgba(255, 45, 149, 0.14), transparent 50%),
+    radial-gradient(ellipse 55% 38% at 48% 108%, rgba(139, 124, 255, 0.12), transparent 56%);
 }
 
 img,

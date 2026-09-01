@@ -12,6 +12,7 @@ type RadioYoutubeFrameProps = {
   onUnavailable?: () => void;
   onReady?: () => void;
   onPlaying?: () => void;
+  ariaHidden?: boolean;
 };
 
 type YoutubeMessagePayload = {
@@ -59,6 +60,7 @@ export function RadioYoutubeFrame({
   onUnavailable,
   onReady,
   onPlaying,
+  ariaHidden = false,
 }: RadioYoutubeFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const frameId = useId().replace(/:/g, "");
@@ -203,9 +205,10 @@ export function RadioYoutubeFrame({
       title={title}
       className={className ? `radio-dj-youtube-frame ${className}` : "radio-dj-youtube-frame"}
       src={embedSrc}
+      aria-hidden={ariaHidden ? true : undefined}
       referrerPolicy="strict-origin-when-cross-origin"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowFullScreen
+      allowFullScreen={!ariaHidden}
     />
   );
 }

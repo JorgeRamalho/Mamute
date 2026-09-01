@@ -50,26 +50,25 @@ Depois disso, `npm run dev` e `npm run test:auth` cobrem o ciclo completo.
 | `npm run dev` | Bootstrap + Netlify dev com API + banco local em **http://localhost:8888** |
 | `npm run dev:vite` | Só frontend Vite (sem API de e-mail) |
 | `npm run build` | `tsc -b` + bundle em `dist/` |
+| `npm run live:vite` | Garante o Vite em **5173** para o Go Live ler `src/` |
 | `npm run live` | Build + preview na porta 5500 |
 | `npm run preview` | Preview Vite (4173) |
 | `npm run typecheck` | TypeScript sem emit |
 | `npm run lint` | oxlint |
 | `npm test` | Playwright (`config/playwright.config.ts`) |
 | `npm run test:auth` | Fluxo automático cadastro → código → login |
+| `npm run test:live` | Garante que o Go Live lê `src/` e não o `dist/` atrasado |
 | `npm run test:ui` | Playwright UI |
 
 ## Live Server (VS Code)
 
-1. No terminal: `npm run live:sync` — compila `dist/` e **recompila ao salvar** arquivos em `src/`
-   - Ou execute a tarefa VS Code **Mamute: sincronizar Live Server** (`Ctrl+Shift+P` → Run Task)
-2. Com `index.html` aberto, **Go Live** (porta 5500)
-3. Após mudanças em `src/`, aguarde o build no terminal e recarregue (o Live Server recarrega sozinho quando `dist/` muda)
+O Go Live (**porta 5500**) **não usa `dist/`**. Ele monta o app a partir de `src/` via Vite em `http://127.0.0.1:5173` (integração backend: preamble React + `@vite/client` + `src/main.tsx`). Sem o Vite, a página espera e explica — nunca mostra um bundle atrasado.
 
-O `index.html` da raiz não executa TypeScript. Fora das portas do Vite (5173 / 4173) ele carrega o bundle em `dist/`. Sem o build, a página explica o que fazer.
+1. No terminal: `npm run live:vite` (ou `npm run dev`) — ou **Ctrl+Shift+B** (tarefa *Mamute: Vite para Go Live*)
+2. Com `index.html` aberto, **Go Live**
+3. Salve arquivos em `src/` — o hot reload do Vite atualiza a página
 
-Se `npm run dev` estiver rodando, o Go Live na porta 5500 **redireciona automaticamente** para `http://127.0.0.1:5173` (hot reload).
-
-`.vscode/settings.json` serve a raiz do workspace (`/`). A pasta `src/` não é ignorada pelo Live Server — mudanças em `dist/` disparam reload.
+`.vscode/settings.json` ignora `src/` no Live Server para não dar reload cheio e brigar com o HMR.
 
 ## Deploy (Netlify)
 

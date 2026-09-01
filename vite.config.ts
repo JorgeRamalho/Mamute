@@ -60,8 +60,15 @@ export default defineConfig({
   base: "./",
   server: {
     port: 5173,
+    strictPort: true,
     host: true,
+    origin: "http://127.0.0.1:5173",
     cors: true,
+    hmr: {
+      host: "127.0.0.1",
+      protocol: "ws",
+      clientPort: 5173,
+    },
     proxy: {
       "/api/dj": {
         target: "http://localhost:8888",

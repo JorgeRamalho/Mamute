@@ -117,16 +117,13 @@
 
       (function () {
         var port = String(location.port || "");
-        if (/^517\d$/.test(port) || port === "4173") return;
-        if (document.querySelector('script[src*="dist/assets/main.js"]')) return;
-        if (document.querySelector('script[src="./assets/main.js"]')) return;
+        if (!port) return;
+        if (/^517\d$/.test(port) || port === "4173" || port === "8888") return;
+        if (document.querySelector('script[src*="src/main.tsx"]')) return;
+        if (document.querySelector('script[src*="assets/main.js"]')) return;
 
         var VITE_ORIGIN = "http://127.0.0.1:5173";
-        var CSS_HREF = "./dist/assets/index.css";
-        var JS_HREF = "./dist/assets/main.js";
-        var MAX_TRIES = 8;
-        var TRY_MS = 400;
-        var LIVE_PORT = port === "5500";
+        var VITE_POLL_MS = 1500;
 
         function viteIsReady(res) {
           if (!res.ok) return false;
@@ -135,79 +132,12 @@
           return /javascript|typescript|ecmascript|module/i.test(type) || type === "";
         }
 
-        function showHint() {
-          var root = document.getElementById("root");
-          if (!root) return;
-          if (root.childElementCount && !root.querySelector("[data-live-wait]")) return;
-          root.innerHTML =
-            '<section style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">Bundle desatualizado</h1><p>O Go Live (porta 5500) usa o arquivo compilado em <code>dist/</code>. Rode no terminal: <code>npm run live:sync</code> (recompila ao salvar) ou <code>npm run live:build</code> (uma vez). Depois recarregue com <strong>Ctrl+Shift+R</strong>.</p><p>Alternativa com hot reload: <code>npm run dev</code> e abra <a href="http://127.0.0.1:5173/" style="color:#00e8ff">127.0.0.1:5173</a>.</p></section>';
-        }
-
-        function showWait() {
-          var root = document.getElementById("root");
-          if (!root || (root.childElementCount && !root.querySelector("[data-live-wait]"))) return;
-          root.innerHTML =
-            '<p data-live-wait style="font-family:Outfit,sans-serif;color:#9bb0c9;padding:2.5rem;text-align:center">Atualizando o bundle do Live Server…</p>';
-        }
-
-        function bust(href) {
-          return href + "?t=" + Date.now();
-        }
-
-        function isRealAsset(type, text) {
-          if (!text || /^\s*</.test(text)) return false;
-          if (/html/i.test(type || "")) return false;
-          return text.length > 20;
-        }
-
-        function inject(cssHref, jsHref) {
-          var css = document.createElement("link");
-          css.rel = "stylesheet";
-          css.href = cssHref;
-          css.onerror = showHint;
-          document.head.appendChild(css);
-
-          var script = document.createElement("script");
-          script.type = "module";
-          script.src = jsHref;
-          script.onerror = showHint;
-          document.body.appendChild(script);
-        }
-
-        function tryLoadDist(attempt) {
-          var cssHref = bust(CSS_HREF);
-          var jsHref = bust(JS_HREF);
-          fetch(jsHref, { cache: "no-store" })
-            .then(function (res) {
-              return res.text().then(function (text) {
-                return { res: res, text: text };
-              });
-            })
-            .then(function (part) {
-              var type = part.res.headers.get("content-type") || "";
-              if (part.res.ok && isRealAsset(type, part.text)) {
-                inject(cssHref, jsHref);
-                return;
-              }
-              if (attempt < MAX_TRIES) {
-                if (attempt === 1) showWait();
-                setTimeout(function () {
-                  tryLoadDist(attempt + 1);
-                }, TRY_MS);
-                return;
-              }
-              showHint();
-            })
-            .catch(function () {
-              if (attempt < MAX_TRIES) {
-                if (attempt === 1) showWait();
-                setTimeout(function () {
-                  tryLoadDist(attempt + 1);
-                }, TRY_MS);
-                return;
-              }
-              showHint();
-            });
+        function probeVite() {
+          return fetch(VITE_ORIGIN + "/@vite/client", { cache: "no-store", mode: "cors" }).then(
+            function (res) {
+              if (!viteIsReady(res)) throw new Error("vite off");
+            },
+          );
         }
 
         function livePath() {
@@ -215,45 +145,67 @@
           return path + location.search + location.hash;
         }
 
-        var settled = false;
-        function goDist() {
-          if (settled) return;
-          settled = true;
-          tryLoadDist(1);
-        }
-        function goVite() {
-          if (settled) return;
-          settled = true;
-          location.replace(VITE_ORIGIN + livePath());
+        function showPanel(html) {
+          var root = document.getElementById("root");
+          if (!root) return;
+          if (root.querySelector("[data-mamute-app]")) return;
+          root.innerHTML = html;
         }
 
-        if (LIVE_PORT) {
-          var liveTimer = setTimeout(goDist, 500);
-          fetch(VITE_ORIGIN + "/src/main.tsx", { cache: "no-store", mode: "cors" })
-            .then(function (res) {
-              if (!viteIsReady(res)) throw new Error("vite off");
-              clearTimeout(liveTimer);
-              goVite();
-            })
+        function showWait() {
+          showPanel(
+            '<p data-live-wait data-live-src-required style="font-family:Outfit,sans-serif;color:#9bb0c9;padding:2.5rem;text-align:center">Go Live lê <code>src/</code> pelo Vite. Aguardando http://127.0.0.1:5173…</p>',
+          );
+        }
+
+        function showHint() {
+          showPanel(
+            '<section data-live-src-required style="font-family:Outfit,sans-serif;color:#e8eef8;padding:2.5rem;max-width:42rem;margin:12vh auto;background:#0c1018;border:1px solid rgba(0,232,255,.35);border-radius:18px;line-height:1.5"><p style="color:#ff2d95;letter-spacing:.24em;font-size:.7rem">MAMUTE DJPLAYER</p><h1 style="font-family:Syne,sans-serif">Go Live precisa do Vite</h1><p>A porta 5500 <strong>não</strong> usa o bundle antigo em <code>dist/</code>. Ela só monta o app a partir de <code>src/</code> via Vite.</p><p>No terminal: <code>npm run live:vite</code> ou <code>npm run dev</code>. Esta página entra sozinha quando o Vite responder em <a href="http://127.0.0.1:5173/" style="color:#00e8ff">127.0.0.1:5173</a>.</p></section>',
+          );
+        }
+
+        var booted = false;
+        function bootVite() {
+          if (booted) return;
+          booted = true;
+          // HTML fora do Vite precisa do preamble do plugin-react, senão o app
+          // quebra em branco (@vitejs/plugin-react can't detect preamble).
+          // https://vitejs.dev/guide/backend-integration.html
+          var boot = document.createElement("script");
+          boot.type = "module";
+          boot.dataset.mamuteVite = "1";
+          boot.textContent =
+            'import RefreshRuntime from "' +
+            VITE_ORIGIN +
+            '/@react-refresh";' +
+            "RefreshRuntime.injectIntoGlobalHook(window);" +
+            "window.$RefreshReg$ = () => {};" +
+            "window.$RefreshSig$ = () => (type) => type;" +
+            "window.__vite_plugin_react_preamble_installed__ = true;" +
+            'await import("' +
+            VITE_ORIGIN +
+            '/@vite/client");' +
+            'await import("' +
+            VITE_ORIGIN +
+            '/src/main.tsx");';
+          document.head.appendChild(boot);
+          if (location.hash || location.pathname.replace(/\/index\.html$/i, "")) {
+            history.replaceState(null, "", livePath());
+          }
+        }
+
+        var started = Date.now();
+        function followVite() {
+          probeVite()
+            .then(bootVite)
             .catch(function () {
-              clearTimeout(liveTimer);
-              goDist();
+              if (Date.now() - started < 4000) showWait();
+              else showHint();
+              setTimeout(followVite, VITE_POLL_MS);
             });
-          return;
         }
 
-        var viteTimer = setTimeout(goDist, 600);
-
-        fetch(VITE_ORIGIN + "/src/main.tsx", { cache: "no-store", mode: "cors" })
-          .then(function (res) {
-            if (!viteIsReady(res)) throw new Error("vite off");
-            clearTimeout(viteTimer);
-            goVite();
-          })
-          .catch(function () {
-            clearTimeout(viteTimer);
-            goDist();
-          });
+        followVite();
       })();
     </script>
   </body>

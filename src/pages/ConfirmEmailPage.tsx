@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { PasswordField } from "../components/forms/PasswordField";
 import { confirmEmailWithToken, getLoginEmailPrefill, resendEmailVerification, type LoginResult } from "../lib/dj-auth";
 
@@ -14,7 +14,6 @@ function resolveConfirmEmail(emailParam: string | null, emailSent: boolean): str
 
 export function ConfirmEmailPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const emailParam = params.get("email");
@@ -35,7 +34,7 @@ export function ConfirmEmailPage() {
       return;
     }
     setResendEmail(resolveConfirmEmail(emailParam, emailSent));
-  }, [emailParam, emailSent, location.key]);
+  }, [emailParam, emailSent]);
 
   const loginHref = resendEmail.trim()
     ? `/dj?cadastrado=1&email=${encodeURIComponent(resendEmail.trim())}`
@@ -118,7 +117,6 @@ export function ConfirmEmailPage() {
             <label className="field">
               E-mail cadastrado
               <input
-                key={resendEmail || "confirm-email-empty"}
                 type="email"
                 name="dj-confirm-email"
                 autoComplete="off"

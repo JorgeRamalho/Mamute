@@ -112,9 +112,13 @@ test.describe("Usabilidade e função", () => {
     await page.getByRole("button", { name: "Concluir aula" }).click();
     await expect(page.getByRole("button", { name: "Desmarcar aula" })).toBeVisible();
 
-    await page.goto("/radio");
-    await page.getByRole("button", { name: /Levels/ }).click();
-    await expect(page.getByRole("heading", { level: 2, name: "Levels" })).toBeVisible();
+    await page.goto("/radio", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Rádio integrada" })).toBeVisible();
+    const player = page.getByRole("region", { name: "Mamute DJ · rádio integrada" });
+    await expect(player).toBeVisible();
+    const title = player.locator(".radio-dj-title");
+    await expect(title).toBeVisible();
+    await expect(player.getByLabel("Plataforma no ar")).toBeVisible();
   });
 
   test("catálogo lista Mamute e as cinco plataformas externas", async ({ page }) => {

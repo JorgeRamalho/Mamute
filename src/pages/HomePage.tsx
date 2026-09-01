@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Hero } from "../components/hero/Hero";
+import { HarmonySection } from "../components/home/HarmonySection";
 import { MamuteSpotlightSection } from "../components/home/MamuteSpotlightSection";
 import { CabinetLayersSection } from "../components/home/CabinetLayersSection";
 import { VisorTechSection } from "../components/home/VisorTechSection";
@@ -29,6 +30,7 @@ export function HomePage() {
     <div className="page">
       <Hero />
       <MamuteSpotlightSection />
+      <HarmonySection />
       <VisorTechSection />
       <CabinetLayersSection />
       <BoothFaqSection />

@@ -7,6 +7,9 @@
   "liveServer.settings.ignoreFiles": [
     ".vscode/**",
     "node_modules/**",
+    "src/**",
+    "netlify/**",
+    "db/**",
     "tests/**",
     "docs/**",
     "config/**",

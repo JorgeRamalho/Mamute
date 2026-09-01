@@ -1,7 +1,7 @@
 import { errorResponse } from "./dj.js";
 
 function databaseErrorMessage(): string {
-  return "Banco de dados indisponível. No Netlify, ative a Database e rode npm run db:migrate. Em local, execute npx netlify init e vincule o site.";
+  return "Banco de dados indisponível. Ative a Netlify Database (npx netlify database init), defina NETLIFY_DB_URL/DATABASE_URL ou rode npm run db:repair.";
 }
 
 export async function runHandler(handler: () => Promise<Response>): Promise<Response> {

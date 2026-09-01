@@ -216,6 +216,8 @@ export const COURSE_MODULES: CourseModule[] = [
         title: "Camelot / tom musical e mix harmônico",
         duration: "20 min",
         synopsis: "Vizinhanças de tom, energy boost e quando quebrar a regra de propósito.",
+        practiceNote:
+          "Abra Harmonia na home, clique 8A na roda e feche o quadrado 8A → 8B → 9B → 9A no mixer antes de marcar o checklist.",
         checklist: [
           "Ler a key no visor Mamute",
           "Planejar 4 faixas em círculo de quintas",

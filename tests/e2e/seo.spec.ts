@@ -24,7 +24,7 @@ test.describe("SEO e estrutura", () => {
     const routes = [
       { path: "/mixer", heading: /CDJ Virtual \+ Dual CDJ \+ mixer integrado/ },
       { path: "/academia", heading: /primeiro beat/ },
-      { path: "/radio", heading: /modo clipe/ },
+      { path: "/radio", heading: /Rádio integrada/ },
       { path: "/catalogo", heading: /Beatport/ },
       { path: "/cadastro", heading: /Cadastro completo/ },
       { path: "/dj", heading: /Entrar no portal/ },

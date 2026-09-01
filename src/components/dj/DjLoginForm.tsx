@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation, useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { PasswordField } from "../forms/PasswordField";
 import {
   AUTH_CODE_LENGTH,
@@ -26,7 +26,6 @@ function resolveLoginEmail(emailParam: string | null, justRegistered: boolean): 
 }
 
 export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
-  const location = useLocation();
   const [params] = useSearchParams();
   const justRegistered = params.get("cadastrado") === "1";
   const emailParam = params.get("email");
@@ -43,16 +42,9 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
 
   useEffect(() => {
     const fromUrl = emailParam?.trim() ?? "";
-    if (fromUrl) {
-      setEmail(fromUrl);
-      setPassword("");
-      setCode("");
-      setError("");
-      setStatus("");
-      return;
-    }
-    setEmail(resolveLoginEmail(emailParam, justRegistered));
-  }, [emailParam, justRegistered, location.key]);
+    if (!fromUrl) return;
+    setEmail(fromUrl);
+  }, [emailParam]);
 
   const resetMessages = () => {
     setError("");
@@ -180,7 +172,6 @@ export function DjLoginForm({ onLoggedIn }: DjLoginFormProps) {
     <label className="field">
       E-mail
       <input
-        key={`${panel}-${email || "login-email-empty"}`}
         type="email"
         name="dj-cabine-email"
         autoComplete="off"

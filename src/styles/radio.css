@@ -315,9 +315,19 @@
   text-transform: uppercase;
   padding: 0.35rem 0.55rem;
   border-radius: 999px;
-  color: var(--cyan);
-  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
-  background: rgba(0, 232, 255, 0.08);
+  color: var(--magenta);
+  border: 1px solid color-mix(in srgb, var(--magenta) 45%, var(--line));
+  background: rgba(255, 45, 149, 0.1);
+}
+
+.radio-dj-live-badge--idle {
+  color: var(--muted);
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.radio-dj-on-air .radio-dj-platform-chip {
+  cursor: default;
 }
 
 .radio-dj-eq-strip {
@@ -722,8 +732,12 @@
   transform-style: flat;
 }
 
-.radio-dj-player--plain,
-.radio-dj-player--plain * {
+.radio-dj-player--plain {
+  transition: none !important;
+  animation: none !important;
+}
+
+.radio-dj-player--plain *:not(.radio-hud, .radio-hud *) {
   transition: none !important;
   animation: none !important;
 }
@@ -941,6 +955,15 @@
   grid-template-rows: minmax(2.85rem, 1fr);
 }
 
+.radio-dj-queue--flow {
+  grid-template-columns: 1fr;
+}
+
+.radio-dj-queue--flow .radio-dj-queue-list {
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.45rem;
+}
+
 .radio-dj-queue-empty {
   display: grid;
   place-items: center;
@@ -990,6 +1013,10 @@
 
   .radio-dj-queue {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .radio-dj-queue--flow {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1470,8 +1497,7 @@
   display: grid;
   grid-template-areas:
     "player"
-    "shell"
-    "fab";
+    "shell";
   gap: 0;
   isolation: isolate;
 }
@@ -1731,7 +1757,7 @@
 }
 
 .radio-fm-balloon-chip {
-  flex: 1 1 calc(50% - 0.22rem);
+  flex: 1 1 100%;
   display: grid;
   gap: 0.06rem;
   min-width: 0;
@@ -1879,93 +1905,14 @@
   text-decoration: underline;
 }
 
-.radio-fm-balloon-fab-row {
-  grid-area: fab;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
-}
-
-.radio-fm-balloon-fab {
-  width: 3.35rem;
-  height: 3.35rem;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 48%, var(--line));
-  background:
-    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.12), transparent 42%),
-    color-mix(in srgb, var(--void) 72%, var(--steel));
-  color: color-mix(in srgb, var(--platform-accent, var(--cyan)) 90%, white);
-  cursor: pointer;
-  position: relative;
-  display: grid;
-  place-items: center;
-  box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.38),
-    0 0 24px color-mix(in srgb, var(--platform-accent, var(--cyan)) 12%, transparent);
-}
-
-.radio-fm-balloon-fab-ring {
-  position: absolute;
-  inset: 0.18rem;
-  border-radius: 50%;
-  border: 1px dashed color-mix(in srgb, var(--platform-accent, var(--cyan)) 35%, transparent);
-  opacity: 0.7;
-}
-
-.radio-fm-balloon[data-on-air="true"] .radio-fm-balloon-fab-ring {
-  animation: radio-fm-ring 4s linear infinite;
-}
-
-@keyframes radio-fm-ring {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.radio-fm-balloon-fab-label {
-  font-family: var(--font-hud);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  z-index: 1;
-}
-
-.radio-fm-balloon-fab-pip {
-  position: absolute;
-  top: 0.42rem;
-  right: 0.55rem;
-  width: 0.38rem;
-  height: 0.38rem;
-  border-radius: 50%;
-  background: var(--muted);
-  z-index: 1;
-}
-
-.radio-fm-balloon-fab-pip[data-on="true"] {
-  background: var(--magenta);
-  box-shadow: 0 0 10px rgba(255, 45, 149, 0.55);
-}
-
 @media (prefers-reduced-motion: no-preference) {
-  .radio-fm-balloon-fab-pip[data-on="true"] {
-    animation: radio-fm-pip 1.2s ease-in-out infinite;
-  }
-
   .radio-fm-balloon-spectrum[data-on="true"] .radio-fm-balloon-spectrum-bar {
     animation: radio-fm-spectrum 0.9s ease-in-out infinite;
     animation-delay: calc(var(--bar-i) * 0.05s);
   }
 }
 
-@keyframes radio-fm-pip {
-  50% {
-    opacity: 0.35;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .radio-fm-balloon-fab-ring,
   .radio-fm-balloon-spectrum-bar {
     animation: none !important;
   }
@@ -1987,11 +1934,6 @@
   .radio-fm-balloon[data-open="true"] .radio-fm-balloon-shell,
   .radio-fm-balloon[data-open="true"] .radio-fm-balloon-player-host {
     border-radius: 14px 14px 0 0;
-  }
-
-  .radio-fm-balloon[data-open="true"] .radio-fm-balloon-fab-row {
-    justify-content: flex-end;
-    padding-inline: 0.15rem;
   }
 
   .radio-fm-balloon-shell {

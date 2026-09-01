@@ -7,6 +7,15 @@ export type {
   LessonVideo,
   TipCard,
 } from "./academy";
+export type {
+  CamelotKey,
+  CamelotLetter,
+  HarmonyDrill,
+  HarmonyRelation,
+  HarmonyStudy,
+  HarmonyStudyId,
+  HarmonyTip,
+} from "./harmony";
 export type { DjProfile, ExperienceLevel, HardwareKind } from "./dj";
 export type {
   DeckEq,

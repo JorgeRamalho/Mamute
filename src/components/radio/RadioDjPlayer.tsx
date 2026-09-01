@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { PLATFORMS } from "../../data/platforms";
-import { RADIO_PLATFORM_ORDER, RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
-import { getFirstClipForPlatform } from "../../lib/radio-playlist";
+import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
+import { getNextPlayableClip, getPreviousPlayableClip, getUpcomingClips } from "../../lib/radio-playlist";
 import type { RadioClip, RadioSource } from "../../types/radio";
 import type { PlatformId } from "../../types/platform";
 import { RadioVirtualDisplay } from "./RadioVirtualDisplay";
@@ -48,25 +48,21 @@ export function RadioDjPlayer({
   const activeClip = source.kind === "clip" ? source.clip : null;
   const continuous = source.kind === "clip" && source.continuous;
   const autoplay = source.kind === "clip" && source.autoplay;
-  const activeIndex = activeClip ? clips.findIndex((clip) => clip.id === activeClip.id) : -1;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlayingFull, setIsPlayingFull] = useState(false);
 
   const goRelative = (delta: number) => {
-    if (activeIndex < 0 || clips.length === 0) return;
-    const nextIndex = (activeIndex + delta + clips.length) % clips.length;
-    const next = clips[nextIndex];
+    if (!activeClip) return;
+    const next =
+      delta === 1
+        ? getNextPlayableClip(clips, activeClip.id)
+        : getPreviousPlayableClip(clips, activeClip.id);
     if (next) onSelectClip(next, { autoplay: true });
   };
 
-  const platformTracks = useMemo(
-    () =>
-      RADIO_PLATFORM_ORDER.map((platformId) => {
-        const tracks = clips.filter((clip) => clip.platform === platformId);
-        const featured = getFirstClipForPlatform(clips, platformId) ?? tracks[0];
-        return { platformId, featured };
-      }),
-    [clips],
+  const flowTracks = useMemo(
+    () => (activeClip ? getUpcomingClips(clips, activeClip.id, 12) : []),
+    [activeClip, clips],
   );
 
   const handlePlaybackEnded = useCallback(() => {
@@ -156,7 +152,7 @@ export function RadioDjPlayer({
     ? "Sintonizando catálogo…"
     : hasYoutube
       ? isPlayingFull
-        ? "Tocando faixa completa · rádio Mamute FM"
+        ? "Tocando faixa completa · rádio contínua"
         : "Iniciando faixa completa…"
       : hasPreview
         ? "Sem clipe completo — usando áudio disponível"
@@ -186,12 +182,17 @@ export function RadioDjPlayer({
           </button>
           <span
             className="radio-dj-platform"
+            data-platform={active.platform}
+            data-live={isPlayingFull ? "true" : "false"}
             style={{ "--platform-accent": platformById.get(active.platform)?.accent } as CSSProperties}
           >
             {platformLabel(active.platform)}
           </span>
-          <span className="radio-dj-live-badge" role="status">
-            NO AR
+          <span
+            className={isPlayingFull ? "radio-dj-live-badge" : "radio-dj-live-badge radio-dj-live-badge--idle"}
+            role="status"
+          >
+            {isPlayingFull ? "AO VIVO" : "STANDBY"}
           </span>
         </div>
       </header>
@@ -216,28 +217,18 @@ export function RadioDjPlayer({
         </a>
       ) : null}
 
-      <div className="radio-dj-platforms" role="tablist" aria-label="Plataformas integradas">
-        {RADIO_PLATFORM_ORDER.map((platformId) => {
-          const platform = platformById.get(platformId);
-          const isActive = active.platform === platformId;
-          const firstTrack = getFirstClipForPlatform(clips, platformId);
-          return (
-            <button
-              key={platformId}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              className={isActive ? "radio-dj-platform-chip is-active" : "radio-dj-platform-chip"}
-              style={{ "--platform-accent": platform?.accent } as CSSProperties}
-              onClick={() => firstTrack && onSelectClip(firstTrack, { autoplay: true })}
-            >
-              <span className="radio-dj-platform-chip-name">{platformLabel(platformId)}</span>
-              <span className="radio-dj-platform-chip-type">
-                {RADIO_PLATFORM_STATION_TYPES[platformId]}
-              </span>
-            </button>
-          );
-        })}
+      <div className="radio-dj-on-air" aria-label="Plataforma no ar">
+        <span
+          className="radio-dj-platform-chip is-active"
+          data-platform={active.platform}
+          data-live={isPlayingFull ? "true" : "false"}
+          style={{ "--platform-accent": platformById.get(active.platform)?.accent } as CSSProperties}
+        >
+          <span className="radio-dj-platform-chip-name">{platformLabel(active.platform)}</span>
+          <span className="radio-dj-platform-chip-type">
+            {isPlayingFull ? "AO VIVO" : RADIO_PLATFORM_STATION_TYPES[active.platform]}
+          </span>
+        </span>
       </div>
 
       <div className="radio-dj-controls">
@@ -271,6 +262,7 @@ export function RadioDjPlayer({
             onPlaying={() => setIsPlayingFull(true)}
             onReady={autoplay ? onAutoplayConsumed : undefined}
             className="radio-dj-youtube-engine"
+            ariaHidden
           />
         ) : hasPreview ? (
           <audio
@@ -293,46 +285,33 @@ export function RadioDjPlayer({
 
       <p className="radio-dj-caption">
         {continuous
-          ? "Rádio contínua — cada faixa toca por inteiro e a programação avança sozinha entre Spotify, SoundCloud, YouTube Music, Beatport e Deezer."
+          ? "Rádio contínua — o flow avança sozinho entre Spotify, SoundCloud, YouTube Music, Beatport e Deezer. Só a plataforma que está tocando aparece no visor."
           : active.caption}
       </p>
 
-      <div className="radio-dj-queue radio-dj-queue--featured" aria-label="Destaques por plataforma">
-        {platformTracks.map(({ platformId, featured }) => (
-          <div key={platformId} className="radio-dj-queue-group">
-            <p
-              className="radio-dj-queue-label"
-              style={{ "--platform-accent": platformById.get(platformId)?.accent } as CSSProperties}
-            >
-              {platformLabel(platformId)}
-            </p>
-            <ul className="radio-dj-queue-list">
-              {featured ? (
-                <li>
-                  <button
-                    type="button"
-                    className={
-                      featured.id === active.id
-                        ? "radio-dj-queue-item is-active"
-                        : playlistIds.includes(featured.id)
-                          ? "radio-dj-queue-item is-saved"
-                          : "radio-dj-queue-item"
-                    }
-                    aria-pressed={featured.id === active.id}
-                    onClick={() => onSelectClip(featured, { autoplay: true })}
-                  >
-                    <strong>{featured.title}</strong>
-                    <span>{featured.artist}</span>
-                  </button>
-                </li>
-              ) : (
-                <li className="radio-dj-queue-empty" aria-hidden="true">
-                  <span>—</span>
-                </li>
-              )}
-            </ul>
-          </div>
-        ))}
+      <div className="radio-dj-queue radio-dj-queue--flow" aria-label="Fila contínua">
+        <ul className="radio-dj-queue-list">
+          {flowTracks.map((clip) => (
+            <li key={clip.id}>
+              <button
+                type="button"
+                data-platform={clip.platform}
+                className={
+                  clip.id === active.id
+                    ? "radio-dj-queue-item is-active"
+                    : playlistIds.includes(clip.id)
+                      ? "radio-dj-queue-item is-saved"
+                      : "radio-dj-queue-item"
+                }
+                aria-pressed={clip.id === active.id}
+                onClick={() => onSelectClip(clip, { autoplay: true })}
+              >
+                <strong>{clip.title}</strong>
+                <span>{clip.artist}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

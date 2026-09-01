@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useLocation } from "react-router";
 import { PLATFORMS } from "../../data/platforms";
-import { RADIO_PLATFORM_ORDER, RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
+import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
 import { useRadioFmStation } from "../../lib/use-radio-fm";
 import type { PlatformId } from "../../types/platform";
 import { RadioYoutubeFrame } from "./RadioYoutubeFrame";
@@ -53,7 +53,7 @@ export function RadioFmBalloon() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const hidden = location.pathname === "/radio";
-  const onAir = started && !paused;
+  const onAir = started && !paused && isPlaying;
   const showPlayer = started && Boolean(clip?.youtubeId);
 
   const ligar = useCallback(() => {
@@ -153,8 +153,8 @@ export function RadioFmBalloon() {
               <div className="radio-fm-balloon-head-copy">
                 <p className="radio-fm-balloon-kicker">
                   {continuous ? "Rádio contínua" : "Programação editorial"}
-                  {isPlaying && !paused ? (
-                    <span className="radio-fm-balloon-live">NO AR</span>
+                  {onAir ? (
+                    <span className="radio-fm-balloon-live">AO VIVO</span>
                   ) : (
                     <span className="radio-fm-balloon-live radio-fm-balloon-live--idle">STANDBY</span>
                   )}
@@ -185,29 +185,26 @@ export function RadioFmBalloon() {
             </div>
 
             <div className="radio-fm-balloon-dial-wrap">
-              <p className="radio-fm-balloon-dial-kicker">Hubs da programação</p>
-              <div className="radio-fm-balloon-dial" aria-label="Plataformas da programação">
-                {RADIO_PLATFORM_ORDER.map((platformId) => (
-                  <span
-                    key={platformId}
-                    className={
-                      clip.platform === platformId
-                        ? "radio-fm-balloon-chip is-active"
-                        : "radio-fm-balloon-chip"
-                    }
-                    style={
-                      {
-                        "--platform-accent": platformById.get(platformId)?.accent ?? accent,
-                      } as CSSProperties
-                    }
-                    title={`${platformLabel(platformId)} · ${RADIO_PLATFORM_STATION_TYPES[platformId]}`}
-                  >
-                    <span className="radio-fm-balloon-chip-name">{platformLabel(platformId)}</span>
-                    <span className="radio-fm-balloon-chip-type">
-                      {RADIO_PLATFORM_STATION_TYPES[platformId]}
-                    </span>
+              <p className="radio-fm-balloon-dial-kicker">
+                {onAir ? "Plataforma ao vivo" : "Próxima no flow"}
+              </p>
+              <div className="radio-fm-balloon-dial" aria-label="Plataforma no ar">
+                <span
+                  className="radio-fm-balloon-chip is-active"
+                  data-platform={clip.platform}
+                  data-live={onAir ? "true" : "false"}
+                  style={
+                    {
+                      "--platform-accent": platformById.get(clip.platform)?.accent ?? accent,
+                    } as CSSProperties
+                  }
+                  title={`${platformLabel(clip.platform)} · ${RADIO_PLATFORM_STATION_TYPES[clip.platform]}`}
+                >
+                  <span className="radio-fm-balloon-chip-name">{platformLabel(clip.platform)}</span>
+                  <span className="radio-fm-balloon-chip-type">
+                    {onAir ? "AO VIVO" : RADIO_PLATFORM_STATION_TYPES[clip.platform]}
                   </span>
-                ))}
+                </span>
               </div>
             </div>
 
@@ -241,7 +238,7 @@ export function RadioFmBalloon() {
             <footer className="radio-fm-balloon-footer">
               <p className="radio-fm-balloon-note">
                 {catalogReady
-                  ? `Agora · ${RADIO_PLATFORM_STATION_TYPES[clip.platform]} · playback oficial no visor.`
+                  ? `Flow contínuo · ${platformLabel(clip.platform)} · playback oficial no visor.`
                   : "Sintonizando catálogo…"}
               </p>
               <div className="radio-fm-balloon-links">
@@ -254,22 +251,6 @@ export function RadioFmBalloon() {
               </div>
             </footer>
           </div>
-        </div>
-
-        <div className="radio-fm-balloon-fab-row">
-          <button
-            type="button"
-            className="radio-fm-balloon-fab"
-            aria-expanded={true}
-            aria-label={onAir ? "Mamute FM no ar" : "Mamute FM aberta"}
-            onClick={() => {
-              if (!started) ligar();
-            }}
-          >
-            <span className="radio-fm-balloon-fab-ring" aria-hidden="true" />
-            <span className="radio-fm-balloon-fab-pip" aria-hidden="true" data-on={onAir ? "true" : "false"} />
-            <span className="radio-fm-balloon-fab-label">FM</span>
-          </button>
         </div>
       </div>
     </aside>

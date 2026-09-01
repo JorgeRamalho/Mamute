@@ -8,6 +8,7 @@ export const TICKER_ITEMS: TickerItem[] = [
   { kind: "track", label: "FREDDIE AGAIN · Rave On", detail: "Spotify editorial · energy 0.86" },
   { kind: "evento", label: "TIME WARP", detail: "Mannheim · arena 02 · 04h00" },
   { kind: "dj", label: "ANNA", detail: "Afterlife · harmonic mix 128" },
+  { kind: "track", label: "CAMELOT 8A → 8B → 9B", detail: "Harmonia Mamute · quadrado Lá menor" },
   { kind: "track", label: "PAUL KALKBRENNER — Feed Your Head", detail: "Deezer Mix Melodic · 125 BPM" },
   { kind: "evento", label: "UNITE WITH TOMORROWLAND", detail: "São Paulo · palco 1 · 22:15" },
   { kind: "dj", label: "VINTAGE CULTURE", detail: "Solomun+1 · Ibiza closing" },

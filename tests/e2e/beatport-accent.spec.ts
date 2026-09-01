@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { BEATPORT_ACCENT, YOUTUBE_ACCENT } from "../../src/data/platform-accents";
+import { cueRadioPlatform } from "./helpers/radio";
 import { PLATFORMS } from "../../src/data/platforms";
 
 const LEGACY_BEATPORT_ACCENT = "#01ff95";
@@ -56,14 +57,18 @@ test.describe("Beatport · avaliação de cor de marca", () => {
     expect(accent).toBe(BEATPORT_ACCENT);
   });
 
-  test("rádio · chip Beatport herda accent amarelo", async ({ page }) => {
-    await page.goto("/radio");
-    const beatportChip = page.getByRole("tab", { name: "Beatport" });
+  test("rádio · Beatport no ar herda accent amarelo", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/radio", { waitUntil: "domcontentloaded" });
+    await cueRadioPlatform(page, "beatport");
+    const beatportChip = page.locator(".radio-dj-on-air [data-platform='beatport']");
     await expect(beatportChip).toBeVisible();
-    const accent = await beatportChip.evaluate((el) =>
-      getComputedStyle(el).getPropertyValue("--platform-accent").trim(),
-    );
-    expect(accent).toBe(BEATPORT_ACCENT);
+    await expect(beatportChip).toContainText(/Beatport/i);
+    await expect
+      .poll(async () =>
+        beatportChip.evaluate((el) => getComputedStyle(el).getPropertyValue("--platform-accent").trim()),
+      )
+      .toBe(BEATPORT_ACCENT);
   });
 });
 
@@ -90,13 +95,17 @@ test.describe("YouTube Music · avaliação de cor de marca", () => {
     expect(accent).toBe(YOUTUBE_ACCENT);
   });
 
-  test("rádio · chip YouTube Music herda accent vermelho", async ({ page }) => {
-    await page.goto("/radio");
-    const youtubeChip = page.getByRole("tab", { name: "YouTube Music" });
+  test("rádio · YouTube Music no ar herda accent vermelho", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/radio", { waitUntil: "domcontentloaded" });
+    await cueRadioPlatform(page, "youtube");
+    const youtubeChip = page.locator(".radio-dj-on-air [data-platform='youtube']");
     await expect(youtubeChip).toBeVisible();
-    const accent = await youtubeChip.evaluate((el) =>
-      getComputedStyle(el).getPropertyValue("--platform-accent").trim(),
-    );
-    expect(accent).toBe(YOUTUBE_ACCENT);
+    await expect(youtubeChip).toContainText(/YouTube Music/);
+    await expect
+      .poll(async () =>
+        youtubeChip.evaluate((el) => getComputedStyle(el).getPropertyValue("--platform-accent").trim()),
+      )
+      .toBe(YOUTUBE_ACCENT);
   });
 });

@@ -6,6 +6,10 @@
   padding: 2.2rem 0 2rem;
 }
 
+.hero:has(+ .mamute-spotlight) {
+  padding-bottom: 0.85rem;
+}
+
 .hero-copy {
   position: relative;
   z-index: 2;

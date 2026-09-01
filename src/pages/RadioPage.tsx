@@ -7,8 +7,7 @@ export function RadioPage() {
       <p className="kicker">Mamute FM</p>
       <h1>Rádio integrada</h1>
       <p className="lede">
-        Uma única cabine com equalizador, playlist DJ iniciante e rádio contínua das plataformas —
-        faixas completas em sequência automática.
+        Flow contínuo das plataformas — só a que está tocando aparece no visor, marcada AO VIVO.
       </p>
       <RadioErrorBoundary>
         <RadioStudio />

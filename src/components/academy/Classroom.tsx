@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { COURSE_MODULES } from "../../data/courses";
 import { EXERCISES, TIPS } from "../../data/academy";
+import { LESSON_ID_SET } from "../../data/lesson-ids";
 import { completionRatio, hydrateAcademyProgress, loadProgress, toggleLessonAsync } from "../../lib/academy";
 import type { CourseLevel, LessonReference } from "../../types/academy";
 
@@ -41,8 +42,14 @@ function ReadingBlock({ kicker, items }: { kicker: string; items: LessonReferenc
 }
 
 export function Classroom() {
+  const location = useLocation();
   const [done, setDone] = useState<string[]>(() => loadProgress());
   const [activeId, setActiveId] = useState(COURSE_MODULES[0]?.lessons[0]?.id ?? "l-01");
+
+  useEffect(() => {
+    const lessonId = location.hash.replace(/^#/, "");
+    if (LESSON_ID_SET.has(lessonId)) setActiveId(lessonId);
+  }, [location.hash]);
 
   useEffect(() => {
     void hydrateAcademyProgress().then((merged) => {

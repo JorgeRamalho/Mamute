@@ -70,6 +70,29 @@ export function getPreviousPlayableClip(
   return programming[prevIndex] ?? null;
 }
 
+/** Próximas faixas no flow editorial, começando pela que está no ar. */
+export function getUpcomingClips(
+  clips: RadioClip[],
+  currentId: string,
+  limit = 8,
+  scopeIds?: string[],
+): RadioClip[] {
+  const programming = programmingPool(clips, scopeIds);
+  if (programming.length === 0) return [];
+
+  const currentIndex = programming.findIndex((clip) => clip.id === currentId);
+  const start = currentIndex < 0 ? 0 : currentIndex;
+  const count = Math.min(limit, programming.length);
+  const upcoming: RadioClip[] = [];
+
+  for (let offset = 0; offset < count; offset += 1) {
+    const clip = programming[(start + offset) % programming.length];
+    if (clip) upcoming.push(clip);
+  }
+
+  return upcoming;
+}
+
 export function getFirstClipForPlatform(clips: RadioClip[], platformId: PlatformId): RadioClip | undefined {
   const editorial = clips.find(
     (clip) => clip.platform === platformId && clip.id.startsWith("radio-"),

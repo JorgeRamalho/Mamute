@@ -39,6 +39,11 @@ function assetFileName(file: string): string {
 export function publicAsset(file: string): string {
   const name = assetFileName(file);
 
+  const viteLiveScript = document.querySelector<HTMLScriptElement>("script[data-mamute-vite]");
+  if (viteLiveScript) {
+    return new URL(name, "http://127.0.0.1:5173/").href;
+  }
+
   const liveRootScript = document.querySelector<HTMLScriptElement>(
     'script[src*="dist/assets/main.js"]',
   );

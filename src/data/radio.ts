@@ -13,10 +13,8 @@ export const RADIO_PLATFORM_ORDER: PlatformId[] = [
 ];
 
 /** Tipo de programação Mamute FM em cada hub (rótulo no visor flutuante). */
-export const RADIO_PLATFORM_STATION_TYPES: Record<
-  (typeof RADIO_PLATFORM_ORDER)[number],
-  string
-> = {
+export const RADIO_PLATFORM_STATION_TYPES: Record<PlatformId, string> = {
+  mamute: "Cabine Mamute",
   spotify: "Playlists editoriais",
   soundcloud: "Sets e uploads",
   youtube: "Clipes oficiais",
