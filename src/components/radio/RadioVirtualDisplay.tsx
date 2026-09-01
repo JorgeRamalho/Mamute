@@ -5,11 +5,12 @@ import { syncBeginnerDjToStorage } from "../../lib/radio-catalog-import";
 import { markBeginnerPlaylistLoaded } from "../../lib/radio-user-playlist";
 import type { RadioClip } from "../../types/radio";
 import type { PlatformId } from "../../types/platform";
+import { RadioDigitalTuner, type RadioDisplayMode } from "./RadioDigitalTuner";
 import { RadioPulseGrid } from "./RadioPulseGrid";
 
-const SPECTRUM_BARS = 32;
-const VU_SEGMENTS = 12;
-const DROP_MS = 480;
+const SPECTRUM_BARS = 40;
+const VU_SEGMENTS = 14;
+const DROP_MS = 520;
 
 type RadioVirtualDisplayProps = {
   clip?: RadioClip | null;
@@ -50,6 +51,7 @@ export function RadioVirtualDisplay({
   const [statusLine, setStatusLine] = useState<string | null>(null);
   const [drop, setDrop] = useState(false);
   const [hint, setHint] = useState(true);
+  const [displayMode, setDisplayMode] = useState<RadioDisplayMode>("chroma");
   const dropTimer = useRef(0);
   const beatMs = clip ? Math.round(60_000 / Math.max(clip.bpm, 1)) : 500;
   const camelot = clip?.key ? getCamelotKey(clip.key) : undefined;
@@ -91,6 +93,7 @@ export function RadioVirtualDisplay({
       aria-label="Visor digital Mamute FM"
       data-playing={live ? "true" : "false"}
       data-drop={drop ? "true" : "false"}
+      data-display-mode={displayMode}
       style={
         {
           "--hud-accent": accent,
@@ -101,7 +104,7 @@ export function RadioVirtualDisplay({
     >
       <div className="radio-hud-bezel">
         <div className="radio-hud-bezel-top">
-          <span className="radio-hud-brand">MAMUTE · STUDIO HUD</span>
+          <span className="radio-hud-brand">MAMUTE · NEXUS VISOR</span>
           <span className="radio-hud-chip">{platformCode(clip?.platform)}</span>
           {clip?.platform ? (
             <span className="radio-hud-station-type">
@@ -109,12 +112,22 @@ export function RadioVirtualDisplay({
             </span>
           ) : null}
           <span className="radio-hud-chroma" aria-hidden="true">
-            CHROMA
+            INTERACTIVE
           </span>
           <span className="radio-hud-live" role="status">
             {live ? "AO VIVO" : catalogReady ? "STANDBY" : "SYNC"}
           </span>
         </div>
+
+        <RadioDigitalTuner
+          clip={clip}
+          accent={accent}
+          keyColor={keyColor}
+          isPlaying={isPlaying}
+          catalogReady={catalogReady}
+          mode={displayMode}
+          onModeChange={setDisplayMode}
+        />
 
         <div className="radio-hud-screen">
           <div className="radio-hud-screen-inner" data-stream={stream ? "true" : "false"}>
@@ -128,6 +141,7 @@ export function RadioVirtualDisplay({
             />
             <span className="radio-hud-scan" aria-hidden="true" />
             <span className="radio-hud-grid" aria-hidden="true" />
+            <span className="radio-hud-aurora" aria-hidden="true" />
             <span className="radio-hud-glow" aria-hidden="true" />
             <span className="radio-hud-noise" aria-hidden="true" />
 
@@ -153,7 +167,7 @@ export function RadioVirtualDisplay({
                 </div>
                 <div className="radio-hud-metric radio-hud-metric--key">
                   <span className="radio-hud-metric-label">KEY</span>
-                  <span className="radio-hud-metric-value">{clip?.key ?? "—"}</span>
+                  <span className="radio-hud-metric-value">{camelot?.code ?? clip?.key ?? "—"}</span>
                 </div>
                 <div className="radio-hud-metric">
                   <span className="radio-hud-metric-label">GENRE</span>
@@ -167,7 +181,7 @@ export function RadioVirtualDisplay({
 
               <p className="radio-hud-status">{playbackLabel}</p>
               {hint ? (
-                <p className="radio-hud-pulse-hint">CHROMA GRID · arraste · clique para um drop</p>
+                <p className="radio-hud-pulse-hint">Toque o visor · arraste luz · clique para drop cromático</p>
               ) : null}
             </div>
 
@@ -196,7 +210,7 @@ export function RadioVirtualDisplay({
         <div className="radio-hud-footer">
           <div className="radio-hud-footer-meta">
             <span>{platformLabel}</span>
-            <span>{continuous ? "RÁDIO CONTÍNUA" : "MANUAL"}</span>
+            <span>{continuous ? "ALEATÓRIO · 24H" : "MANUAL"}</span>
             {statusLine ? <span className="radio-hud-footer-sync">{statusLine}</span> : null}
           </div>
           <div className="radio-hud-footer-actions">

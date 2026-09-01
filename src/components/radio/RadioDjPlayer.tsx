@@ -1,6 +1,7 @@
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { PLATFORMS } from "../../data/platforms";
 import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
+import { getCamelotKey } from "../../lib/musical-key";
 import { getUpcomingClips } from "../../lib/radio-playlist";
 import { radioMp3Station } from "../../lib/radio-mp3-station";
 import { useRadioMp3 } from "../../lib/use-radio-mp3";
@@ -107,7 +108,15 @@ export function RadioDjPlayer({
   }
 
   const inPlaylist = playlistIds.includes(activeClip.id);
-  const liveStream = <RadioLiveStage className="radio-hud-stream-frame" />;
+  const keyColor = activeClip.key ? (getCamelotKey(activeClip.key)?.color ?? accent) : accent;
+  const liveStream = (
+    <RadioLiveStage
+      className="radio-hud-stream-frame"
+      accent={accent}
+      keyColor={keyColor}
+      playing={playing && catalogReady}
+    />
+  );
   const playbackLabel = !catalogReady
     ? "Sintonizando catálogo eletrônico…"
     : paused
@@ -116,7 +125,7 @@ export function RadioDjPlayer({
 
   return (
     <section
-      className="radio-dj-player card radio-dj-player--plain radio-dj-player--unified"
+      className="radio-dj-player card radio-dj-player--plain radio-dj-player--unified radio-dj-player--nexus"
       aria-label="Mamute DJ · rádio integrada"
       data-continuous={continuous ? "on" : "off"}
       data-random="on"
@@ -175,21 +184,22 @@ export function RadioDjPlayer({
         </a>
       ) : null}
 
-      <div className="radio-dj-on-air" aria-label="Plataforma no ar">
-        <span
-          className="radio-dj-platform-chip is-active"
-          data-platform={activeClip.platform}
-          data-live={playing ? "true" : "false"}
-          style={{ "--platform-accent": platformById.get(activeClip.platform)?.accent } as CSSProperties}
-        >
-          <span className="radio-dj-platform-chip-name">{platformLabel(activeClip.platform)}</span>
-          <span className="radio-dj-platform-chip-type">
-            {playing ? "AO VIVO" : RADIO_PLATFORM_STATION_TYPES[activeClip.platform]}
+      <div className="radio-dj-deck-premium">
+        <div className="radio-dj-on-air" aria-label="Plataforma no ar">
+          <span
+            className="radio-dj-platform-chip is-active"
+            data-platform={activeClip.platform}
+            data-live={playing ? "true" : "false"}
+            style={{ "--platform-accent": platformById.get(activeClip.platform)?.accent } as CSSProperties}
+          >
+            <span className="radio-dj-platform-chip-name">{platformLabel(activeClip.platform)}</span>
+            <span className="radio-dj-platform-chip-type">
+              {playing ? "AO VIVO" : RADIO_PLATFORM_STATION_TYPES[activeClip.platform]}
+            </span>
           </span>
-        </span>
-      </div>
+        </div>
 
-      <div className="radio-dj-controls">
+        <div className="radio-dj-controls">
         <button type="button" className="radio-dj-btn" onClick={() => void mp3.skip(-1)} aria-label="Faixa anterior">
           ◀
         </button>
@@ -214,6 +224,7 @@ export function RadioDjPlayer({
         <button type="button" className="radio-dj-btn" onClick={() => void mp3.skip(1)} aria-label="Próxima faixa">
           ▶
         </button>
+        </div>
       </div>
 
       <p className="radio-dj-caption">

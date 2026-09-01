@@ -1,5 +1,6 @@
 import type { DjProfileRow } from "../../../db/schema.js";
 import type { DjProfile } from "../../../src/types/dj.js";
+import { corsHeaders } from "./cors.js";
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -11,6 +12,7 @@ export function jsonResponse(body: unknown, status = 200): Response {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
+      ...corsHeaders(),
     },
   });
 }

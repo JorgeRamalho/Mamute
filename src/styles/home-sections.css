@@ -782,7 +782,7 @@
 .mamute-spotlight {
   --spot-accent: var(--cyan);
   position: relative;
-  margin: 0.35rem 0 1.75rem;
+  margin: 0.35rem 0 1.05rem;
   padding: clamp(1.35rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.75rem);
   border: 0;
   outline: none;

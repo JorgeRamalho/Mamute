@@ -14,6 +14,7 @@ export async function runHandler(handler: () => Promise<Response>): Promise<Resp
       detail.includes("Failed query") ||
       detail.includes("ECONNREFUSED") ||
       detail.includes("connection") ||
+      detail.includes("connection string") ||
       detail.includes("NETLIFY_DB_URL") ||
       detail.includes("NETLIFY_DATABASE");
     return errorResponse(

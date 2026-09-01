@@ -42,17 +42,28 @@ export function ConfirmEmailPage() {
 
   useEffect(() => {
     if (!token) return;
+    let cancelled = false;
+    let timeoutId = 0;
+
     void confirmEmailWithToken(token).then((result: LoginResult) => {
+      if (cancelled) return;
       if (result.ok) {
         setVerifyState("success");
         setVerifyMessage("E-mail confirmado. Redirecionando ao portal…");
-        window.setTimeout(() => navigate("/dj"), 1800);
+        timeoutId = window.setTimeout(() => navigate("/dj"), 1800);
         return;
       }
       setVerifyState("error");
       setVerifyMessage(result.message);
     });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [token, navigate]);
+
+  const showResendForm = !token || verifyState === "idle" || verifyState === "error";
 
   const onResend = async () => {
     setResendError("");
@@ -92,7 +103,9 @@ export function ConfirmEmailPage() {
             <p className="dj-login-error" role="alert">{verifyMessage}</p>
           ) : null}
         </section>
-      ) : (
+      ) : null}
+
+      {showResendForm ? (
         <section className="dj-login card" aria-labelledby="confirm-email-title">
           <h2 id="confirm-email-title">Aguardando confirmação</h2>
           {emailSent ? (
@@ -152,7 +165,7 @@ export function ConfirmEmailPage() {
             </button>
           </form>
         </section>
-      )}
+      ) : null}
 
       <p className="dj-page-switch">
         Já confirmou? <Link to={loginHref}>Entrar na Área do DJ</Link>

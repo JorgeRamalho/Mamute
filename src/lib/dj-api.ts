@@ -95,43 +95,58 @@ export class ApiUnavailableError extends TypeError {
   }
 }
 
+const STATIC_FRONT_PORTS = new Set(["5500", "4173"]);
+
+function apiCandidateUrls(path: string): string[] {
+  const { port, protocol, hostname } = window.location;
+  if (!STATIC_FRONT_PORTS.has(port)) return [path];
+  const host = hostname === "localhost" ? "localhost" : "127.0.0.1";
+  return [`${protocol}//${host}:8888${path}`, `${protocol}//${host}:5173${path}`];
+}
+
 function apiUnavailableMessage(): string {
   const port = window.location.port;
-  if (port === "5500") {
-    return "O Live Server (porta 5500) não executa a API de e-mail. Rode npm run dev e abra http://127.0.0.1:5173.";
-  }
-  if (port === "4173") {
-    return "O preview estático não executa a API. Use npm run dev para testar o envio de código.";
+  if (STATIC_FRONT_PORTS.has(port)) {
+    return "A API local não respondeu. Deixe npm run dev no ar (http://localhost:8888) e clique de novo — pode continuar neste mesmo endereço.";
   }
   return "O servidor da API não respondeu. Rode npm run dev no terminal e abra http://localhost:8888/dj.";
 }
 
-async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
-  if (window.location.port === "5500" || window.location.port === "4173") {
-    throw new ApiUnavailableError(apiUnavailableMessage());
-  }
-  let response: Response;
-  try {
-    response = await fetch(input, init);
-  } catch {
-    throw new ApiUnavailableError(apiUnavailableMessage());
-  }
+async function readApiResponse(response: Response): Promise<Response> {
   const type = response.headers.get("content-type") ?? "";
-  if (!type.toLowerCase().includes("application/json")) {
-    const fallbackText = await response.text().catch(() => "");
-    if (fallbackText.includes("NETLIFY_DB_URL")) {
-      throw new ApiUnavailableError(
-        "Banco local não iniciado. No terminal: npm run dev — depois abra http://localhost:8888/dj (não use a porta 5173).",
-      );
-    }
-    if (response.status >= 500) {
-      throw new ApiUnavailableError(
-        "O servidor respondeu com erro. Use npm run dev (não dev:vite), confira npm run db:migrate e configure RESEND_API_KEY no .env.",
-      );
-    }
-    throw new ApiUnavailableError(apiUnavailableMessage());
+  if (type.toLowerCase().includes("application/json")) {
+    return response;
   }
-  return response;
+  const fallbackText = await response.text().catch(() => "");
+  if (fallbackText.includes("NETLIFY_DB_URL")) {
+    throw new ApiUnavailableError(
+      "Banco local não iniciado. No terminal: npm run dev — depois abra http://localhost:8888/dj.",
+    );
+  }
+  if (response.status >= 500) {
+    throw new ApiUnavailableError(
+      "O servidor respondeu com erro. Use npm run dev (não dev:vite), confira npm run db:migrate e configure RESEND_API_KEY no .env.",
+    );
+  }
+  throw new ApiUnavailableError(apiUnavailableMessage());
+}
+
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const urls = apiCandidateUrls(input);
+  let lastError: ApiUnavailableError | null = null;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, init);
+      return await readApiResponse(response);
+    } catch (error) {
+      if (error instanceof ApiUnavailableError && error.message.includes("Banco local")) {
+        throw error;
+      }
+      lastError =
+        error instanceof ApiUnavailableError ? error : new ApiUnavailableError(apiUnavailableMessage());
+    }
+  }
+  throw lastError ?? new ApiUnavailableError(apiUnavailableMessage());
 }
 
 async function parseJson<T>(response: Response): Promise<T | ApiError> {
@@ -389,6 +404,16 @@ export async function saveAcademyProgress(
 
 export function isApiReachableError(error: unknown): boolean {
   return error instanceof ApiUnavailableError || error instanceof TypeError;
+}
+
+export async function pingDjApi(): Promise<boolean> {
+  try {
+    const response = await apiFetch("/api/dj/health");
+    const data = await parseJson<{ ok?: boolean }>(response);
+    return "ok" in data && data.ok === true;
+  } catch {
+    return false;
+  }
 }
 
 export function getApiConnectionMessage(error: unknown, fallback: string): string {

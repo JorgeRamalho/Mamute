@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { Hero } from "../components/hero/Hero";
 import { HarmonyPanel } from "../components/home/HarmonyPanel";
 import { MamuteSpotlightSection } from "../components/home/MamuteSpotlightSection";
+import { VisorSection } from "../components/home/VisorSection";
 import { CabinetLayersSection } from "../components/home/CabinetLayersSection";
 import { VisorTechSection } from "../components/home/VisorTechSection";
 import { BoothFaqSection } from "../components/plans/BoothFaqSection";
@@ -30,6 +31,7 @@ export function HomePage() {
     <div className="page">
       <Hero />
       <MamuteSpotlightSection />
+      <VisorSection />
       <HarmonyPanel />
       <VisorTechSection />
       <CabinetLayersSection />

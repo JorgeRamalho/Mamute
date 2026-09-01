@@ -8,6 +8,7 @@ export function normalizeLiveServerUrl(): void {
 const APP_SEGMENTS = new Set([
   "mixer",
   "academia",
+  "harmonia",
   "radio",
   "catalogo",
   "cadastro",
@@ -17,7 +18,7 @@ const APP_SEGMENTS = new Set([
 
 export function appBasename(): string {
   const { pathname, port } = window.location;
-  if (/^517\d$/.test(port) || port === "4173") return "/";
+  if (/^517\d$/.test(port) || port === "4173" || port === "8888") return "/";
 
   const path = pathname.endsWith("/index.html")
     ? pathname.slice(0, -"index.html".length)

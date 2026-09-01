@@ -17,6 +17,21 @@ async function dismissPrivacyBanner(page: import("@playwright/test").Page): Prom
   }
 }
 
+test("UI: link /cadastro/confirmar-email monta o app e valida o token", async ({ page }) => {
+  await page.goto(
+    "/cadastro/confirmar-email?token=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  );
+  await dismissPrivacyBanner(page);
+
+  await expect(page.getByRole("heading", { name: "Confirme seu e-mail" })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("alert")).toContainText(/inválido ou expirado|sem conexão/i, {
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("button", { name: /reenviar código e link/i })).toBeVisible();
+});
+
 test.describe("DJ — cadastro, código e login (automático)", () => {
   let apiReady = false;
 

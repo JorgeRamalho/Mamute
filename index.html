@@ -1,6 +1,29 @@
 <!doctype html>
 <html lang="pt-BR">
   <head>
+    <script>
+      (function () {
+        var APP = {
+          mixer: 1,
+          academia: 1,
+          radio: 1,
+          catalogo: 1,
+          cadastro: 1,
+          dj: 1,
+          politicas: 1,
+          harmonia: 1,
+        };
+        var path = location.pathname.replace(/\/index\.html$/i, "");
+        var parts = path.split("/").filter(Boolean);
+        var href = "/";
+        if (parts[0] && !APP[parts[0]]) {
+          href = "/" + parts[0] + "/";
+        }
+        var base = document.createElement("base");
+        base.href = href;
+        document.head.insertBefore(base, document.head.firstChild);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./public/favicon.svg?v=monogram" />
     <link rel="apple-touch-icon" href="./public/logo-mamute.svg" />

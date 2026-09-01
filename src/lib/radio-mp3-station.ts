@@ -47,7 +47,7 @@ export class RadioMp3Station {
     const audio = new Audio();
     audio.preload = "auto";
     audio.autoplay = true;
-    audio.controls = true;
+    audio.controls = false;
     audio.setAttribute("playsinline", "true");
     audio.setAttribute("controlslist", "nodownload noplaybackrate");
     audio.setAttribute("data-radio-mp3", "true");

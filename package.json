@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "setup": "node scripts/bootstrap.mjs --migrate",
-    "dev": "node scripts/bootstrap.mjs --migrate --skip-env-copy && netlify dev",
+    "dev": "node scripts/dev.mjs",
     "dev:vite": "vite",
     "dev:api": "netlify dev",
     "bootstrap": "node scripts/bootstrap.mjs --migrate",

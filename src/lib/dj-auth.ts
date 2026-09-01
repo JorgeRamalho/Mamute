@@ -368,7 +368,22 @@ export async function hydrateProfileFromServer(): Promise<DjProfile | null> {
   return null;
 }
 
+const confirmEmailInFlight = new Map<string, Promise<LoginResult>>();
+
 export async function confirmEmailWithToken(token: string): Promise<LoginResult> {
+  const key = token.trim();
+  const cached = confirmEmailInFlight.get(key);
+  if (cached) return cached;
+
+  const pending = confirmEmailWithTokenOnce(key).catch((error: unknown) => {
+    confirmEmailInFlight.delete(key);
+    throw error;
+  });
+  confirmEmailInFlight.set(key, pending);
+  return pending;
+}
+
+async function confirmEmailWithTokenOnce(token: string): Promise<LoginResult> {
   try {
     const remote = await verifyEmailToken(token);
     if (remote.ok) {
@@ -379,6 +394,7 @@ export async function confirmEmailWithToken(token: string): Promise<LoginResult>
     }
     return { ok: false, message: remote.error };
   } catch {
+    confirmEmailInFlight.delete(token);
     return {
       ok: false,
       message: "Sem conexão com o servidor. Tente abrir o link de confirmação novamente.",

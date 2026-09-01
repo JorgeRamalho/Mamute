@@ -12,6 +12,7 @@ function liveBundleStamp(): Plugin {
       const stamp = { builtAt: new Date().toISOString() };
       fs.mkdirSync("dist", { recursive: true });
       fs.writeFileSync(path.join("dist", "live-bundle.json"), JSON.stringify(stamp), "utf8");
+      fs.writeFileSync(path.join("dist", "_redirects"), "/*    /index.html   200\n", "utf8");
     },
   };
 }

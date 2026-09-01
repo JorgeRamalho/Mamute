@@ -18,6 +18,7 @@ import {
 import { PasswordField } from "../forms/PasswordField";
 import { CadastroWelcome } from "./CadastroWelcome";
 import { isCadastroEditMode } from "../../lib/cadastro-mode";
+import { pingDjApi } from "../../lib/dj-api";
 import {
   hasCredentials,
   hydrateProfileFromServer,
@@ -203,6 +204,26 @@ export function RegisterForm({ selectedPlan = null, onJourneyComplete }: Registe
   const [currentStep, setCurrentStep] = useState<CadastroStepNumber>(1);
   const [farthest, setFarthest] = useState<CadastroStepNumber>(editing ? CADASTRO_STEP_COUNT : 1);
   const [welcome, setWelcome] = useState<WelcomeState | null>(null);
+  const [apiHint, setApiHint] = useState("");
+
+  useEffect(() => {
+    if (currentStep !== 8 || welcome) {
+      setApiHint("");
+      return;
+    }
+    let cancelled = false;
+    void pingDjApi().then((ok) => {
+      if (cancelled) return;
+      setApiHint(
+        ok
+          ? ""
+          : "A API local não respondeu. Deixe npm run dev no ar (http://localhost:8888) e clique de novo — pode continuar neste mesmo endereço.",
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentStep, welcome]);
 
   useEffect(() => {
     if (!editing) return;
@@ -897,6 +918,10 @@ export function RegisterForm({ selectedPlan = null, onJourneyComplete }: Registe
           {authError ? (
             <p className="dj-login-error" role="alert">
               {authError}
+            </p>
+          ) : apiHint ? (
+            <p className="dj-login-error" role="alert">
+              {apiHint}
             </p>
           ) : null}
           <div className="dj-register-nav">

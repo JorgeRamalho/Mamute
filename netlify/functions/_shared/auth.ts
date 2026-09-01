@@ -66,8 +66,6 @@ export async function markEmailVerified(accountId: string): Promise<void> {
     .set({
       emailVerified: true,
       emailVerifiedAt: now,
-      emailVerificationToken: null,
-      emailVerificationExpiresAt: null,
       emailVerificationCodeHash: null,
       emailVerificationCodeExpiresAt: null,
       updatedAt: now,
@@ -162,23 +160,16 @@ export async function resetPasswordWithCode(
 }
 
 export async function verifyEmailToken(token: string): Promise<{ accountId: string; email: string } | null> {
-  const trimmed = token.trim();
-  if (!trimmed) return null;
-
-  const [account] = await db
-    .select()
-    .from(djAccounts)
-    .where(
-      and(
-        eq(djAccounts.emailVerificationToken, trimmed),
-        gt(djAccounts.emailVerificationExpiresAt, new Date()),
-      ),
-    )
-    .limit(1);
-
+  const account = await findAccountByVerificationToken(token);
   if (!account) return null;
 
-  await markEmailVerified(account.id);
+  const expiresAt = account.emailVerificationExpiresAt?.getTime() ?? 0;
+  if (expiresAt <= Date.now()) return null;
+
+  if (!account.emailVerified) {
+    await markEmailVerified(account.id);
+  }
+
   return { accountId: account.id, email: account.email };
 }
 

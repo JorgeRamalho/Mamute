@@ -1,4 +1,4 @@
-import { DigitalVisor } from "./DigitalVisor";
+import { RadioFmBalloon } from "../radio/RadioFmBalloon";
 
 export function Hero() {
   return (
@@ -15,7 +15,9 @@ export function Hero() {
           SoundCloud, Deezer, Spotify e YouTube.
         </p>
       </div>
-      <DigitalVisor />
+      <div className="hero-radio">
+        <RadioFmBalloon variant="hero" />
+      </div>
     </section>
   );
 }

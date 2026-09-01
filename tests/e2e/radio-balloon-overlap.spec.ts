@@ -62,6 +62,9 @@ const CADASTRO_SELECTORS = [
 ];
 
 async function scrollPastRadioReserve(page: Page): Promise<void> {
+  const placement = await page.locator(".radio-fm-balloon").getAttribute("data-placement");
+  if (placement === "hero") return;
+
   await page.waitForFunction(() => {
     const reserve = Number.parseFloat(
       getComputedStyle(document.documentElement).getPropertyValue("--radio-fm-reserve-h"),
@@ -105,7 +108,7 @@ test.describe("Mamute FM — sem sobrepor conteúdo", () => {
     expect(overlaps, `Sobreposição detectada: ${overlaps.join(" | ")}`).toEqual([]);
   });
 
-  test("balão respeita altura máxima e não invade o topo da viewport", async ({ page }) => {
+  test("na home o visor FM ocupa o hero e não invade o header", async ({ page }) => {
     await page.goto("/");
     await dismissPrivacyBanner(page);
     await openRadioBalloon(page);
@@ -113,20 +116,24 @@ test.describe("Mamute FM — sem sobrepor conteúdo", () => {
     const metrics = await page.evaluate(() => {
       const el = document.querySelector(".radio-fm-balloon");
       const header = document.querySelector(".site-header");
+      const hero = document.querySelector(".hero");
       if (!el || !header) return null;
       const br = el.getBoundingClientRect();
       const hr = header.getBoundingClientRect();
       return {
+        placement: el.getAttribute("data-placement"),
+        inHero: Boolean(hero?.contains(el)),
         balloonTop: br.top,
         headerBottom: hr.bottom,
-        viewportH: window.innerHeight,
-        balloonHeight: br.height,
+        position: getComputedStyle(el).position,
       };
     });
 
     expect(metrics).not.toBeNull();
+    expect(metrics!.inHero).toBe(true);
+    expect(metrics!.placement).toBe("hero");
+    expect(metrics!.position).toBe("relative");
     expect(metrics!.balloonTop).toBeGreaterThanOrEqual(metrics!.headerBottom - 4);
-    expect(metrics!.balloonHeight).toBeLessThanOrEqual(metrics!.viewportH * 0.45);
   });
 
   test("seção de planos na home não fica sob o balão aberto", async ({ page }) => {

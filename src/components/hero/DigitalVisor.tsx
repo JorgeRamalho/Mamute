@@ -4,6 +4,12 @@ import { visorBeatPhase, visorWaveFrame } from "../../lib/visor-motion";
 import { bindVisorStage } from "../../lib/visor-stage";
 
 const VU_BARS = 12;
+const PHASE_STEPS = 32;
+/** Envelope de uma frase 8 compassos — picos nos downbeats. */
+const PHASE_ENVELOPE = [
+  42, 58, 72, 100, 82, 60, 48, 86, 68, 54, 92, 100, 78, 56, 46, 84, 64, 52, 90, 98, 76, 58, 48, 88,
+  70, 54, 94, 96, 74, 58, 42, 80,
+] as const;
 
 export function DigitalVisor() {
   const rootRef = useRef<HTMLElement>(null);
@@ -13,7 +19,7 @@ export function DigitalVisor() {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    return bindVisorStage(root);
+    return bindVisorStage(root, { flat: true });
   }, []);
 
   useEffect(() => {
@@ -74,17 +80,39 @@ export function DigitalVisor() {
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
+
+      const violet = ctx.createLinearGradient(0, 0, width, 0);
+      violet.addColorStop(0, "rgba(139, 124, 255, 0.2)");
+      violet.addColorStop(0.5, `rgba(196, 184, 255, ${0.28 + 0.32 * pulse})`);
+      violet.addColorStop(1, "rgba(255, 45, 149, 0.4)");
+      ctx.shadowColor = "rgba(139, 124, 255, 0.45)";
+      ctx.strokeStyle = violet;
+      ctx.lineWidth = 1.35;
+      ctx.beginPath();
+      for (let x = 0; x < width; x += 1) {
+        const wave =
+          Math.sin((x + frame * 0.72) * 0.022) * 18 + Math.cos((x - frame) * 0.07) * 6;
+        const y = height / 2 + wave;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
       ctx.shadowBlur = 0;
       raf = requestAnimationFrame(draw);
     };
 
     const resize = () => {
-      canvas.width = canvas.clientWidth * devicePixelRatio;
-      canvas.height = canvas.clientHeight * devicePixelRatio;
+      canvas.width = Math.max(1, Math.floor(canvas.clientWidth * devicePixelRatio));
+      canvas.height = Math.max(1, Math.floor(canvas.clientHeight * devicePixelRatio));
     };
     resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
     draw();
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -95,7 +123,7 @@ export function DigitalVisor() {
   }, []);
 
   return (
-    <div className="visor-scene">
+    <div className="visor-scene visor-scene--band">
       <aside
         ref={rootRef}
         className="visor"
@@ -157,14 +185,47 @@ export function DigitalVisor() {
                 </div>
               </div>
             </div>
-            <div className="visor-platters" aria-hidden="true">
-              <div className="visor-platter visor-platter-a">
-                <span className="visor-platter-ring" />
-                <span className="visor-platter-hub">A</span>
+            <div className="visor-phase" aria-hidden="true">
+              <div className="visor-phase-readout">
+                <span className="visor-phase-lock">
+                  <span className="visor-phase-pip" />
+                  PHASE LOCK
+                </span>
+                <span className="visor-phase-delta">Δ 4.00 BPM</span>
+                <span className="visor-phase-bridge">8A → 9A</span>
               </div>
-              <div className="visor-platter visor-platter-b">
-                <span className="visor-platter-ring" />
-                <span className="visor-platter-hub">B</span>
+              <div className="visor-phase-well">
+                <span className="visor-phase-post visor-phase-post-a" />
+                <div className="visor-phase-field">
+                  <div className="visor-phase-ticks">
+                    {Array.from({ length: PHASE_STEPS }, (_, index) => (
+                      <span
+                        key={`tick-${index}`}
+                        className={index % 4 === 0 ? "is-downbeat" : undefined}
+                        style={{ "--i": String(index) } as CSSProperties}
+                      />
+                    ))}
+                  </div>
+                  <div className="visor-phase-filament" />
+                  <span className="visor-phase-scan" />
+                  <div className="visor-phase-prism">
+                    <span className="visor-phase-facet" />
+                  </div>
+                  <div className="visor-phase-lattice">
+                    {PHASE_ENVELOPE.map((height, index) => (
+                      <span
+                        key={`bar-${index}`}
+                        style={
+                          {
+                            "--i": String(index),
+                            "--h": String(height),
+                          } as CSSProperties
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+                <span className="visor-phase-post visor-phase-post-b" />
               </div>
             </div>
           </div>

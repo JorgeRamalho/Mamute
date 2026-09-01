@@ -1525,13 +1525,18 @@
   grid-area: player;
   position: relative;
   width: 100%;
-  height: 7rem;
+  height: 8.25rem;
   overflow: hidden;
   background: #030508;
   border-radius: 16px 16px 0 0;
   border: 1px solid color-mix(in srgb, var(--platform-accent, var(--cyan)) 48%, var(--line));
   border-bottom: 0;
   box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.55);
+}
+
+.radio-fm-balloon-player-host .radio-digital-tuner--compact {
+  position: relative;
+  z-index: 4;
 }
 
 .radio-fm-balloon-viewport-label {
@@ -1592,9 +1597,10 @@
 }
 
 .radio-fm-balloon-player-host .radio-mp3-el {
-  width: 100%;
-  height: 2rem;
-  pointer-events: auto;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .radio-fm-balloon-player-host .radio-live-preview {
@@ -1950,6 +1956,43 @@
   text-decoration: underline;
 }
 
+.radio-fm-balloon--hero {
+  position: relative;
+  inset: auto;
+  right: auto;
+  bottom: auto;
+  z-index: 2;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  height: 100%;
+  min-height: 28rem;
+  pointer-events: auto;
+}
+
+.radio-fm-balloon--hero > * {
+  pointer-events: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.radio-fm-balloon--hero .radio-fm-balloon-chassis {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 28rem;
+}
+
+.radio-fm-balloon--hero .radio-fm-balloon-player-host {
+  height: clamp(10.5rem, 26vh, 14.5rem);
+}
+
+.radio-fm-balloon--hero .radio-fm-balloon-shell,
+.radio-fm-balloon--hero .radio-fm-balloon-panel {
+  flex: 1 1 auto;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .radio-fm-balloon-spectrum[data-on="true"] .radio-fm-balloon-spectrum-bar {
     animation: radio-fm-spectrum 0.9s ease-in-out infinite;
@@ -1968,7 +2011,7 @@
     --radio-fm-width: min(16rem, calc(100vw - 2rem));
   }
 
-  .radio-fm-balloon[data-open="true"] {
+  .radio-fm-balloon[data-open="true"]:not(.radio-fm-balloon--hero) {
     left: max(var(--radio-fm-gap), env(safe-area-inset-left));
     right: max(var(--radio-fm-gap), env(safe-area-inset-right));
     width: auto;
@@ -1976,8 +2019,20 @@
     align-items: stretch;
   }
 
+  .radio-fm-balloon--hero {
+    min-height: 0;
+  }
+
+  .radio-fm-balloon--hero .radio-fm-balloon-chassis {
+    min-height: 0;
+  }
+
+  .radio-fm-balloon--hero .radio-fm-balloon-player-host {
+    height: 8.75rem;
+  }
+
   .radio-fm-balloon-player-host {
-    height: 5.5rem;
+    height: 7.25rem;
     border-radius: 14px 14px 0 0;
   }
 
@@ -1997,4 +2052,73 @@
     gap: 0.2rem;
     padding: 0.32rem 0.4rem 0.36rem;
   }
+}
+
+/* Cabine Nexus — painel premium */
+
+.radio-dj-player--nexus {
+  border: 1px solid color-mix(in srgb, var(--cyan) 22%, var(--line));
+  background:
+    radial-gradient(ellipse 90% 55% at 100% 0%, rgba(0, 212, 255, 0.06), transparent 58%),
+    radial-gradient(ellipse 70% 45% at 0% 100%, rgba(255, 45, 149, 0.05), transparent 62%),
+    linear-gradient(168deg, color-mix(in srgb, var(--steel-2) 92%, transparent), var(--panel) 48%, #06080e);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 48px rgba(0, 0, 0, 0.42);
+}
+
+.radio-dj-player--nexus .radio-dj-head--unified {
+  border-bottom: 1px solid color-mix(in srgb, var(--cyan) 18%, var(--line));
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.15rem;
+}
+
+.radio-dj-deck-premium {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 20%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 32%),
+    rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 -16px 28px rgba(0, 0, 0, 0.35);
+}
+
+.radio-dj-player--nexus .radio-dj-controls {
+  margin-bottom: 0;
+}
+
+.radio-dj-player--nexus .radio-dj-btn {
+  width: 2.85rem;
+  height: 2.85rem;
+  border-color: color-mix(in srgb, var(--cyan) 28%, var(--line));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.1), transparent 55%),
+    linear-gradient(180deg, #161e2c, #0c1018);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 22px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.radio-dj-player--nexus .radio-dj-btn--play.is-on {
+  border-color: color-mix(in srgb, var(--magenta) 60%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 22px rgba(255, 45, 149, 0.28);
+}
+
+.radio-dj-player--nexus .radio-dj-queue--flow {
+  margin-top: 0.35rem;
+  padding: 0.55rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.radio-dj-player--nexus .radio-dj-queue-item.is-active {
+  border-color: color-mix(in srgb, var(--cyan) 50%, var(--line));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 18%, transparent);
 }
