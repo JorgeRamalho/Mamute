@@ -24,7 +24,19 @@ const TRIM_SPAN = 0.8;
 const EQ_CUT_DB = 24;
 const EQ_BOOST_DB = 12;
 const FILTER_RANGE = 100;
-const UNIT_STEP = 0.01;
+
+/**
+ * Casas decimais dos controles unitários de 0 a 1.
+ *
+ * Três casas dão mil degraus, ao passo que as duas de antes davam cem, ou seja,
+ * menos que os 128 de um CC de 7 bits. Com duas casas o par MSB/LSB não
+ * comprava resolução nenhuma nesses controles, e o esforço de 14 bits era
+ * jogado fora no arredondamento.
+ */
+const UNIT_DECIMALS = 3;
+
+/** Casas decimais de EQ em dB e de filter, cujas escalas já são amplas. */
+const WIDE_DECIMALS = 1;
 
 interface Cc14Parts {
   readonly msb: number;
@@ -77,7 +89,7 @@ function mapDeckAnalog(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerAc
 
   const bits = assemble14Bit(ctx, event.status, match.pair, match.part, event.data2);
   if (match.name === "channelFader") {
-    return { type: "gain", id: deck, value: snapStep(unit14Bit(bits.msb, bits.lsb), UNIT_STEP) };
+    return { type: "gain", id: deck, value: roundTo(unit14Bit(bits.msb, bits.lsb), UNIT_DECIMALS) };
   }
   if (match.name === "trim") {
     return { type: "trim", id: deck, value: scaleTrim(unit14Bit(bits.msb, bits.lsb)) };
@@ -103,7 +115,7 @@ function mapMixerAnalog(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerA
   const bipolar = bipolarUnit14Bit(bits.msb, bits.lsb);
 
   if (match.name === "crossfader") {
-    return { type: "xf", value: snapStep(unit, UNIT_STEP) };
+    return { type: "xf", value: roundTo(unit, UNIT_DECIMALS) };
   }
   if (match.name === "filterDeckA") {
     return { type: "filter", id: "a", value: scaleFilter(bipolar) };
@@ -112,10 +124,10 @@ function mapMixerAnalog(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerA
     return { type: "filter", id: "b", value: scaleFilter(bipolar) };
   }
   if (match.name === "headphonesMixing") {
-    return { type: "cueMix", value: snapStep(unit, UNIT_STEP) };
+    return { type: "cueMix", value: roundTo(unit, UNIT_DECIMALS) };
   }
   if (match.name === "headphonesLevel") {
-    return { type: "booth", value: snapStep(unit, UNIT_STEP) };
+    return { type: "booth", value: roundTo(unit, UNIT_DECIMALS) };
   }
   return null;
 }
@@ -180,7 +192,7 @@ function matchCc14(
  * @param unit Saída de `unit14Bit`.
  */
 function scaleTrim(unit: number): number {
-  return snapStep(TRIM_MIN + unit * TRIM_SPAN, UNIT_STEP);
+  return roundTo(TRIM_MIN + unit * TRIM_SPAN, UNIT_DECIMALS);
 }
 
 /**
@@ -189,7 +201,7 @@ function scaleTrim(unit: number): number {
  * @param bipolar Saída de `bipolarUnit14Bit`, zero no detent.
  */
 function scaleEq(bipolar: number): number {
-  return Math.round(bipolar < 0 ? bipolar * EQ_CUT_DB : bipolar * EQ_BOOST_DB);
+  return roundTo(bipolar < 0 ? bipolar * EQ_CUT_DB : bipolar * EQ_BOOST_DB, WIDE_DECIMALS);
 }
 
 /**
@@ -198,15 +210,22 @@ function scaleEq(bipolar: number): number {
  * @param bipolar Saída de `bipolarUnit14Bit`, zero no detent.
  */
 function scaleFilter(bipolar: number): number {
-  return Math.round(bipolar * FILTER_RANGE);
+  return roundTo(bipolar * FILTER_RANGE, WIDE_DECIMALS);
 }
 
 /**
- * Arredonda para o passo da UI, para o knob da tela não oscilar em frações.
+ * Arredonda para um número de casas decimais, para o knob da tela não oscilar
+ * em frações longas.
+ *
+ * A conta multiplica antes e divide depois, e **não** o contrário, porque
+ * `Math.round(x / 0.001) * 0.001` devolveria 0.6000000000000001 em vez de 0.6,
+ * e o valor vazaria com ruído de ponto flutuante para o snapshot e para os
+ * testes de mapa.
  *
  * @param value Valor já na escala de destino.
- * @param step Passo do `RotaryKnob` ou do fader.
+ * @param decimals Casas a preservar.
  */
-function snapStep(value: number, step: number): number {
-  return Math.round(value / step) * step;
+function roundTo(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
 }
