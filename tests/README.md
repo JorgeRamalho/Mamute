@@ -1,6 +1,19 @@
 # tests/
 
-Testes de ponta a ponta. A config do Playwright está em `config/playwright.config.ts` (`npm test`).
+Testes de ponta a ponta e unitários. A config do Playwright está em `config/playwright.config.ts` (`npm test` roda unit + e2e). A do Vitest está em `config/vitest.config.ts` (`npm run test:unit`).
+
+## helpers/
+
+| Arquivo | Papel |
+| --- | --- |
+| `audio-engine-harness.ts` | `createTestEngine` com `AudioContext` mockado. |
+| `mock-audio-context.ts` | Mock de `AudioContext`, buffer e nós para o Vitest. |
+
+## unit/
+
+| Arquivo | Papel |
+| --- | --- |
+| `audio-engine.spec.ts` | `MamuteEngine` com `AudioContext` mockado: load, sync, gains, toggle, cue, nudge, pitch, buffer e phase loop. |
 
 ## e2e/
 

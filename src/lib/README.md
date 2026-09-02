@@ -4,7 +4,7 @@ Lógica de domínio e adaptação de ambiente. Sem JSX.
 
 | Arquivo | Papel |
 | --- | --- |
-| `audio-engine.ts` | Dual deck Web Audio (loops sintéticos, EQ, pitch, crossfader). |
+| `audio-engine.ts` | Dual deck Web Audio (loops sintéticos, EQ, pitch, crossfader). `MamuteEngineOptions` injeta o `AudioContext` nos testes. |
 | `mixer-snapshot.ts` | Clone do `MixerSnapshot` e conversão fase → beat. |
 | `mixer-browse.ts` | Cursor da biblioteca de treino, wrap nas pontas e índice do master. |
 | `mixer-dispatch.ts` | Resolve `MixerAction` em absoluto, intenção ou browse, sem React. |
