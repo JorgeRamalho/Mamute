@@ -64,8 +64,10 @@ function round1(value: number): number {
  * Nada aqui despacha por byte. Knob e fader entram na fila de
  * `midi-coalesce` e saem uma vez por `requestAnimationFrame`, ao passo que
  * botão sai na hora, porque esperar frame num clique apareceria como input
- * lag. O rótulo do chip acompanha o mesmo frame, senão o diagnóstico
- * re-renderizaria a cabine a cada mensagem e desfaria o ganho da fila.
+ * lag. Sair na hora **não** significa furar a fila, e sim levar o pendente
+ * consigo, senão um botão que depende do gesto anterior leria estado velho. O
+ * rótulo do chip acompanha o mesmo frame, senão o diagnóstico re-renderizaria
+ * a cabine a cada mensagem e desfaria o ganho da fila.
  *
  * @param onAction Callback do reducer, que recebe cada `MixerAction` mapeada a
  * partir de uma mensagem da DDJ-400.
@@ -156,8 +158,9 @@ export function useMidiController(onAction: (action: MixerAction) => void): Midi
         probeRef.current.timeStamp = timeStamp;
         probeRef.current.mapEnd = performance.now();
 
-        const now = queueRef.current.push(action);
-        if (now) dispatchTimed(now);
+        // A fila devolve o pendente antes da ação imediata, e por isso o laço
+        // preserva a ordem do gesto em vez de deixar o botão furar a fila.
+        for (const ready of queueRef.current.push(action)) dispatchTimed(ready);
       }
 
       schedule();

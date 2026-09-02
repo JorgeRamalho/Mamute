@@ -414,6 +414,25 @@ test.describe("transporte por inject", () => {
     );
   });
 
+  test("LOAD no mesmo frame do encoder carrega a faixa nova, e não a anterior", async ({ page }) => {
+    const partida = await readBrowse(page);
+
+    // O gesto real da controladora, que o helper `spinEncoder` esconde ao
+    // esperar o frame: o DJ gira e aperta na mesma fração de segundo, e o
+    // botão sai na hora ao passo que o passo do encoder fica na fila.
+    await inject(page, [
+      [DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x01],
+      [DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a, 0x7f],
+      [DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a, 0x00],
+    ]);
+
+    const destino = await readBrowse(page);
+    expect(destino.position).toBe((partida.position % partida.total) + 1);
+    await expect(page.getByLabel("Track deck A").locator("option:checked")).toContainText(
+      destino.title,
+    );
+  });
+
   test("o BACK realinha o destaque com a faixa do deck master", async ({ page }) => {
     // Segurar SYNC manda a note longa e elege a deck A como master, e assim o
     // teste não depende de qual deck nasce master.

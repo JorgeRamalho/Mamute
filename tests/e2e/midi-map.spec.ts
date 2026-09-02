@@ -275,9 +275,9 @@ test.describe("fila de coalesce de um frame", () => {
   test("knob e fader guardam só o último valor de cada controle", () => {
     const queue = createMidiActionQueue();
 
-    expect(queue.push({ type: "gain", id: "a", value: 0.2 })).toBeNull();
-    expect(queue.push({ type: "gain", id: "a", value: 0.8 })).toBeNull();
-    expect(queue.push({ type: "gain", id: "b", value: 0.3 })).toBeNull();
+    expect(queue.push({ type: "gain", id: "a", value: 0.2 })).toEqual([]);
+    expect(queue.push({ type: "gain", id: "a", value: 0.8 })).toEqual([]);
+    expect(queue.push({ type: "gain", id: "b", value: 0.3 })).toEqual([]);
 
     expect(queue.drain()).toEqual([
       { type: "gain", id: "a", value: 0.8 },
@@ -305,7 +305,7 @@ test.describe("fila de coalesce de um frame", () => {
     const queue = createMidiActionQueue();
 
     for (let tick = 0; tick < 3; tick += 1) {
-      expect(queue.push({ type: "nudge", id: "a", direction: 1 })).toBeNull();
+      expect(queue.push({ type: "nudge", id: "a", direction: 1 })).toEqual([]);
     }
     queue.push({ type: "nudge", id: "b", direction: -1 });
     queue.push({ type: "nudge", id: "b", direction: -1 });
@@ -333,14 +333,49 @@ test.describe("fila de coalesce de um frame", () => {
   test("botão sai na hora e não espera frame", () => {
     const queue = createMidiActionQueue();
 
-    expect(queue.push({ type: "toggle", id: "a" })).toEqual({ type: "toggle", id: "a" });
-    expect(queue.push({ type: "cueMonitor", id: "b", value: true })).toEqual({
-      type: "cueMonitor",
-      id: "b",
-      value: true,
-    });
+    expect(queue.push({ type: "toggle", id: "a" })).toEqual([{ type: "toggle", id: "a" }]);
+    expect(queue.push({ type: "cueMonitor", id: "b", value: true })).toEqual([
+      { type: "cueMonitor", id: "b", value: true },
+    ]);
     expect(queue.isEmpty()).toBe(true);
     expect(queue.drain()).toEqual([]);
+  });
+
+  test("o botão leva o pendente consigo, em vez de furar a fila", () => {
+    const queue = createMidiActionQueue();
+
+    queue.push({ type: "browseMove", delta: 1 });
+    queue.push({ type: "gain", id: "a", value: 0.4 });
+    queue.push({ type: "nudge", id: "a", direction: 1 });
+
+    // Este é o bug que a DDJ-400 real expôs: o LOAD saindo antes do passo do
+    // encoder carregava a faixa anterior, porque o cursor ainda não tinha
+    // andado. A ação imediata é a **última** da lista, e não a primeira.
+    expect(queue.push({ type: "browseLoad", id: "a" })).toEqual([
+      { type: "gain", id: "a", value: 0.4 },
+      { type: "nudge", id: "a", direction: 1 },
+      { type: "browseMove", delta: 1 },
+      { type: "browseLoad", id: "a" },
+    ]);
+
+    // O pendente foi embora com o botão, e por isso o frame não o repete.
+    expect(queue.isEmpty()).toBe(true);
+    expect(queue.drain()).toEqual([]);
+  });
+
+  test("o pad no fim do scratch vê a fase de onde a roda parou", () => {
+    const queue = createMidiActionQueue();
+
+    queue.push({ type: "nudge", id: "a", direction: 1 });
+    queue.push({ type: "nudge", id: "a", direction: 1 });
+
+    // Mesmo princípio do LOAD, e por isso a onda 5 dependia desta ordem sem
+    // que o teste dela percebesse: o helper esperava dois frames antes do pad.
+    expect(queue.push({ type: "hotCuePad", id: "a", slot: 2 })).toEqual([
+      { type: "nudge", id: "a", direction: 1 },
+      { type: "nudge", id: "a", direction: 1 },
+      { type: "hotCuePad", id: "a", slot: 2 },
+    ]);
   });
 
   test("a classificação separa as três naturezas de ação", () => {
@@ -517,7 +552,7 @@ test.describe("mapa MIDI DDJ-400 — browser", () => {
     expect(queue.isEmpty()).toBe(true);
 
     for (const delta of [1, 1, 1, -1]) {
-      expect(queue.push({ type: "browseMove", delta })).toBeNull();
+      expect(queue.push({ type: "browseMove", delta })).toEqual([]);
     }
     expect(queue.isEmpty()).toBe(false);
 
