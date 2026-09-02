@@ -10,6 +10,12 @@
  * O ponto delicado é que **não** existe uma regra única de agrupamento, porque
  * as ações da cabine têm três naturezas distintas. Tratar todas como a
  * primeira é o erro que faria o prato andar um décimo do gesto.
+ *
+ * A fila garante **ordem de gesto**, e não só agrupamento. Uma ação imediata
+ * esvazia o que estava pendente antes de sair, porque ela costuma depender do
+ * que o DJ acabou de fazer: girar o BROWSE e apertar LOAD na mesma fração de
+ * segundo tem de carregar a faixa nova, e não a anterior, do mesmo modo que um
+ * pad apertado no fim de um scratch grava a fase de onde a roda parou.
  */
 
 import type { DeckId, MixerAction } from "../../types/mixer";
@@ -43,6 +49,7 @@ export function coalesceMode(action: MixerAction): CoalesceMode {
     case "pitch":
       return "continuous";
     case "nudge":
+    case "browseMove":
       return "accumulate";
     default:
       return "immediate";
@@ -65,12 +72,13 @@ export function coalesceKey(action: MixerAction): string {
 
 export interface MidiActionQueue {
   /**
-   * Enfileira a ação e devolve o que precisa ir agora.
+   * Enfileira a ação e devolve o que precisa ir agora, já em ordem de gesto.
    *
-   * @returns A própria ação quando ela é `immediate`, senão `null`, porque ela
-   * fica guardada até o `drain`.
+   * @returns Lista vazia quando a ação fica guardada até o `drain`. Quando ela
+   * é `immediate`, a lista traz **primeiro** o que estava pendente e só então a
+   * própria ação, senão o botão atropelaria o giro que veio antes dele.
    */
-  push: (action: MixerAction) => MixerAction | null;
+  push: (action: MixerAction) => MixerAction[];
   /** Esvazia a fila do frame, na ordem em que os controles chegaram. */
   drain: () => MixerAction[];
   /** Diz se há algo guardado, para o hook não agendar frame à toa. */
@@ -86,36 +94,57 @@ export interface MidiActionQueue {
 export function createMidiActionQueue(): MidiActionQueue {
   const continuous = new Map<string, MixerAction>();
   const steps = new Map<DeckId, number>();
+  let browse = 0;
+
+  /** Esvazia os três acumuladores na ordem em que os controles chegaram. */
+  function drainAll(): MixerAction[] {
+    const out = [...continuous.values()];
+    continuous.clear();
+
+    for (const [id, total] of steps) {
+      const direction = total < 0 ? -1 : 1;
+      for (let step = 0; step < Math.abs(total); step += 1) {
+        out.push({ type: "nudge", id, direction });
+      }
+    }
+    steps.clear();
+
+    // O encoder sai numa ação só com a soma, ao contrário do `nudge`, porque
+    // quem o aplica é uma função de UI que já soma e dá a volta na lista, ao
+    // passo que `engine.nudge` precisa de uma chamada por passo.
+    if (browse !== 0) {
+      out.push({ type: "browseMove", delta: browse });
+      browse = 0;
+    }
+
+    return out;
+  }
 
   return {
     push(action) {
-      const mode = coalesceMode(action);
-      if (mode === "immediate") return action;
-      if (mode === "accumulate" && action.type === "nudge") {
+      if (coalesceMode(action) === "immediate") {
+        // O botão não espera frame, mas também não fura a fila: o que estava
+        // pendente sai antes dele. Sem isso, apertar LOAD no mesmo frame de um
+        // clique de BROWSE carregaria a faixa anterior, porque o cursor ainda
+        // não teria andado.
+        return [...drainAll(), action];
+      }
+      if (action.type === "nudge") {
         steps.set(action.id, (steps.get(action.id) ?? 0) + action.direction);
-        return null;
+        return [];
+      }
+      if (action.type === "browseMove") {
+        browse += action.delta;
+        return [];
       }
       continuous.set(coalesceKey(action), action);
-      return null;
+      return [];
     },
 
-    drain() {
-      const out = [...continuous.values()];
-      continuous.clear();
-
-      for (const [id, total] of steps) {
-        const direction = total < 0 ? -1 : 1;
-        for (let step = 0; step < Math.abs(total); step += 1) {
-          out.push({ type: "nudge", id, direction });
-        }
-      }
-      steps.clear();
-
-      return out;
-    },
+    drain: drainAll,
 
     isEmpty() {
-      return continuous.size === 0 && steps.size === 0;
+      return continuous.size === 0 && steps.size === 0 && browse === 0;
     },
   };
 }

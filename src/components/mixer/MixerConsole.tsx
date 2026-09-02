@@ -163,6 +163,26 @@ export function MixerConsole({
       </div>
 
       {/*
+        O PFL de canal nasceu com o transporte MIDI: o botão CUE da deck passou
+        a ser set e call do ponto de cue, como num CDJ, e por isso o monitor de
+        fone precisava de alvo próprio aqui, ao lado dos faders.
+      */}
+      <div className="mixer-pfl-row" role="group" aria-label="Cue de canal">
+        {(["a", "b"] as const).map((deckId) => (
+          <button
+            key={deckId}
+            type="button"
+            className={`mixer-pfl${snap[deckId].cueMonitor ? " is-on" : ""}`}
+            aria-pressed={snap[deckId].cueMonitor}
+            aria-label={`Cue monitor deck ${deckId.toUpperCase()}`}
+            onClick={() => onChange({ type: "toggleCueMonitor", id: deckId })}
+          >
+            CUE {deckId.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/*
         Os três faders usam `step="any"` porque eles recebem valor de 14 bits da
         DDJ-400, e um step numérico faria o browser alinhar o valor ao múltiplo
         mais próximo, jogando fora a resolução do par MSB/LSB. As setas do

@@ -10,6 +10,7 @@
 | [estrutura.md](estrutura.md) | Mapa de pastas e inventário de arquivos |
 | [desenvolvimento.md](desenvolvimento.md) | Ambiente local, scripts, testes e deploy Netlify |
 | [mixer-midi-escopo-2.md](mixer-midi-escopo-2.md) | Referência técnica do Escopo 2 do MIDI da DDJ-400: o que o engine só finge na UI hoje e o que cada onda 7 a 12 precisa mudar no grafo de áudio |
+| [mixer-hardening-plano.md](mixer-hardening-plano.md) | Índice das ondas P1–P4 do hardening do mixer |
 
 Documentação de pasta (o que vive em cada diretório):
 

@@ -1,4 +1,12 @@
+import type { MidiLatency } from "../../lib/midi/use-midi-controller";
 import type { MidiLinkStatus } from "../../lib/midi/midi-session";
+
+/**
+ * Alvo de p95 do gesto físico até a tela, conforme o orçamento do plano. Acima
+ * disso o chip marca `data-over-budget`, para o diagnóstico aparecer sem
+ * precisar abrir o console.
+ */
+const LATENCY_BUDGET_MS = 50;
 
 const STATUS_LABEL: Record<MidiLinkStatus, string> = {
   unavailable: "MIDI indisponível neste browser",
@@ -17,6 +25,7 @@ const STATUS_LABEL: Record<MidiLinkStatus, string> = {
  * @param error Texto de diagnóstico, por exemplo Rekordbox com a porta presa.
  * @param live True por alguns milissegundos depois de qualquer MIDI, para o
  * ponto do chip piscar enquanto o knob da tela gira.
+ * @param latency Tempo do último gesto até a tela, decomposto em etapas.
  * @param onConnect Reabre `requestMIDIAccess`.
  */
 export function MidiStatus({
@@ -26,6 +35,7 @@ export function MidiStatus({
   lastHeard,
   error,
   live,
+  latency,
   onConnect,
 }: {
   status: MidiLinkStatus;
@@ -34,6 +44,7 @@ export function MidiStatus({
   lastHeard: string | null;
   error: string | null;
   live: boolean;
+  latency: MidiLatency | null;
   onConnect: () => void;
 }) {
   const label = status === "connected" && deviceName ? deviceName : STATUS_LABEL[status];
@@ -52,6 +63,15 @@ export function MidiStatus({
         <span className="mixer-midi-label">{label}</span>
         {detail ? <span className="mixer-midi-detail">{detail}</span> : null}
       </span>
+      {latency ? (
+        <span
+          className="mixer-midi-latency"
+          data-over-budget={latency.totalMs > LATENCY_BUDGET_MS ? "true" : "false"}
+          aria-label={`Latência MIDI: ${latency.totalMs} ms até a tela, sendo ${latency.midiToMapMs} ms de fila e mapeamento, ${latency.mapToDispatchMs} ms de espera do frame e ${latency.dispatchToPaintMs} ms de render`}
+        >
+          {latency.totalMs} ms
+        </span>
+      ) : null}
       {status !== "unavailable" ? (
         <button
           type="button"

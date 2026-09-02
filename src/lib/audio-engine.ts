@@ -1,4 +1,5 @@
 import { DEFAULT_DECK_TRACKS, getTrainingTrack } from "../data/training-tracks";
+import { HOT_CUE_SLOTS } from "../types/mixer";
 import type {
   DeckId,
   DeckState,
@@ -9,8 +10,6 @@ import type {
 } from "../types/mixer";
 
 export type { DeckState, MixerSnapshot } from "../types/mixer";
-
-const HOT_CUE_SLOTS = 4;
 
 function emptyHotCues(): HotCue[] {
   return Array.from({ length: HOT_CUE_SLOTS }, (_, index) => ({

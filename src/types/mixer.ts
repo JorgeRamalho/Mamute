@@ -20,6 +20,15 @@ export interface HotCue {
   set: boolean;
 }
 
+/**
+ * Slots de hot cue por deck.
+ *
+ * Mora aqui, e não no engine, porque o mapper MIDI precisa do mesmo número para
+ * descartar os pads que a cabine não tem, e importar o `audio-engine` dentro do
+ * mapa puro arrastaria a Web Audio para um módulo que roda sem página.
+ */
+export const HOT_CUE_SLOTS = 4;
+
 export interface DeckEq {
   high: number;
   mid: number;
@@ -71,7 +80,22 @@ export interface MixerSnapshot {
 
 /**
  * Ação única da cabine. Mouse, knobs da tela e a DDJ-400 emitem o mesmo union,
- * porque o reducer em MixerBoard é o único caminho até o audio-engine.
+ * porque `createMixerDispatch` em `src/lib/mixer-dispatch.ts` é o único caminho
+ * até o audio-engine.
+ *
+ * Duas famílias convivem aqui. As ações com `value` são **absolutas** e servem
+ * a quem já conhece o estado de destino, como um slider da tela. As ações sem
+ * `value`, a saber `toggle`, `toggleSync`, `toggleCueMonitor`, `toggleLoop` e
+ * `cueButton`, são de **intenção**: elas descrevem o gesto e deixam o
+ * dispatcher ler o snapshot, porque um botão MIDI manda press e nada mais.
+ *
+ * As três ações de browser são intenção por um motivo diferente dos toggles.
+ * Elas não dependem do snapshot, e sim do cursor da biblioteca, que é estado de
+ * tela e portanto invisível ao mapper, ou seja `browseLoad` diz qual deck
+ * recebe mas **não** qual track, porque quem sabe disso é o `BrowseState`.
+ *
+ * Union aberto: um `type` novo exige case em `applyAbsoluteAction` ou
+ * `resolveMixerAction`, e na onda P3 uma linha em `MIXER_ACTION_ROUTES`.
  */
 export type MixerAction =
   | { type: "refresh" }
@@ -87,12 +111,23 @@ export type MixerAction =
   | { type: "booth"; value: number }
   | { type: "cueMix"; value: number }
   | { type: "sync"; id: DeckId; value: boolean }
+  | { type: "toggleSync"; id: DeckId }
   | { type: "masterDeck"; id: DeckId }
   | { type: "cueMonitor"; id: DeckId; value: boolean }
+  | { type: "toggleCueMonitor"; id: DeckId }
   | { type: "jogMode"; id: DeckId; value: JogMode }
   | { type: "quantize"; id: DeckId; value: boolean }
   | { type: "loadTrack"; id: DeckId; trackId: string }
   | { type: "callCue"; id: DeckId }
   | { type: "setCue"; id: DeckId }
+  | { type: "cueButton"; id: DeckId }
   | { type: "toggleLoop"; id: DeckId }
-  | { type: "nudge"; id: DeckId; direction: -1 | 1 };
+  | { type: "loopOn"; id: DeckId }
+  | { type: "loopOff"; id: DeckId }
+  | { type: "hotCue"; id: DeckId; slot: number }
+  | { type: "triggerHotCue"; id: DeckId; slot: number }
+  | { type: "hotCuePad"; id: DeckId; slot: number }
+  | { type: "nudge"; id: DeckId; direction: -1 | 1 }
+  | { type: "browseMove"; delta: number }
+  | { type: "browseLoad"; id: DeckId }
+  | { type: "browseHome" };

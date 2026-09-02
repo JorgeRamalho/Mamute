@@ -1,128 +1,87 @@
-import { useCallback, useEffect, useReducer } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
+import { TRAINING_TRACKS } from "../../data/training-tracks";
 import { engine } from "../../lib/audio-engine";
+import { createBrowseState, masterTrackIndex } from "../../lib/mixer-browse";
+import { applyAbsoluteAction, createMixerDispatch } from "../../lib/mixer-dispatch";
+import { cloneMixerSnapshot } from "../../lib/mixer-snapshot";
 import { useMidiController } from "../../lib/midi/use-midi-controller";
-import type { MixerAction } from "../../types/mixer";
+import type { MixerAction, MixerSnapshot } from "../../types/mixer";
+import { BrowseChip } from "./BrowseChip";
 import { CdjDeck } from "./CdjDeck";
 import { MidiStatus } from "./MidiStatus";
 import { MixerConsole } from "./MixerConsole";
 
-function cloneSnapshot() {
-  return {
-    ...engine.snapshot,
-    a: {
-      ...engine.snapshot.a,
-      eq: { ...engine.snapshot.a.eq },
-      eqKill: { ...engine.snapshot.a.eqKill },
-      loop: { ...engine.snapshot.a.loop },
-      hotCues: engine.snapshot.a.hotCues.map((cue) => ({ ...cue })),
-      track: { ...engine.snapshot.a.track },
-    },
-    b: {
-      ...engine.snapshot.b,
-      eq: { ...engine.snapshot.b.eq },
-      eqKill: { ...engine.snapshot.b.eqKill },
-      loop: { ...engine.snapshot.b.loop },
-      hotCues: engine.snapshot.b.hotCues.map((cue) => ({ ...cue })),
-      track: { ...engine.snapshot.b.track },
-    },
-  };
-}
-
-function reducer(_state: typeof engine.snapshot, action: MixerAction) {
-  switch (action.type) {
-    case "pitch":
-      engine.setPitch(action.id, action.value);
-      break;
-    case "gain":
-      engine.setGain(action.id, action.value);
-      break;
-    case "trim":
-      engine.setTrim(action.id, action.value);
-      break;
-    case "filter":
-      engine.setFilter(action.id, action.value);
-      break;
-    case "eq":
-      engine.setEq(action.id, action.band, action.value);
-      break;
-    case "eqKill":
-      engine.setEqKill(action.id, action.band, action.value);
-      break;
-    case "xf":
-      engine.setCrossfader(action.value);
-      break;
-    case "master":
-      engine.setMaster(action.value);
-      break;
-    case "booth":
-      engine.setBooth(action.value);
-      break;
-    case "cueMix":
-      engine.setCueMix(action.value);
-      break;
-    case "sync":
-      engine.setSync(action.id, action.value);
-      break;
-    case "masterDeck":
-      engine.setMasterDeck(action.id);
-      break;
-    case "cueMonitor":
-      engine.setCueMonitor(action.id, action.value);
-      break;
-    case "jogMode":
-      engine.setJogMode(action.id, action.value);
-      break;
-    case "quantize":
-      engine.setQuantize(action.id, action.value);
-      break;
-    case "loadTrack":
-      engine.loadTrack(action.id, action.trackId);
-      break;
-    case "callCue":
-      engine.callCue(action.id);
-      break;
-    case "setCue":
-      engine.setCueBeat(action.id, engine.snapshot[action.id].phase * 8);
-      break;
-    case "toggleLoop":
-      engine.toggleLoop(action.id);
-      break;
-    case "nudge":
-      engine.nudge(action.id, action.direction);
-      break;
-    case "toggle":
-      // Não chama o engine aqui, e sim em `dispatchAction`, porque o play
-      // espera o resume do AudioContext ao passo que o reducer precisa
-      // devolver o clone neste mesmo tick.
-      break;
-    case "refresh":
-      break;
-  }
-  return cloneSnapshot();
+/**
+ * Aplica a ação no engine e devolve um clone do snapshot para o React.
+ *
+ * O reducer **não** é puro, porque o engine muta o grafo de áudio. O
+ * StrictMode invoca reducers duas vezes, e por isso intenções nunca entram
+ * aqui: elas nascem no `createMixerDispatch` e só chegam como absolutas ou
+ * como `refresh`.
+ *
+ * @param _state Snapshot anterior, ignorado porque a fonte da verdade é o engine.
+ * @param action Ação absoluta ou `refresh`.
+ */
+function reducer(_state: MixerSnapshot, action: MixerAction): MixerSnapshot {
+  applyAbsoluteAction(engine, action);
+  return cloneMixerSnapshot(engine.snapshot);
 }
 
 export function MixerBoard() {
-  const [snap, dispatch] = useReducer(reducer, engine.snapshot, cloneSnapshot);
+  const [snap, dispatch] = useReducer(reducer, engine.snapshot, () =>
+    cloneMixerSnapshot(engine.snapshot),
+  );
+
+  const [cursor, setCursor] = useState(() =>
+    masterTrackIndex(
+      engine.snapshot,
+      TRAINING_TRACKS.map((track) => track.id),
+    ),
+  );
+
+  // O `dispatchAction` precisa ler o cursor para resolver o LOAD, mas ele é um
+  // callback estável, e fechar sobre o state o congelaria no valor da primeira
+  // render. Por isso o valor corrente vive num ref e o state só serve à
+  // pintura do chip.
+  const cursorRef = useRef(cursor);
+
+  const browse = useMemo(
+    () =>
+      createBrowseState({
+        tracks: TRAINING_TRACKS,
+        getCursor: () => cursorRef.current,
+        setCursor: (index) => {
+          cursorRef.current = index;
+          setCursor(index);
+        },
+        snapshot: () => engine.snapshot,
+      }),
+    [],
+  );
 
   /**
-   * Caminho único de ação da cabine, para o mouse e a DDJ-400 emitirem o mesmo
-   * union em vez de fluxos separados.
-   *
-   * O `toggle` é a única ação assíncrona, porque `engine.toggle` aguarda o
-   * resume do `AudioContext`, e por isso ela não cabe no reducer, que devolve o
-   * clone na hora. Aqui o `refresh` só sai depois que o engine assenta, senão o
-   * rótulo continuaria em Play com o deck já tocando.
+   * Caminho único de ação da cabine, para o mouse e a DDJ-400 emitirem o
+   * mesmo union em vez de fluxos separados.
    */
-  const dispatchAction = useCallback((action: MixerAction) => {
-    if (action.type === "toggle") {
-      void engine.toggle(action.id).then(() => dispatch({ type: "refresh" }));
-      return;
-    }
-    dispatch(action);
-  }, []);
+  const dispatchAction = useMemo(
+    () => createMixerDispatch({ eng: engine, browse, dispatchReducer: dispatch }),
+    [browse],
+  );
 
   const midi = useMidiController(dispatchAction);
   const masterKey = snap[snap.masterDeck].track.key;
+  // O `wrapCursor` garante o índice na lista, mas o acesso indexado é opcional
+  // no tsconfig, e por isso o chip sai do ar em vez de fingir uma track.
+  const browseTrack = TRAINING_TRACKS[cursor];
+  const { markPainted } = midi;
+
+  // Fecha a medição de latência com o snapshot novo já no layout, e não depois
+  // da pintura assíncrona, porque `useEffect` mediria também o tempo ocioso até
+  // o próximo commit. O hook ignora a chamada quando nada de MIDI está em voo,
+  // e por isso o refresh periódico e os cliques de mouse não entram na conta.
+  useLayoutEffect(() => {
+    markPainted();
+  }, [snap, markPainted]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -139,6 +98,13 @@ export function MixerBoard() {
         <p className="mixer-cabinet-note">
           Key Camelot, sync, loop e trim. Loops sintéticos — sem streaming licenciado.
         </p>
+        {browseTrack ? (
+          <BrowseChip
+            track={browseTrack}
+            position={cursor + 1}
+            total={TRAINING_TRACKS.length}
+          />
+        ) : null}
         <MidiStatus
           status={midi.status}
           deviceName={midi.deviceName}
@@ -146,6 +112,7 @@ export function MixerBoard() {
           lastHeard={midi.lastHeard}
           error={midi.error}
           live={midi.live}
+          latency={midi.latency}
           onConnect={midi.connect}
         />
       </header>

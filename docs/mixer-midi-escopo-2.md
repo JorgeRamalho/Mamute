@@ -147,7 +147,7 @@ O jog com SHIFT, que é o fast search no CC `0x29` e usaria o `JOG_FAST_SEEK_SCA
 
 **O que a DDJ-400 manda.** LOOP IN em `DECK_NOTE.loopIn`, LOOP OUT em `DECK_NOTE.loopOut`, RELOOP/EXIT em `DECK_NOTE.reloop`, e SHIFT+IN/OUT para ajustar pontos no jog, que ainda não tem constante.
 
-**Por que a onda 5 fica rasa.** O engine **não** separa in de out, e por isso mapear os três botões para o mesmo `toggleLoop` é honesto só como LED. Loop in e out independentes, half e double em `0x51` e `0x53`, e beat loop nos pads da faixa `0x60` pedem recorte real na fase.
+**Por que a onda 5 fica rasa.** O engine **não** separa in de out, e por isso os três botões dividem um método só. A onda 5 tirou disso o máximo possível sem tocar no engine, ou seja, IN e OUT viram pedidos de **estado** que só chamam `toggleLoop` quando ele mudaria alguma coisa, ao passo que RELOOP alterna. Os três gestos ficam distintos e previsíveis, mas continuam sendo LED, porque o áudio não recorta. Loop in e out independentes, half e double em `0x51` e `0x53`, e beat loop nos pads da faixa `0x60` pedem recorte real na fase.
 
 **O que seria preciso.** Na `startPhaseLoop`, com `loop.active`, a fase que passa de `outBeat` volta para `inBeat` e reinicia o source. O `quantize` passa a arredondar in e out para o grid, em vez de só guardar um boolean. Métodos novos: `setLoopIn`, `setLoopOut`, `loopHalve`, `loopDouble` e `setBeatLoop(beats)`.
 

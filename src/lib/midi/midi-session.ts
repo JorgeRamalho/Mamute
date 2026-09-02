@@ -19,7 +19,7 @@ export interface MidiSessionSnapshot {
   error: string | null;
 }
 
-type BytesHandler = (data: Uint8Array) => void;
+type BytesHandler = (data: Uint8Array, timeStamp: number) => void;
 type StatusListener = (snapshot: MidiSessionSnapshot) => void;
 
 const byteHandlers = new Set<BytesHandler>();
@@ -37,6 +37,7 @@ let snapshot: MidiSessionSnapshot = {
 let access: MIDIAccess | null = null;
 let stops: Array<() => void> = [];
 let startPromise: Promise<void> | null = null;
+let attachChain: Promise<void> = Promise.resolve();
 
 /**
  * Diz se o browser expõe a Web MIDI API.
@@ -98,28 +99,29 @@ export function selectDdj400Inputs(midi: MIDIAccess): MIDIInput[] {
  * O dispose só zera o handler se ele ainda for o nosso, senão a segunda
  * instância do Strict Mode perderia a escuta.
  *
+ * A escuta usa **apenas** o atributo, e não também o `addEventListener`.
+ * Registrar nos dois parece redundância inofensiva, mas o `MIDIInput` é um
+ * `EventTarget` e o atributo dispara **junto** dos listeners em vez de
+ * substituí-los, ou seja cada mensagem seria processada duas vezes. Uma
+ * validação na DDJ-400 mostrou o sintoma: um clique de encoder movia o cursor
+ * três posições, porque o gesto era contado mais de uma vez.
+ *
  * @param input Porta de entrada MIDI.
- * @param onMessage Bytes crus de cada mensagem.
+ * @param onMessage Bytes crus de cada mensagem e o `timeStamp` do evento.
  */
 export async function listenMidiInput(
   input: MIDIInput,
-  onMessage: (data: Uint8Array) => void,
+  onMessage: (data: Uint8Array, timeStamp: number) => void,
 ): Promise<() => void> {
   const handler = (event: MIDIMessageEvent) => {
     if (!event.data) return;
     const data = event.data instanceof Uint8Array ? event.data : new Uint8Array(event.data);
-    onMessage(data);
+    onMessage(data, event.timeStamp);
   };
   input.onmidimessage = handler;
-  if (typeof input.addEventListener === "function") {
-    input.addEventListener("midimessage", handler);
-  }
   await input.open();
   return () => {
     if (input.onmidimessage === handler) input.onmidimessage = null;
-    if (typeof input.removeEventListener === "function") {
-      input.removeEventListener("midimessage", handler);
-    }
   };
 }
 
@@ -134,9 +136,12 @@ export function getMidiSnapshot(): MidiSessionSnapshot {
  * Entrega cada pacote MIDI aos handlers do React, inclusive o inject da PoC.
  *
  * @param data Bytes da mensagem.
+ * @param timeStamp Instante em que o browser recebeu a mensagem, na mesma base
+ * de `performance.now()`. Sem ele o hook não consegue separar a espera na fila
+ * do browser do custo do próprio mapper.
  */
-export function emitMidiBytes(data: Uint8Array): void {
-  for (const handler of byteHandlers) handler(data);
+export function emitMidiBytes(data: Uint8Array, timeStamp = performance.now()): void {
+  for (const handler of byteHandlers) handler(data, timeStamp);
 }
 
 /**
@@ -228,7 +233,22 @@ async function runStart(): Promise<void> {
   }
 }
 
-async function attachPorts(midi: MIDIAccess): Promise<void> {
+/**
+ * Serializa as tentativas de anexar portas.
+ *
+ * O `input.open()` de `listenMidiInput` dispara `onstatechange`, que chama
+ * `attachPorts` de novo, e por isso duas execuções se cruzavam: a segunda
+ * rodava o `releasePorts` **antes** de a primeira registrar o seu stop, não
+ * encontrava nada para remover e deixava o handler anterior escutando para
+ * sempre. Enfileirar resolve porque o `releasePorts` de cada rodada passa a
+ * ver a lista de stops já completa.
+ */
+function attachPorts(midi: MIDIAccess): Promise<void> {
+  attachChain = attachChain.catch(() => undefined).then(() => runAttach(midi));
+  return attachChain;
+}
+
+async function runAttach(midi: MIDIAccess): Promise<void> {
   await releasePorts();
   const names = listMidiInputNames(midi);
   const chosen = selectDdj400Inputs(midi);

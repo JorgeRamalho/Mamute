@@ -169,6 +169,9 @@ export function CdjDeck({
       data-stage="9"
       data-deck={id}
       data-playing={deck.playing ? "true" : "false"}
+      // O e2e do jog precisa ler o efeito do nudge, e a fase só existe no
+      // canvas do waveform e num anel decorativo, que o teste não consegue medir.
+      data-phase={deck.phase.toFixed(3)}
       aria-label={`Deck ${id.toUpperCase()}`}
     >
       <header className="cdj-deck-top">
@@ -232,11 +235,16 @@ export function CdjDeck({
       <div className="cdj-transport-primary">
         <p className="cdj-transport-label">Comandos principais</p>
         <div className="cdj-transport" aria-label={`Transporte deck ${id.toUpperCase()}`}>
+          {/*
+            CUE agora é o ponto de cue, e não o monitor de fone, que passou a
+            ter botão próprio no mixer central. Ele não leva `aria-pressed`
+            porque virou ação momentânea, ao passo que antes era um toggle.
+          */}
           <button
-            className={`cdj-btn cdj-btn--primary cdj-btn--cue${deck.cueMonitor ? " is-on" : ""}`}
+            className="cdj-btn cdj-btn--primary cdj-btn--cue"
             type="button"
-            aria-pressed={deck.cueMonitor}
-            onClick={() => onChange({ type: "cueMonitor", id, value: !deck.cueMonitor })}
+            aria-label={`Cue deck ${id.toUpperCase()}: grava o ponto com o deck pausado e volta a ele tocando`}
+            onClick={() => onChange({ type: "cueButton", id })}
           >
             CUE
           </button>
@@ -279,6 +287,27 @@ export function CdjDeck({
         <div className="cdj-jog-row-side cdj-jog-row-side--right">
           {id === "b" ? pitchFader : null}
         </div>
+      </div>
+
+      <div className="cdj-jog-modes" role="group" aria-label={`Modos do prato deck ${id.toUpperCase()}`}>
+        <button
+          className={`cdj-jog-mode${deck.jogMode === "vinyl" ? " is-on" : ""}`}
+          type="button"
+          aria-pressed={deck.jogMode === "vinyl"}
+          onClick={() =>
+            onChange({ type: "jogMode", id, value: deck.jogMode === "vinyl" ? "cdj" : "vinyl" })
+          }
+        >
+          VINYL
+        </button>
+        <button
+          className={`cdj-jog-mode${deck.quantize ? " is-on" : ""}`}
+          type="button"
+          aria-pressed={deck.quantize}
+          onClick={() => onChange({ type: "quantize", id, value: !deck.quantize })}
+        >
+          QUANTIZE
+        </button>
       </div>
     </section>
   );
