@@ -71,6 +71,7 @@ export type ResolvedPlan =
   | { kind: "engine-loop"; id: DeckId }
   | { kind: "engine-cue-press"; id: DeckId }
   | { kind: "engine-cue-release"; id: DeckId }
+  | { kind: "engine-nudge"; id: DeckId; direction: -1 | 1 }
   | { kind: "engine-file"; id: DeckId; file: File }
   | { kind: "ui-op"; op: MixerUiOp };
 

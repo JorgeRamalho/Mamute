@@ -28,7 +28,7 @@ test.describe("Rádio — visor flutuante", () => {
     await expect(balloon.getByRole("link", { name: "Cabine completa" })).toHaveAttribute("href", /\/radio$/);
   });
 
-  test("o visor some na cabine /radio e volta no mixer", async ({ page }) => {
+  test("o visor some na cabine /radio e no mixer fica no header", async ({ page }) => {
     test.setTimeout(45_000);
     await page.goto("/");
     await dismissPrivacyBanner(page);
@@ -37,14 +37,39 @@ test.describe("Rádio — visor flutuante", () => {
 
     await openMixer(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(balloon).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Ligar Mamute FM" })).toBeVisible();
 
-    await balloon.getByRole("link", { name: "Cabine completa" }).click();
+    await page.getByRole("button", { name: "Ligar Mamute FM" }).click();
+    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toBeVisible();
+
+    await page.getByRole("complementary", { name: "Mamute FM" })
+      .getByRole("link", { name: "Cabine completa" })
+      .click();
     await expect(page.getByRole("heading", { name: "Rádio integrada" })).toBeVisible();
     await expect(page.getByRole("complementary", { name: "Mamute FM" })).toHaveCount(0);
 
     await openMixer(page);
-    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "FM", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Ligar Mamute FM" })).toBeVisible();
+  });
+
+  test("minimizar vira botão redondo e fechar leva ao header", async ({ page }) => {
+    test.setTimeout(45_000);
+    await page.goto("/cadastro?plano=bronze");
+    await dismissPrivacyBanner(page);
+    const balloon = page.getByRole("complementary", { name: "Mamute FM" });
+    await expect(balloon).toBeVisible({ timeout: 10_000 });
+
+    await balloon.getByRole("button", { name: "Minimizar rádio" }).click();
+    await expect(balloon).toHaveAttribute("data-shell", "mini");
+    await expect(balloon.getByRole("button", { name: "Abrir Mamute FM" })).toBeVisible();
+
+    await balloon.getByRole("button", { name: "Abrir Mamute FM" }).click();
+    await expect(balloon).toHaveAttribute("data-shell", "expanded");
+
+    await balloon.getByRole("button", { name: "Fechar rádio" }).click();
+    await expect(page.getByRole("complementary", { name: "Mamute FM" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Ligar Mamute FM" })).toBeVisible();
   });
 });
