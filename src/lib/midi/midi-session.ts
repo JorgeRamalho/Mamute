@@ -19,7 +19,7 @@ export interface MidiSessionSnapshot {
   error: string | null;
 }
 
-type BytesHandler = (data: Uint8Array) => void;
+type BytesHandler = (data: Uint8Array, timeStamp: number) => void;
 type StatusListener = (snapshot: MidiSessionSnapshot) => void;
 
 const byteHandlers = new Set<BytesHandler>();
@@ -99,16 +99,16 @@ export function selectDdj400Inputs(midi: MIDIAccess): MIDIInput[] {
  * instância do Strict Mode perderia a escuta.
  *
  * @param input Porta de entrada MIDI.
- * @param onMessage Bytes crus de cada mensagem.
+ * @param onMessage Bytes crus de cada mensagem e o `timeStamp` do evento.
  */
 export async function listenMidiInput(
   input: MIDIInput,
-  onMessage: (data: Uint8Array) => void,
+  onMessage: (data: Uint8Array, timeStamp: number) => void,
 ): Promise<() => void> {
   const handler = (event: MIDIMessageEvent) => {
     if (!event.data) return;
     const data = event.data instanceof Uint8Array ? event.data : new Uint8Array(event.data);
-    onMessage(data);
+    onMessage(data, event.timeStamp);
   };
   input.onmidimessage = handler;
   if (typeof input.addEventListener === "function") {
@@ -134,9 +134,12 @@ export function getMidiSnapshot(): MidiSessionSnapshot {
  * Entrega cada pacote MIDI aos handlers do React, inclusive o inject da PoC.
  *
  * @param data Bytes da mensagem.
+ * @param timeStamp Instante em que o browser recebeu a mensagem, na mesma base
+ * de `performance.now()`. Sem ele o hook não consegue separar a espera na fila
+ * do browser do custo do próprio mapper.
  */
-export function emitMidiBytes(data: Uint8Array): void {
-  for (const handler of byteHandlers) handler(data);
+export function emitMidiBytes(data: Uint8Array, timeStamp = performance.now()): void {
+  for (const handler of byteHandlers) handler(data, timeStamp);
 }
 
 /**

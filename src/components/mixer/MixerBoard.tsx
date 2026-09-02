@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer } from "react";
 import { engine } from "../../lib/audio-engine";
 import { useMidiController } from "../../lib/midi/use-midi-controller";
-import type { MixerAction } from "../../types/mixer";
+import type { DeckId, MixerAction } from "../../types/mixer";
 import { CdjDeck } from "./CdjDeck";
 import { MidiStatus } from "./MidiStatus";
 import { MixerConsole } from "./MixerConsole";
@@ -26,6 +26,16 @@ function cloneSnapshot() {
       track: { ...engine.snapshot.b.track },
     },
   };
+}
+
+/**
+ * Converte a fase corrente do deck no beat do compasso de oito, que é a unidade
+ * que `setCueBeat` espera.
+ *
+ * @param id Deck a consultar.
+ */
+function phaseToBeat(id: DeckId) {
+  return engine.snapshot[id].phase * 8;
 }
 
 function reducer(_state: typeof engine.snapshot, action: MixerAction) {
@@ -82,18 +92,17 @@ function reducer(_state: typeof engine.snapshot, action: MixerAction) {
       engine.callCue(action.id);
       break;
     case "setCue":
-      engine.setCueBeat(action.id, engine.snapshot[action.id].phase * 8);
-      break;
-    case "toggleLoop":
-      engine.toggleLoop(action.id);
-      break;
-    case "nudge":
-      engine.nudge(action.id, action.direction);
+      engine.setCueBeat(action.id, phaseToBeat(action.id));
       break;
     case "toggle":
-      // Não chama o engine aqui, e sim em `dispatchAction`, porque o play
-      // espera o resume do AudioContext ao passo que o reducer precisa
-      // devolver o clone neste mesmo tick.
+    case "toggleSync":
+    case "toggleCueMonitor":
+    case "cueButton":
+    case "toggleLoop":
+    case "nudge":
+      // Resolvidas em `dispatchAction`, e não aqui, porque todas dependem do
+      // estado anterior e este reducer roda duas vezes sob StrictMode. Chegar
+      // neste ponto significa que alguém desviou do `dispatchAction`.
       break;
     case "refresh":
       break;
@@ -108,21 +117,65 @@ export function MixerBoard() {
    * Caminho único de ação da cabine, para o mouse e a DDJ-400 emitirem o mesmo
    * union em vez de fluxos separados.
    *
-   * O `toggle` é a única ação assíncrona, porque `engine.toggle` aguarda o
-   * resume do `AudioContext`, e por isso ela não cabe no reducer, que devolve o
-   * clone na hora. Aqui o `refresh` só sai depois que o engine assenta, senão o
-   * rótulo continuaria em Play com o deck já tocando.
+   * Aqui também mora a fronteira de pureza. O reducer aplica cada ação no
+   * `audio-engine`, e portanto ele **não** é puro, ao passo que o StrictMode
+   * invoca reducers duas vezes justamente para expor impureza. A consequência é
+   * que qualquer ação derivada do estado anterior seria aplicada em dobro, ou
+   * seja, um toggle voltaria ao valor original e um `nudge` andaria o dobro do
+   * gesto. Por isso essas ações são resolvidas neste ponto, viram absolutas ou
+   * chamam o engine uma única vez, e o reducer só recebe o que é idempotente.
    */
   const dispatchAction = useCallback((action: MixerAction) => {
-    if (action.type === "toggle") {
-      void engine.toggle(action.id).then(() => dispatch({ type: "refresh" }));
-      return;
+    switch (action.type) {
+      case "toggle":
+        // O play aguarda o resume do `AudioContext`, e por isso o `refresh` só
+        // sai quando o engine assenta, senão o rótulo continuaria em Play com o
+        // deck já tocando.
+        void engine.toggle(action.id).then(() => dispatch({ type: "refresh" }));
+        return;
+      case "toggleSync":
+        dispatch({ type: "sync", id: action.id, value: !engine.snapshot[action.id].sync });
+        return;
+      case "toggleCueMonitor":
+        dispatch({
+          type: "cueMonitor",
+          id: action.id,
+          value: !engine.snapshot[action.id].cueMonitor,
+        });
+        return;
+      case "cueButton":
+        // Critério do CDJ: com o deck tocando o CUE volta ao ponto, ao passo
+        // que com o deck pausado ele grava o ponto na posição atual.
+        dispatch(
+          engine.snapshot[action.id].playing
+            ? { type: "callCue", id: action.id }
+            : { type: "setCue", id: action.id },
+        );
+        return;
+      case "toggleLoop":
+        engine.toggleLoop(action.id);
+        dispatch({ type: "refresh" });
+        return;
+      case "nudge":
+        engine.nudge(action.id, action.direction);
+        dispatch({ type: "refresh" });
+        return;
+      default:
+        dispatch(action);
     }
-    dispatch(action);
   }, []);
 
   const midi = useMidiController(dispatchAction);
   const masterKey = snap[snap.masterDeck].track.key;
+  const { markPainted } = midi;
+
+  // Fecha a medição de latência com o snapshot novo já no layout, e não depois
+  // da pintura assíncrona, porque `useEffect` mediria também o tempo ocioso até
+  // o próximo commit. O hook ignora a chamada quando nada de MIDI está em voo,
+  // e por isso o refresh periódico e os cliques de mouse não entram na conta.
+  useLayoutEffect(() => {
+    markPainted();
+  }, [snap, markPainted]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -146,6 +199,7 @@ export function MixerBoard() {
           lastHeard={midi.lastHeard}
           error={midi.error}
           live={midi.live}
+          latency={midi.latency}
           onConnect={midi.connect}
         />
       </header>

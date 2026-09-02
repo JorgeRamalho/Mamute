@@ -1,10 +1,11 @@
 /**
- * Traduz CC de 14 bits da DDJ-400 em `MixerAction` da cabine.
+ * Traduz mensagens da DDJ-400 em `MixerAction` da cabine.
  *
- * Esta PoC cobre os knobs e faders analógicos, a saber trim, EQ, filter,
- * channel fader, crossfader e os dois knobs de fone. Pitch, transporte e
- * pads ficam para ondas seguintes. Os bytes vêm de `ddj-400-protocol.ts`,
- * e as escalas de destino da UI ficam aqui.
+ * Cobre os knobs e faders analógicos de 14 bits, a saber trim, EQ, filter,
+ * channel fader, crossfader e os dois knobs de fone, e também as notes de
+ * transporte, ou seja play, cue, PFL e sync. Pitch, jog e pads ficam para
+ * ondas seguintes. Os bytes vêm de `ddj-400-protocol.ts`, e as escalas de
+ * destino da UI ficam aqui.
  */
 
 import type { DeckId, MixerAction } from "../../types/mixer";
@@ -13,7 +14,9 @@ import {
   bipolarUnit14Bit,
   DDJ_STATUS,
   DECK_CC_14BIT,
+  DECK_NOTE,
   deckFromStatus,
+  isPress,
   MIXER_CC_14BIT,
   unit14Bit,
   type Cc14Bit,
@@ -57,12 +60,18 @@ export function createDdj400MapContext(): Ddj400MapContext {
 
 /**
  * Mapeia uma mensagem já parseada para uma ação da cabine, ou `null` quando o
- * byte não é um knob ou fader desta PoC.
+ * controle ainda não pertence a este mapa.
  *
  * @param event Mensagem CC ou note já quebrada pelo parser genérico.
  * @param ctx Pares 14-bit pendentes, um por controle e canal.
  */
 export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerAction | null {
+  if (event.kind === "noteOn") {
+    if (event.status === DDJ_STATUS.noteDeckA || event.status === DDJ_STATUS.noteDeckB) {
+      return mapDeckNote(event);
+    }
+    return null;
+  }
   if (event.kind !== "cc") return null;
 
   if (event.status === DDJ_STATUS.ccDeckA || event.status === DDJ_STATUS.ccDeckB) {
@@ -72,6 +81,41 @@ export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): Mixe
     return mapMixerAnalog(event, ctx);
   }
   return null;
+}
+
+/**
+ * Resolve os botões de transporte de um deck.
+ *
+ * Só o press vira ação, porque a DDJ-400 **não** manda Note Off de status
+ * `0x80`, e sim um segundo Note On com velocity zero ao soltar; sem esse filtro
+ * o play dispararia duas vezes por toque.
+ *
+ * As ações de sync, PFL e cue saem sem `value`, ou seja, são intenção, porque a
+ * controladora informa o gesto e não o estado de destino. Quem lê o snapshot e
+ * decide é o reducer.
+ *
+ * @param event Note On no canal do deck A ou B.
+ */
+function mapDeckNote(event: ParsedMidiMessage): MixerAction | null {
+  const deck = deckFromStatus(event.status);
+  if (!deck || !isPress(event.data2)) return null;
+
+  switch (event.data1) {
+    case DECK_NOTE.play:
+      return { type: "toggle", id: deck };
+    case DECK_NOTE.cue:
+      return { type: "cueButton", id: deck };
+    case DECK_NOTE.pfl:
+      return { type: "toggleCueMonitor", id: deck };
+    case DECK_NOTE.sync:
+      return { type: "toggleSync", id: deck };
+    case DECK_NOTE.syncLong:
+      // Note distinta que o firmware emite ao segurar o SYNC, e por isso o
+      // mapper não precisa de timer para separar toque curto de longo.
+      return { type: "masterDeck", id: deck };
+    default:
+      return null;
+  }
 }
 
 /**

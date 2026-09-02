@@ -72,6 +72,12 @@ export interface MixerSnapshot {
 /**
  * Ação única da cabine. Mouse, knobs da tela e a DDJ-400 emitem o mesmo union,
  * porque o reducer em MixerBoard é o único caminho até o audio-engine.
+ *
+ * Duas famílias convivem aqui. As ações com `value` são **absolutas** e servem
+ * a quem já conhece o estado de destino, como um slider da tela. As ações sem
+ * `value`, a saber `toggle`, `toggleSync`, `toggleCueMonitor`, `toggleLoop` e
+ * `cueButton`, são de **intenção**: elas descrevem o gesto e deixam o reducer
+ * ler o snapshot, porque um botão MIDI manda press e nada mais.
  */
 export type MixerAction =
   | { type: "refresh" }
@@ -87,12 +93,15 @@ export type MixerAction =
   | { type: "booth"; value: number }
   | { type: "cueMix"; value: number }
   | { type: "sync"; id: DeckId; value: boolean }
+  | { type: "toggleSync"; id: DeckId }
   | { type: "masterDeck"; id: DeckId }
   | { type: "cueMonitor"; id: DeckId; value: boolean }
+  | { type: "toggleCueMonitor"; id: DeckId }
   | { type: "jogMode"; id: DeckId; value: JogMode }
   | { type: "quantize"; id: DeckId; value: boolean }
   | { type: "loadTrack"; id: DeckId; trackId: string }
   | { type: "callCue"; id: DeckId }
   | { type: "setCue"; id: DeckId }
+  | { type: "cueButton"; id: DeckId }
   | { type: "toggleLoop"; id: DeckId }
   | { type: "nudge"; id: DeckId; direction: -1 | 1 };

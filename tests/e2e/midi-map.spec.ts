@@ -120,20 +120,8 @@ test.describe("mapa MIDI DDJ-400 — knobs e faders", () => {
     });
   });
 
-  test("note e tempo fader não emitem ação nesta PoC", () => {
+  test("o tempo fader ainda não emite ação, porque pitch é da onda seguinte", () => {
     const ctx = createDdj400MapContext();
-    expect(
-      mapDdj400(
-        {
-          status: DDJ_STATUS.noteDeckA,
-          channel: 0,
-          kind: "noteOn",
-          data1: DECK_NOTE.play,
-          data2: 0x7f,
-        },
-        ctx,
-      ),
-    ).toBeNull();
     expect(send14(ctx, DDJ_STATUS.ccDeckA, DECK_CC_14BIT.tempo, 0x40, 0)).toBeNull();
   });
 });
@@ -222,6 +210,84 @@ test.describe("fila de coalesce de um frame", () => {
     expect(coalesceMode({ type: "loadTrack", id: "a", trackId: "x" })).toBe("immediate");
   });
 });
+
+test.describe("mapa MIDI DDJ-400 — transporte", () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "mapa puro, um projeto basta");
+  });
+
+  test("os botões viram ação no press, cada um no seu deck", () => {
+    const ctx = createDdj400MapContext();
+
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.play, 0x7f), ctx)).toEqual({
+      type: "toggle",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckB, DECK_NOTE.play, 0x7f), ctx)).toEqual({
+      type: "toggle",
+      id: "b",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.cue, 0x7f), ctx)).toEqual({
+      type: "cueButton",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckB, DECK_NOTE.pfl, 0x7f), ctx)).toEqual({
+      type: "toggleCueMonitor",
+      id: "b",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.sync, 0x7f), ctx)).toEqual({
+      type: "toggleSync",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckB, DECK_NOTE.syncLong, 0x7f), ctx)).toEqual({
+      type: "masterDeck",
+      id: "b",
+    });
+  });
+
+  test("soltar o botão não dispara segunda ação", () => {
+    const ctx = createDdj400MapContext();
+
+    // A DDJ-400 não manda Note Off de status 0x80, e sim um segundo Note On com
+    // velocity zero, e por isso é este caso que faria o play piscar duas vezes.
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.play, 0x00), ctx)).toBeNull();
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.sync, 0x00), ctx)).toBeNull();
+
+    // O Note Off de verdade também não vira ação, porque o parser o classifica
+    // como `noteOff` e o mapa só consome `noteOn`.
+    expect(mapDdj400({ ...note(0x80, DECK_NOTE.play, 0x7f), kind: "noteOff" }, ctx)).toBeNull();
+  });
+
+  test("nem toda note é transporte, e o canal dos pads não vaza", () => {
+    const ctx = createDdj400MapContext();
+
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn, 0x7f), ctx)).toBeNull();
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x7f), ctx)).toBeNull();
+
+    // O pad do deck A tem canal próprio, e a note 0x0b ali é pad e não play.
+    expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, DECK_NOTE.play, 0x7f), ctx)).toBeNull();
+    expect(mapDdj400(note(DDJ_STATUS.noteBrowser, DECK_NOTE.play, 0x7f), ctx)).toBeNull();
+  });
+
+  test("botão não espera frame, ao passo que o fader espera", () => {
+    expect(coalesceMode({ type: "toggle", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "cueButton", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "toggleSync", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "toggleCueMonitor", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "masterDeck", id: "a" })).toBe("immediate");
+  });
+});
+
+/**
+ * Monta um Note On sintético no canal informado.
+ *
+ * @param status Primeiro byte da mensagem.
+ * @param data1 Número da note.
+ * @param data2 Velocity, sendo 0x7F o press e 0x00 o release da DDJ-400.
+ */
+function note(status: number, data1: number, data2: number): ParsedMidiMessage {
+  return { status, channel: status & 0x0f, kind: "noteOn", data1, data2 };
+}
 
 /**
  * Monta um CC sintético com o status e os dois data bytes.

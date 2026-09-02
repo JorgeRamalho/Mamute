@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   DDJ_STATUS,
   DECK_CC_14BIT,
+  DECK_NOTE,
   MIXER_CC_14BIT,
   type Cc14Bit,
 } from "../../src/lib/midi/ddj-400-protocol";
@@ -21,6 +22,24 @@ async function inject(page: Page, messages: number[][]): Promise<void> {
     if (typeof fn !== "function") throw new Error("window.__mamuteMidiInject não existe");
     for (const bytes of batch) fn(bytes);
   }, messages);
+}
+
+/**
+ * Toca e solta um botão, como o hardware faz.
+ *
+ * O release vai junto de propósito, porque a DDJ-400 manda um segundo Note On
+ * com velocity zero, e é ele que dispararia a ação duas vezes se o mapper não
+ * filtrasse o press.
+ *
+ * @param page Página já em `/mixer`.
+ * @param status Canal de note do deck.
+ * @param noteNumber Número da note no protocolo.
+ */
+async function tapNote(page: Page, status: number, noteNumber: number): Promise<void> {
+  await inject(page, [
+    [status, noteNumber, 0x7f],
+    [status, noteNumber, 0x00],
+  ]);
 }
 
 /**
@@ -102,10 +121,87 @@ test.describe("físico→virtual sem USB", () => {
   });
 
   test("o chip registra a última mensagem, mesmo a que o mapper ignora", async ({ page }) => {
-    // Note de play, que só entra no mapa na onda de transporte.
-    await inject(page, [[DDJ_STATUS.noteDeckA, 0x0b, 0x7f]]);
+    // Loop in, que só entra no mapa na onda de pads.
+    await inject(page, [[DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn, 0x7f]]);
 
     const chip = page.getByRole("status", { name: /Controladora MIDI/ });
-    await expect(chip.locator(".mixer-midi-detail")).toContainText("noteOn ch1 n11=127");
+    await expect(chip.locator(".mixer-midi-detail")).toContainText("noteOn ch1 n16=127");
+  });
+});
+
+test.describe("transporte por inject", () => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "o caminho é o mesmo nas três viewports");
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/mixer");
+    await expect(page.getByRole("status", { name: /Controladora MIDI/ })).toBeVisible();
+  });
+
+  test("Play troca o rótulo uma vez, e soltar o botão não troca de novo", async ({ page }) => {
+    const deckA = page.getByRole("region", { name: "Deck A" });
+    await expect(deckA.getByRole("button", { name: "Play" })).toBeVisible();
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.play);
+
+    // Se o release virasse ação, o rótulo voltaria para Play na mesma batida.
+    await expect(deckA.getByRole("button", { name: "Pause" })).toBeVisible();
+    await expect(deckA.getByRole("button", { name: "Play" })).toHaveCount(0);
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.play);
+    await expect(deckA.getByRole("button", { name: "Play" })).toBeVisible();
+  });
+
+  test("SYNC e MASTER alternam a partir do estado atual, e não de um valor fixo", async ({ page }) => {
+    const deckB = page.getByRole("region", { name: "Deck B" });
+    const sync = deckB.getByRole("button", { name: "SYNC" });
+    await expect(sync).toHaveAttribute("aria-pressed", "false");
+
+    await tapNote(page, DDJ_STATUS.noteDeckB, DECK_NOTE.sync);
+    await expect(sync).toHaveAttribute("aria-pressed", "true");
+
+    // O mapper manda intenção, e por isso o segundo toque desliga.
+    await tapNote(page, DDJ_STATUS.noteDeckB, DECK_NOTE.sync);
+    await expect(sync).toHaveAttribute("aria-pressed", "false");
+
+    await tapNote(page, DDJ_STATUS.noteDeckB, DECK_NOTE.syncLong);
+    await expect(deckB.getByRole("button", { name: "MASTER" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("o PFL de canal do mixer central responde ao CUE físico", async ({ page }) => {
+    const pfl = page.getByRole("button", { name: "Cue monitor deck A" });
+    await expect(pfl).toHaveAttribute("aria-pressed", "false");
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.pfl);
+    await expect(pfl).toHaveAttribute("aria-pressed", "true");
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.pfl);
+    await expect(pfl).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("o CUE da deck é ponto de cue, e não monitor de fone", async ({ page }) => {
+    const cue = page.getByRole("region", { name: "Deck A" }).getByRole("button", { name: /^Cue deck A/ });
+    await expect(cue).toBeVisible();
+
+    // O CUE físico não pode mais acender o PFL, que agora vive no mixer.
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.cue);
+    await expect(page.getByRole("button", { name: "Cue monitor deck A" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  test("a latência do gesto fica dentro do orçamento", async ({ page }) => {
+    await tapNote(page, DDJ_STATUS.noteDeckB, DECK_NOTE.sync);
+
+    // Medido dentro da página pelo probe do hook, e não por relógio do teste,
+    // porque o ida e volta do protocolo do Playwright somaria dezenas de
+    // milissegundos que não existem para o DJ.
+    const chip = page.locator(".mixer-midi-latency");
+    await expect(chip).toBeVisible();
+
+    const totalMs = Number((await chip.innerText()).replace(/[^\d.]/g, ""));
+    expect(Number.isFinite(totalMs)).toBe(true);
+    expect(totalMs).toBeLessThanOrEqual(80);
+    await expect(chip).toHaveAttribute("data-over-budget", "false");
   });
 });

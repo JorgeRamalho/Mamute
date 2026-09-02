@@ -232,11 +232,16 @@ export function CdjDeck({
       <div className="cdj-transport-primary">
         <p className="cdj-transport-label">Comandos principais</p>
         <div className="cdj-transport" aria-label={`Transporte deck ${id.toUpperCase()}`}>
+          {/*
+            CUE agora é o ponto de cue, e não o monitor de fone, que passou a
+            ter botão próprio no mixer central. Ele não leva `aria-pressed`
+            porque virou ação momentânea, ao passo que antes era um toggle.
+          */}
           <button
-            className={`cdj-btn cdj-btn--primary cdj-btn--cue${deck.cueMonitor ? " is-on" : ""}`}
+            className="cdj-btn cdj-btn--primary cdj-btn--cue"
             type="button"
-            aria-pressed={deck.cueMonitor}
-            onClick={() => onChange({ type: "cueMonitor", id, value: !deck.cueMonitor })}
+            aria-label={`Cue deck ${id.toUpperCase()}: grava o ponto com o deck pausado e volta a ele tocando`}
+            onClick={() => onChange({ type: "cueButton", id })}
           >
             CUE
           </button>
