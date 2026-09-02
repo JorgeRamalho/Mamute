@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { onDjSessionChange, sessionIdentityName } from "../../lib/dj-auth";
+import { RadioFmEjectIcon, useRadioFmUi } from "../../lib/radio-fm-ui";
 
 const SCROLL_ACTIVATE_PX = 10;
 
@@ -70,6 +71,7 @@ function BrandMark() {
 
 export function Header() {
   const location = useLocation();
+  const { shell, openFromDock } = useRadioFmUi();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [identity, setIdentity] = useState<string | null>(() => sessionIdentityName());
@@ -124,6 +126,17 @@ export function Header() {
           <NavLink className="btn header-area-dj" to={AREA_DJ_LINK.to} onClick={() => setOpen(false)}>
             {AREA_DJ_LINK.label}
           </NavLink>
+          {shell === "docked" ? (
+            <button
+              type="button"
+              className="btn radio-fm-header-fab"
+              onClick={openFromDock}
+              aria-label="Ligar Mamute FM"
+              title="Ligar rádio"
+            >
+              <RadioFmEjectIcon />
+            </button>
+          ) : null}
           {identity ? (
             <NavLink
               className="btn btn-solid header-identity"

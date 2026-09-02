@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { PLATFORMS } from "../../data/platforms";
 import { RADIO_PLATFORM_STATION_TYPES } from "../../data/radio";
 import { getCamelotKey } from "../../lib/musical-key";
+import { RadioFmEjectIcon, useRadioFmUi } from "../../lib/radio-fm-ui";
 import { useRadioMp3 } from "../../lib/use-radio-mp3";
 import type { PlatformId } from "../../types/platform";
 import { RadioDigitalTuner } from "./RadioDigitalTuner";
@@ -43,9 +44,15 @@ type RadioFmBalloonProps = {
 export function RadioFmBalloon({ variant = "float" }: RadioFmBalloonProps) {
   const rootRef = useRef<HTMLElement>(null);
   const location = useLocation();
+  const { shell, minimize, close, expand } = useRadioFmUi();
   const { clip, catalogReady, playing, start, pause, skip } = useRadioMp3();
-  const docked = variant === "hero";
-  const hidden = location.pathname === "/radio" || (variant === "float" && isHomePath(location.pathname));
+  const isHero = variant === "hero";
+  const floatDocked = variant === "float" && shell === "docked";
+  const floatMini = variant === "float" && shell === "mini";
+  const hidden =
+    location.pathname === "/radio" ||
+    floatDocked ||
+    (variant === "float" && isHomePath(location.pathname));
   const onAir = playing;
   const platform = clip?.platform;
   const accent = platform ? (platformById.get(platform)?.accent ?? "#00e8ff") : "#00e8ff";
@@ -80,7 +87,7 @@ export function RadioFmBalloon({ variant = "float" }: RadioFmBalloonProps) {
   );
 
   useEffect(() => {
-    if (hidden || docked || !clip) {
+    if (hidden || isHero || !clip) {
       syncRadioFmReserve(null);
       return;
     }
@@ -105,24 +112,69 @@ export function RadioFmBalloon({ variant = "float" }: RadioFmBalloonProps) {
       window.removeEventListener("resize", update);
       syncRadioFmReserve(null);
     };
-  }, [hidden, docked, clip, playing]);
+  }, [hidden, isHero, clip, playing]);
 
   if (hidden) return null;
-  if (!clip && !docked) return null;
+  if (!clip && !isHero) return null;
+
+  if (floatMini) {
+    return (
+      <aside
+        ref={rootRef}
+        className="radio-fm-balloon"
+        data-placement="float"
+        data-shell="mini"
+        data-on-air={onAir ? "true" : "false"}
+        style={{ "--platform-accent": accent } as CSSProperties}
+        aria-label="Mamute FM"
+      >
+        <button
+          type="button"
+          className="radio-fm-balloon-fab"
+          onClick={expand}
+          aria-label="Abrir Mamute FM"
+          title="Abrir rádio"
+        >
+          <RadioFmEjectIcon />
+        </button>
+      </aside>
+    );
+  }
 
   return (
     <aside
       ref={rootRef}
-      className={docked ? "radio-fm-balloon radio-fm-balloon--hero" : "radio-fm-balloon"}
-      data-placement={docked ? "hero" : "float"}
-      data-open="true"
+      className={isHero ? "radio-fm-balloon radio-fm-balloon--hero" : "radio-fm-balloon"}
+      data-placement={isHero ? "hero" : "float"}
+      data-shell="expanded"
       data-on-air={onAir ? "true" : "false"}
       data-random="on"
-      data-mini="false"
       style={{ "--platform-accent": accent } as CSSProperties}
       aria-label="Mamute FM"
     >
       <div className="radio-fm-balloon-chassis">
+        {!isHero ? (
+          <div className="radio-fm-balloon-chrome" aria-label="Controles do visor">
+            <button
+              type="button"
+              className="radio-fm-balloon-chrome-btn"
+              onClick={minimize}
+              aria-label="Minimizar rádio"
+              title="Minimizar"
+            >
+              <span aria-hidden="true">−</span>
+            </button>
+            <button
+              type="button"
+              className="radio-fm-balloon-chrome-btn radio-fm-balloon-chrome-btn--close"
+              onClick={close}
+              aria-label="Fechar rádio"
+              title="Fechar"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+        ) : null}
         <div className="radio-fm-balloon-player-host">
           <span className="radio-fm-balloon-viewport-label">NEXUS · STREAM MP3</span>
           <RadioDigitalTuner

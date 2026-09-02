@@ -25,7 +25,7 @@ test.describe("SEO e estrutura", () => {
       { path: "/mixer", heading: /CDJ Virtual \+ Dual CDJ \+ mixer integrado/ },
       { path: "/academia", heading: /primeiro beat/ },
       { path: "/radio", heading: /Rádio integrada/ },
-      { path: "/catalogo", heading: /Beatport/ },
+      { path: "/catalogo", heading: /Plataformas/ },
       { path: "/cadastro", heading: /Cadastro completo/ },
       { path: "/dj", heading: /Entrar no portal/ },
       { path: "/politicas", heading: /Privacidade e cookies/ },

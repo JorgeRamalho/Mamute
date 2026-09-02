@@ -66,6 +66,20 @@ export interface DeckState {
   cueBeat: number;
   track: TrainingTrack;
   phase: number;
+  /** `synthetic` é o loop de treino; `file` é buffer decodificado. */
+  sourceKind: "synthetic" | "file";
+  durationSec: number;
+  positionSec: number;
+  peaks: Float32Array | null;
+}
+
+/** Metadados de um arquivo carregado no deck. */
+export interface DeckFileMeta {
+  title: string;
+  artist?: string;
+  bpm?: number;
+  key?: string;
+  durationSec: number;
 }
 
 export interface MixerSnapshot {
@@ -85,17 +99,17 @@ export interface MixerSnapshot {
  *
  * Duas famílias convivem aqui. As ações com `value` são **absolutas** e servem
  * a quem já conhece o estado de destino, como um slider da tela. As ações sem
- * `value`, a saber `toggle`, `toggleSync`, `toggleCueMonitor`, `toggleLoop` e
- * `cueButton`, são de **intenção**: elas descrevem o gesto e deixam o
+ * `value`, a saber `toggle`, `toggleSync`, `toggleCueMonitor`, `toggleLoop`,
+ * `cuePress` e `cueRelease`, são de **intenção**: elas descrevem o gesto e deixam o
  * dispatcher ler o snapshot, porque um botão MIDI manda press e nada mais.
  *
  * As três ações de browser são intenção por um motivo diferente dos toggles.
- * Elas não dependem do snapshot, e sim do cursor da biblioteca, que é estado de
- * tela e portanto invisível ao mapper, ou seja `browseLoad` diz qual deck
- * recebe mas **não** qual track, porque quem sabe disso é o `BrowseState`.
+ * Elas não dependem do snapshot: `browseMove` e `browseHome` mexem no cursor da
+ * biblioteca, e `browseLoad` abre o seletor de arquivo do deck indicado.
  *
  * Union aberto: um `type` novo exige case em `applyAbsoluteAction` ou
- * `resolveMixerAction`, e na onda P3 uma linha em `MIXER_ACTION_ROUTES`.
+ * `resolveMixerAction`, e uma linha em `MIXER_ACTION_ROUTES` (ver
+ * `src/lib/mixer-action-routing.ts`).
  */
 export type MixerAction =
   | { type: "refresh" }
@@ -120,7 +134,8 @@ export type MixerAction =
   | { type: "loadTrack"; id: DeckId; trackId: string }
   | { type: "callCue"; id: DeckId }
   | { type: "setCue"; id: DeckId }
-  | { type: "cueButton"; id: DeckId }
+  | { type: "cuePress"; id: DeckId }
+  | { type: "cueRelease"; id: DeckId }
   | { type: "toggleLoop"; id: DeckId }
   | { type: "loopOn"; id: DeckId }
   | { type: "loopOff"; id: DeckId }
@@ -130,4 +145,7 @@ export type MixerAction =
   | { type: "nudge"; id: DeckId; direction: -1 | 1 }
   | { type: "browseMove"; delta: number }
   | { type: "browseLoad"; id: DeckId }
-  | { type: "browseHome" };
+  | { type: "browseHome" }
+  | { type: "requestDeckLoad"; id: DeckId; source?: "file" | "library" }
+  | { type: "loadDeckFile"; id: DeckId; file: File }
+  | { type: "setDeckMeta"; id: DeckId; bpm?: number; key?: string; title?: string };

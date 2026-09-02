@@ -79,9 +79,27 @@
   padding-inline: max(1.25rem, var(--radio-fm-reserve-w, 0px));
 }
 
+/*
+ * A reserva vertical só vale para o balão **flutuante**.
+ *
+ * O `--radio-fm-reserve-h` continua sendo medido em `RadioFmBalloon`, e vale a
+ * distância do topo do visor até a borda de baixo da viewport. O commit
+ * Harmonia apagou o `padding-bottom` que consumia essa variável, e deixou só
+ * o `scroll-margin-bottom`, que empurra âncoras e não cria espaço de rolagem.
+ * Sem esse espaço, o botão Continuar do cadastro DJ fica por baixo do visor
+ * em desktop e tablet, e o clique cai no `<h2>` da faixa. Na home o visor
+ * está ancorado no hero, `data-placement="hero"`, e a reserva é zerada, por
+ * isso o seletor exige `float` e a home não ganha um vão vazio.
+ */
+.app-shell:has(.radio-fm-balloon[data-placement="float"]) > main,
+.app-shell:has(.radio-fm-balloon[data-placement="float"]) > .site-footer {
+  padding-bottom: var(--radio-fm-reserve-h, 0px);
+}
+
 .app-shell:has(.radio-fm-balloon) .plans,
 .app-shell:has(.radio-fm-balloon) .dj-page,
 .app-shell:has(.radio-fm-balloon) .booth-faq {
+  padding-bottom: var(--radio-fm-reserve-h, 0px);
   scroll-margin-bottom: calc(var(--radio-fm-reserve-h, 0px) + 0.5rem);
 }
 

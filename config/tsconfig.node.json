@@ -18,6 +18,7 @@
   "include": [
     "../vite.config.ts",
     "./playwright.config.ts",
+    "./vitest.config.ts",
     "../drizzle.config.ts",
     "../db/**/*.ts",
     "../netlify/functions/**/*.ts"

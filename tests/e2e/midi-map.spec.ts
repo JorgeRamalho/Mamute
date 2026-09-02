@@ -404,7 +404,11 @@ test.describe("mapa MIDI DDJ-400 — transporte", () => {
       id: "b",
     });
     expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.cue, 0x7f), ctx)).toEqual({
-      type: "cueButton",
+      type: "cuePress",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.cue, 0x00), ctx)).toEqual({
+      type: "cueRelease",
       id: "a",
     });
     expect(mapDdj400(note(DDJ_STATUS.noteDeckB, DECK_NOTE.pfl, 0x7f), ctx)).toEqual({
@@ -467,7 +471,8 @@ test.describe("mapa MIDI DDJ-400 — transporte", () => {
 
   test("botão não espera frame, ao passo que o fader espera", () => {
     expect(coalesceMode({ type: "toggle", id: "a" })).toBe("immediate");
-    expect(coalesceMode({ type: "cueButton", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "cuePress", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "cueRelease", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "toggleSync", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "toggleCueMonitor", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "masterDeck", id: "a" })).toBe("immediate");

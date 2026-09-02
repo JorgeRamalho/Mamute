@@ -20,11 +20,23 @@
   max-width: 42rem;
 }
 
+/*
+ * O chip encolhe, e por isso **não** tem `flex-shrink: 0`.
+ *
+ * O texto de diagnóstico é longo por natureza, já que ele lista as portas que
+ * o Chrome viu ou explica por que a porta recusou o open. Com o chip rígido,
+ * esse texto impunha 544px de largura e estourava 170px numa viewport de
+ * 390px, arrastando a página inteira para a rolagem horizontal, embora a
+ * cabine em si ocupasse 358px e caiba folgada. O `min-width: 0` é o que
+ * permite ao filho de texto truncar, porque sem ele o conteúdo define o
+ * mínimo do item flex e o encolhimento não acontece.
+ */
 .mixer-midi-status {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.4rem 0.55rem 0.4rem 0.5rem;
   border-radius: 12px;
   border: 1px solid var(--line);
@@ -126,11 +138,14 @@
   background: color-mix(in srgb, var(--cyan) 22%, transparent);
 }
 
+/* Encolhe pelo mesmo motivo do chip de sessão, porque título de faixa também
+   é texto de tamanho imprevisível. */
 .mixer-browse-chip {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.4rem 0.6rem;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--cyan) 32%, var(--line));
@@ -494,6 +509,20 @@
   letter-spacing: 0.1em;
   color: var(--muted);
   text-transform: uppercase;
+}
+
+.cdj-track-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+  align-items: end;
+}
+
+.cdj-btn--load {
+  height: 2.35rem;
+  padding: 0 0.75rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
 }
 
 .cdj-track-select select {

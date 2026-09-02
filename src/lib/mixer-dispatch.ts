@@ -1,4 +1,4 @@
-import type { DeckId, JogMode, MixerAction, MixerSnapshot } from "../types/mixer";
+import type { DeckFileMeta, DeckId, JogMode, MixerAction, MixerSnapshot } from "../types/mixer";
 import type { BrowseState } from "./mixer-browse";
 import { phaseToBeat } from "./mixer-snapshot";
 
@@ -28,12 +28,18 @@ export type MixerEngine = {
   setQuantize(id: DeckId, enabled: boolean): void;
   loadTrack(id: DeckId, trackId: string): void;
   callCue(id: DeckId): void;
+  pressCue(id: DeckId): void;
+  releaseCue(id: DeckId): void;
   setCueBeat(id: DeckId, beat: number): void;
   setHotCue(id: DeckId, slot: number): void;
   triggerHotCue(id: DeckId, slot: number): void;
   toggle(id: DeckId): Promise<void>;
   toggleLoop(id: DeckId): void;
   nudge(id: DeckId, direction: -1 | 1): void;
+  ensure(): Promise<void>;
+  loadDeckBuffer(id: DeckId, buffer: AudioBuffer, meta: DeckFileMeta): void;
+  loadDeckFile(id: DeckId, file: File): Promise<void>;
+  setDeckMeta(id: DeckId, meta: { bpm?: number; key?: string; title?: string }): void;
 };
 
 /**
@@ -42,6 +48,7 @@ export type MixerEngine = {
  */
 export type MixerUiOp =
   | { kind: "openFilePicker"; deckId: DeckId }
+  | { kind: "armFilePicker"; deckId: DeckId }
   | { kind: "showLoadError"; message: string };
 
 export type DispatchResult =
@@ -62,7 +69,11 @@ export type ResolvedPlan =
   | { kind: "absolute"; action: MixerAction }
   | { kind: "engine-toggle"; id: DeckId }
   | { kind: "engine-loop"; id: DeckId }
-  | { kind: "engine-nudge"; id: DeckId; direction: -1 | 1 };
+  | { kind: "engine-cue-press"; id: DeckId }
+  | { kind: "engine-cue-release"; id: DeckId }
+  | { kind: "engine-nudge"; id: DeckId; direction: -1 | 1 }
+  | { kind: "engine-file"; id: DeckId; file: File }
+  | { kind: "ui-op"; op: MixerUiOp };
 
 export type MixerDispatchDeps = {
   eng: MixerEngine;
@@ -141,10 +152,18 @@ export function applyAbsoluteAction(eng: MixerEngine, action: MixerAction): void
     case "triggerHotCue":
       eng.triggerHotCue(action.id, action.slot);
       return;
+    case "setDeckMeta":
+      eng.setDeckMeta(action.id, {
+        bpm: action.bpm,
+        key: action.key,
+        title: action.title,
+      });
+      return;
     case "toggle":
     case "toggleSync":
     case "toggleCueMonitor":
-    case "cueButton":
+    case "cuePress":
+    case "cueRelease":
     case "toggleLoop":
     case "loopOn":
     case "loopOff":
@@ -154,6 +173,8 @@ export function applyAbsoluteAction(eng: MixerEngine, action: MixerAction): void
     case "browseHome":
     case "browseLoad":
     case "refresh":
+    case "requestDeckLoad":
+    case "loadDeckFile":
       return;
   }
 }
@@ -187,13 +208,10 @@ export function resolveMixerAction(
           value: !eng.snapshot[action.id].cueMonitor,
         },
       };
-    case "cueButton":
-      return {
-        kind: "absolute",
-        action: eng.snapshot[action.id].playing
-          ? { type: "callCue", id: action.id }
-          : { type: "setCue", id: action.id },
-      };
+    case "cuePress":
+      return { kind: "engine-cue-press", id: action.id };
+    case "cueRelease":
+      return { kind: "engine-cue-release", id: action.id };
     case "toggleLoop":
       return { kind: "engine-loop", id: action.id };
     case "loopOn":
@@ -219,11 +237,12 @@ export function resolveMixerAction(
       return { kind: "browse-move", nextCursor: browse.getCursor() + action.delta };
     case "browseHome":
       return { kind: "browse-home", nextCursor: browse.masterTrackIndex() };
-    case "browseLoad": {
-      const trackId = browse.resolveTrackId(browse.getCursor());
-      if (!trackId) return { kind: "noop" };
-      return { kind: "absolute", action: { type: "loadTrack", id: action.id, trackId } };
-    }
+    case "browseLoad":
+      return { kind: "ui-op", op: { kind: "armFilePicker", deckId: action.id } };
+    case "requestDeckLoad":
+      return { kind: "ui-op", op: { kind: "openFilePicker", deckId: action.id } };
+    case "loadDeckFile":
+      return { kind: "engine-file", id: action.id, file: action.file };
     default:
       return { kind: "absolute", action };
   }
@@ -266,6 +285,29 @@ export function dispatchMixerAction(
       deps.eng.nudge(plan.id, plan.direction);
       deps.dispatchReducer({ type: "refresh" });
       return { kind: "refresh" };
+    case "engine-cue-press":
+      deps.eng.pressCue(plan.id);
+      deps.dispatchReducer({ type: "refresh" });
+      return { kind: "refresh" };
+    case "engine-cue-release":
+      deps.eng.releaseCue(plan.id);
+      deps.dispatchReducer({ type: "refresh" });
+      return { kind: "refresh" };
+    case "ui-op":
+      deps.onUiOp?.(plan.op);
+      return { kind: "ui-only" };
+    case "engine-file": {
+      const whenDone = deps.eng.loadDeckFile(plan.id, plan.file).then(
+        () => {
+          deps.dispatchReducer({ type: "refresh" });
+        },
+        (error: unknown) => {
+          const message = error instanceof Error ? error.message : "Falha ao carregar o arquivo";
+          deps.onUiOp?.({ kind: "showLoadError", message });
+        },
+      );
+      return { kind: "async", whenDone };
+    }
   }
 }
 
@@ -274,8 +316,11 @@ export function dispatchMixerAction(
  *
  * @param deps Engine, browse e o `dispatch` do `useReducer`.
  */
-export function createMixerDispatch(deps: MixerDispatchDeps): (action: MixerAction) => void {
+export function createMixerDispatch(deps: MixerDispatchDeps): MixerDispatch {
   return (action) => {
     dispatchMixerAction(deps, action);
   };
 }
+
+/** Callback único da cabine: mouse, MIDI e testes injetam o mesmo union. */
+export type MixerDispatch = (action: MixerAction) => void;

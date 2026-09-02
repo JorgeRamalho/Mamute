@@ -20,6 +20,7 @@ export type { DjProfile, ExperienceLevel, HardwareKind } from "./dj";
 export type {
   DeckEq,
   DeckEqKill,
+  DeckFileMeta,
   DeckId,
   DeckLoop,
   DeckState,

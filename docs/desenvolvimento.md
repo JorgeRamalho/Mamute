@@ -55,7 +55,8 @@ Depois disso, `npm run dev` e `npm run test:auth` cobrem o ciclo completo.
 | `npm run preview` | Preview Vite (4173) |
 | `npm run typecheck` | TypeScript sem emit |
 | `npm run lint` | oxlint |
-| `npm test` | Playwright (`config/playwright.config.ts`) |
+| `npm test` | Unitários Vitest e depois Playwright |
+| `npm run test:unit` | Vitest em `tests/unit` (`config/vitest.config.ts`) |
 | `npm run test:auth` | Fluxo automático cadastro → código → login |
 | `npm run test:live` | Garante que o Go Live lê `src/` e não o `dist/` atrasado |
 | `npm run test:ui` | Playwright UI |
