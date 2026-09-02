@@ -13,5 +13,6 @@ Testes de ponta a ponta. A config do Playwright está em `config/playwright.conf
 | `midi-status.spec.ts` | Chip da sessão MIDI nos quatro estados, e a `/mixer` viva sem controladora. |
 | `midi-map.spec.ts` | Mapa puro da DDJ-400 e fila de coalesce, rodando no Node sem página. |
 | `midi-inject.spec.ts` | Bytes injetados na página até o slider e o chip de browse, com o orçamento de latência. |
+| `mixer-dispatch.spec.ts` | Dispatcher puro: intenção, loop guards e wrap do browse, sem página. |
 
 Viewports: desktop 1440×900, tablet 768×1024, mobile 390×844.

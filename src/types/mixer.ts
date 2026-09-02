@@ -80,18 +80,22 @@ export interface MixerSnapshot {
 
 /**
  * Ação única da cabine. Mouse, knobs da tela e a DDJ-400 emitem o mesmo union,
- * porque o reducer em MixerBoard é o único caminho até o audio-engine.
+ * porque `createMixerDispatch` em `src/lib/mixer-dispatch.ts` é o único caminho
+ * até o audio-engine.
  *
  * Duas famílias convivem aqui. As ações com `value` são **absolutas** e servem
  * a quem já conhece o estado de destino, como um slider da tela. As ações sem
  * `value`, a saber `toggle`, `toggleSync`, `toggleCueMonitor`, `toggleLoop` e
- * `cueButton`, são de **intenção**: elas descrevem o gesto e deixam o reducer
- * ler o snapshot, porque um botão MIDI manda press e nada mais.
+ * `cueButton`, são de **intenção**: elas descrevem o gesto e deixam o
+ * dispatcher ler o snapshot, porque um botão MIDI manda press e nada mais.
  *
  * As três ações de browser são intenção por um motivo diferente dos toggles.
  * Elas não dependem do snapshot, e sim do cursor da biblioteca, que é estado de
  * tela e portanto invisível ao mapper, ou seja `browseLoad` diz qual deck
- * recebe mas **não** qual track, porque quem sabe disso é o `MixerBoard`.
+ * recebe mas **não** qual track, porque quem sabe disso é o `BrowseState`.
+ *
+ * Union aberto: um `type` novo exige case em `applyAbsoluteAction` ou
+ * `resolveMixerAction`, e na onda P3 uma linha em `MIXER_ACTION_ROUTES`.
  */
 export type MixerAction =
   | { type: "refresh" }
