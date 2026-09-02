@@ -11,6 +11,16 @@ import type {
 
 export type { DeckState, MixerSnapshot } from "../types/mixer";
 
+/** Fábrica de `AudioContext`, injetável nos testes para não usar o Web Audio real. */
+export type AudioContextFactory = () => AudioContext;
+
+/**
+ * Opções do engine. A UI não passa nada, e os testes injetam o mock.
+ */
+export interface MamuteEngineOptions {
+  createAudioContext?: AudioContextFactory;
+}
+
 function emptyHotCues(): HotCue[] {
   return Array.from({ length: HOT_CUE_SLOTS }, (_, index) => ({
     slot: index + 1,
@@ -150,6 +160,7 @@ class DeckNodes {
 }
 
 export class MamuteEngine {
+  private readonly createAudioContext: AudioContextFactory;
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private xfA: GainNode | null = null;
@@ -166,9 +177,42 @@ export class MamuteEngine {
     masterDeck: "a",
   };
 
+  /**
+   * @param options Fábrica de contexto; omitida na cabine, obrigatória no harness.
+   */
+  constructor(options: MamuteEngineOptions = {}) {
+    this.createAudioContext = options.createAudioContext ?? (() => new AudioContext());
+  }
+
+  /**
+   * Superfície só para testes: métodos privados e nós do grafo.
+   *
+   * Não usar na UI. O getter existe para o harness não precisar de `as any`.
+   */
+  get __test__() {
+    return {
+      applySync: (id: DeckId) => this.applySync(id),
+      applyGains: () => this.applyGains(),
+      rebuildBuffer: (id: DeckId) => this.rebuildBuffer(id),
+      start: (id: DeckId) => this.start(id),
+      stop: (id: DeckId) => this.stop(id),
+      ctx: () => this.ctx,
+      decks: () => this.decks,
+      master: () => this.master,
+      xfA: () => this.xfA,
+      xfB: () => this.xfB,
+      phaseTimer: () => this.phaseTimer,
+      stopPhaseLoop: () => {
+        if (this.phaseTimer === null) return;
+        window.clearInterval(this.phaseTimer);
+        this.phaseTimer = null;
+      },
+    };
+  }
+
   async ensure(): Promise<void> {
     if (this.ctx) return;
-    const ctx = new AudioContext();
+    const ctx = this.createAudioContext();
     this.ctx = ctx;
     this.master = ctx.createGain();
     this.xfA = ctx.createGain();
