@@ -163,30 +163,14 @@ test.describe("mapa MIDI DDJ-400 — jog", () => {
     test.skip(testInfo.project.name !== "desktop-chrome", "mapa puro, um projeto basta");
   });
 
-  test("o primeiro tick do topo anuncia o modo, que sai do número do CC", () => {
+  test("o gesto encostado decima 26 ticks por nudge, e não dispara por magnitude", () => {
     const ctx = createDdj400MapContext();
-
-    expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1)).toEqual({
-      type: "jogMode",
-      id: "a",
-      value: "vinyl",
-    });
-    expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, 1)).toEqual({
-      type: "jogMode",
-      id: "a",
-      value: "cdj",
-    });
-  });
-
-  test("o topo decima 26 ticks por nudge, e não dispara por magnitude", () => {
-    const ctx = createDdj400MapContext();
-    spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, 1);
 
     // A DDJ-400 manda delta ±1 sempre, e por isso um limiar de magnitude nunca
     // dispararia. Quem informa velocidade é a taxa, e quem traduz é o divisor.
     const emitted: MixerAction[] = [];
-    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.platter * 2; tick += 1) {
-      const action = spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, 1);
+    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.touched * 2; tick += 1) {
+      const action = spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 1);
       if (action) emitted.push(action);
     }
 
@@ -196,93 +180,84 @@ test.describe("mapa MIDI DDJ-400 — jog", () => {
     ]);
   });
 
-  test("uma volta de 750 ticks rende 28 nudges, que é a faixa inteira", () => {
+  test("uma volta de 750 ticks encostados rende 28 nudges, que é a faixa inteira", () => {
     const ctx = createDdj400MapContext();
-    spin(ctx, DDJ_STATUS.ccDeckB, DECK_CC_JOG.platterCdj, 1);
 
     let nudges = 0;
     for (let tick = 0; tick < 750; tick += 1) {
-      if (spin(ctx, DDJ_STATUS.ccDeckB, DECK_CC_JOG.platterCdj, 1)) nudges += 1;
+      if (spin(ctx, DDJ_STATUS.ccDeckB, DECK_CC_JOG.touched, 1)) nudges += 1;
     }
 
     expect(nudges).toBe(28);
   });
 
-  test("a borda é quatro vezes mais grossa, porque é bend e não arrasto", () => {
+  test("a roda solta pede quatro vezes mais gesto, porque é bend e não arrasto", () => {
     const ctx = createDdj400MapContext();
 
     let nudges = 0;
-    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.side; tick += 1) {
-      if (spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.side, -1)) nudges += 1;
+    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.free; tick += 1) {
+      if (spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.free, -1)) nudges += 1;
     }
 
     expect(nudges).toBe(1);
-    expect(JOG_TICKS_PER_NUDGE.side).toBe(JOG_TICKS_PER_NUDGE.platter * 4);
+    expect(JOG_TICKS_PER_NUDGE.free).toBe(JOG_TICKS_PER_NUDGE.touched * 4);
   });
 
   test("o resto do gesto sobrevive, e girar de volta desfaz o acumulado", () => {
     const ctx = createDdj400MapContext();
-    spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, 1);
 
     for (let tick = 0; tick < 20; tick += 1) {
-      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, 1)).toBeNull();
+      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 1)).toBeNull();
     }
     for (let tick = 0; tick < 20; tick += 1) {
-      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, -1)).toBeNull();
+      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, -1)).toBeNull();
     }
 
     // Se o acumulador zerasse a cada mensagem, ou se guardasse módulo em vez de
     // sinal, esses quarenta ticks teriam virado nudge em algum ponto.
-    expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, 1)).toBeNull();
+    expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 1)).toBeNull();
   });
 
-  test("em vinyl o topo só anda com o prato encostado", () => {
+  test("scratch e bend não misturam resto, nem entre decks", () => {
     const ctx = createDdj400MapContext();
-    spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1);
 
-    for (let tick = 0; tick < 60; tick += 1) {
-      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1)).toBeNull();
+    // Vinte e cinco ticks encostados faltam um para o nudge, e vinte e cinco
+    // soltos faltam muito mais. Se os dois dividissem acumulador, o quinquagésimo
+    // tick emitiria.
+    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.touched - 1; tick += 1) {
+      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 1)).toBeNull();
+    }
+    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.touched - 1; tick += 1) {
+      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.free, 1)).toBeNull();
+    }
+    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.touched - 1; tick += 1) {
+      expect(spin(ctx, DDJ_STATUS.ccDeckB, DECK_CC_JOG.touched, 1)).toBeNull();
     }
 
-    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x7f), ctx)).toBeNull();
-
-    // Os sessenta ticks de prato solto não podem sair agora de uma vez, e por
-    // isso o primeiro nudge só chega depois de 26 ticks novos.
-    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.platter - 1; tick += 1) {
-      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1)).toBeNull();
-    }
-    expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1)).toEqual({
+    expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 1)).toEqual({
       type: "nudge",
       id: "a",
       direction: 1,
     });
-
-    // Soltar o prato é o único release que vira estado, senão o topo ficaria
-    // marcado como encostado para sempre.
-    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x00), ctx)).toBeNull();
-    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.platter; tick += 1) {
-      expect(spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1)).toBeNull();
-    }
   });
 
-  test("o toque de um deck não libera o prato do outro", () => {
+  test("o toque do prato não vira ação, porque o CC da roda já informa o toque", () => {
     const ctx = createDdj400MapContext();
-    spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterVinyl, 1);
-    spin(ctx, DDJ_STATUS.ccDeckB, DECK_CC_JOG.platterVinyl, 1);
-    mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x7f), ctx);
 
-    let deckB = 0;
-    for (let tick = 0; tick < JOG_TICKS_PER_NUDGE.platter * 2; tick += 1) {
-      if (spin(ctx, DDJ_STATUS.ccDeckB, DECK_CC_JOG.platterVinyl, 1)) deckB += 1;
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x7f), ctx)).toBeNull();
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x00), ctx)).toBeNull();
+
+    // A roda nunca deduz modo, senão encostar no prato atropelaria o VINYL que
+    // o DJ escolheu na tela. A DDJ-400 sequer tem essa chave.
+    for (let tick = 0; tick < 200; tick += 1) {
+      const action = spin(ctx, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 1);
+      if (action) expect(action.type).toBe("nudge");
     }
-
-    expect(deckB).toBe(0);
   });
 
   test("o nudge acumula na fila, ao passo que o pitch guarda o último", () => {
     expect(coalesceMode({ type: "nudge", id: "a", direction: 1 })).toBe("accumulate");
     expect(coalesceMode({ type: "pitch", id: "a", value: 3 })).toBe("continuous");
-    expect(coalesceMode({ type: "jogMode", id: "a", value: "vinyl" })).toBe("immediate");
   });
 });
 

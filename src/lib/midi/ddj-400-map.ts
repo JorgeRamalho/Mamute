@@ -8,7 +8,7 @@
  * `midi-scales.ts`, de modo que este arquivo só decide **qual** controle é.
  */
 
-import type { DeckId, JogMode, MixerAction } from "../../types/mixer";
+import type { DeckId, MixerAction } from "../../types/mixer";
 import type { ParsedMidiMessage } from "./parse-message";
 import {
   DDJ_STATUS,
@@ -39,25 +39,16 @@ interface Cc14Parts {
 export interface Ddj400MapContext {
   /** Último par MSB/LSB de cada controle de 14 bits, por canal. */
   last14: Map<string, Cc14Parts>;
-  /** Ticks de jog ainda não convertidos em `nudge`, por deck e sensor. */
+  /** Ticks de jog ainda não convertidos em `nudge`, por deck e estado de toque. */
   jogTicks: Map<string, number>;
-  /** Prato encostado, que só o topo em modo vinyl consulta. */
-  jogTouched: Record<DeckId, boolean>;
-  /** Último modo de prato deduzido do número do CC. */
-  jogMode: Record<DeckId, JogMode | null>;
 }
 
 /**
  * Cria o contexto mutável do mapper, que guarda o que uma mensagem sozinha não
- * carrega, a saber o par 14-bit pendente e o estado dos pratos.
+ * carrega, a saber o par 14-bit pendente e o resto do gesto de jog.
  */
 export function createDdj400MapContext(): Ddj400MapContext {
-  return {
-    last14: new Map(),
-    jogTicks: new Map(),
-    jogTouched: { a: false, b: false },
-    jogMode: { a: null, b: null },
-  };
+  return { last14: new Map(), jogTicks: new Map() };
 }
 
 /**
@@ -70,7 +61,7 @@ export function createDdj400MapContext(): Ddj400MapContext {
 export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerAction | null {
   if (event.kind === "noteOn") {
     if (event.status === DDJ_STATUS.noteDeckA || event.status === DDJ_STATUS.noteDeckB) {
-      return mapDeckNote(event, ctx);
+      return mapDeckNote(event);
     }
     return null;
   }
@@ -90,27 +81,20 @@ export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): Mixe
  *
  * Só o press vira ação, porque a DDJ-400 **não** manda Note Off de status
  * `0x80`, e sim um segundo Note On com velocity zero ao soltar; sem esse filtro
- * o play dispararia duas vezes por toque. A exceção é o `jogTouch`, que precisa
- * justamente do release para soltar o flag, senão o prato ficaria marcado como
- * encostado para sempre.
+ * o play dispararia duas vezes por toque.
+ *
+ * O `DECK_NOTE.jogTouch` chega aqui e sai sem ação de propósito, porque o
+ * número do CC da roda já informa o toque, e guardar o flag seria estado morto.
  *
  * As ações de sync, PFL e cue saem sem `value`, ou seja, são intenção, porque a
  * controladora informa o gesto e não o estado de destino. Quem lê o snapshot e
  * decide é o reducer.
  *
  * @param event Note On no canal do deck A ou B.
- * @param ctx Estado do mapper entre mensagens.
  */
-function mapDeckNote(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerAction | null {
+function mapDeckNote(event: ParsedMidiMessage): MixerAction | null {
   const deck = deckFromStatus(event.status);
-  if (!deck) return null;
-
-  if (event.data1 === DECK_NOTE.jogTouch) {
-    ctx.jogTouched[deck] = isPress(event.data2);
-    return null;
-  }
-
-  if (!isPress(event.data2)) return null;
+  if (!deck || !isPress(event.data2)) return null;
 
   switch (event.data1) {
     case DECK_NOTE.play:
@@ -140,29 +124,27 @@ function mapDeckCc(event: ParsedMidiMessage, ctx: Ddj400MapContext): MixerAction
   const deck = deckFromStatus(event.status);
   if (!deck) return null;
 
-  if (
-    event.data1 === DECK_CC_JOG.platterVinyl ||
-    event.data1 === DECK_CC_JOG.platterCdj ||
-    event.data1 === DECK_CC_JOG.side
-  ) {
+  if (event.data1 === DECK_CC_JOG.touched || event.data1 === DECK_CC_JOG.free) {
     return mapJog(event, ctx, deck);
   }
   return mapDeckAnalog(event, ctx, deck);
 }
 
 /**
- * Converte os ticks do prato em `nudge`, decimando em vez de comparar limiar.
+ * Converte os ticks da roda em `nudge`, decimando em vez de comparar limiar.
  *
- * O número do CC entrega o modo de graça, porque `platterVinyl` só chega com o
- * vinyl ligado e `platterCdj` só com ele desligado, e por isso o mapper alimenta
- * `jogMode` mesmo sem o botão da tela. A mensagem que anuncia a troca perde o
- * próprio tick, o que custa um vigésimo sexto de `nudge` num evento raro.
+ * O próprio número do CC diz se a roda girou encostada ou solta, e por isso o
+ * mapper **não** precisa consultar o `jogTouch`: um gesto encostado é scratch e
+ * pede 26 ticks por `nudge`, ao passo que a roda livre é bend e pede 104.
  *
- * O topo em modo vinyl exige prato encostado, imitando o CDJ, ao passo que a
- * borda responde sempre, porque ela é a faixa de bend e não tem sensor de toque.
- * O portão fica **antes** do acumulador, e não depois, senão os ticks girados
- * com o prato solto ficariam guardados e sairiam todos de uma vez no instante
- * em que o dedo encostasse.
+ * O mapper também **não** deduz `jogMode` daqui, embora o mapa do Mixxx separe
+ * um CC de prato vinyl de um de prato CDJ, porque a DDJ-400 não tem chave VINYL
+ * e o segundo número nunca chega. Deduzir modo faria encostar no prato atropelar
+ * a escolha feita na tela.
+ *
+ * Os dois acumuladores são separados por deck e por estado de toque, senão o
+ * resto de um gesto de scratch entraria na conta do bend seguinte com o peso
+ * errado.
  *
  * @param event CC de jog no canal do deck.
  * @param ctx Estado do mapper entre mensagens.
@@ -173,19 +155,10 @@ function mapJog(
   ctx: Ddj400MapContext,
   deck: DeckId,
 ): MixerAction | null {
-  const isSide = event.data1 === DECK_CC_JOG.side;
+  const touched = event.data1 === DECK_CC_JOG.touched;
+  const key = `${deck}:${touched ? "touched" : "free"}`;
+  const divisor = touched ? JOG_TICKS_PER_NUDGE.touched : JOG_TICKS_PER_NUDGE.free;
 
-  if (!isSide) {
-    const mode: JogMode = event.data1 === DECK_CC_JOG.platterVinyl ? "vinyl" : "cdj";
-    if (ctx.jogMode[deck] !== mode) {
-      ctx.jogMode[deck] = mode;
-      return { type: "jogMode", id: deck, value: mode };
-    }
-    if (mode === "vinyl" && !ctx.jogTouched[deck]) return null;
-  }
-
-  const key = `${deck}:${isSide ? "side" : "platter"}`;
-  const divisor = isSide ? JOG_TICKS_PER_NUDGE.side : JOG_TICKS_PER_NUDGE.platter;
   const { direction, rest } = takeJogNudge(
     (ctx.jogTicks.get(key) ?? 0) + jogDelta(event.data2),
     divisor,

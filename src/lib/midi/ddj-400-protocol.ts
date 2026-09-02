@@ -73,11 +73,23 @@ export const MIXER_CC_14BIT = {
   headphonesLevel: { msb: 0x0d, lsb: 0x2d },
 } as const satisfies Record<string, Cc14Bit>;
 
-/** Jogs, que mandam CC relativo de 7 bits no canal do deck. */
+/**
+ * Jog, que manda CC relativo de 7 bits no canal do deck.
+ *
+ * Os dois números **não** são dois lugares da roda, e sim o mesmo giro em dois
+ * estados de toque, o que uma medição na controladora provou: uma volta com o
+ * dedo no topo rendeu 752 ticks em `touched` e nenhum em `free`, ao passo que
+ * uma volta com a roda solta rendeu o contrário. Um sensor separado de borda
+ * teria registrado as duas voltas, já que a roda é peça única.
+ *
+ * O mapa do Mixxx ainda lista um terceiro CC, `0x23`, que ele chama de prato em
+ * modo CDJ. Ele **nunca** chegou nesta unidade, e por isso não vira constante
+ * aqui: a DDJ-400 não tem chave VINYL, e quem escolhe o tamanho do bump é o
+ * `jogMode` da cabine.
+ */
 export const DECK_CC_JOG = {
-  platterVinyl: 0x22,
-  platterCdj: 0x23,
-  side: 0x21,
+  touched: 0x22,
+  free: 0x21,
 } as const;
 
 /**

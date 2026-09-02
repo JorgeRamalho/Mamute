@@ -44,16 +44,15 @@ const PITCH_DECIMALS = 2;
 /**
  * Ticks de jog que valem um `nudge`, medidos numa DDJ-400 real.
  *
- * Uma volta completa do topo manda 750 ticks, e cada `nudge` desloca 0.035 de
- * `phase` no modo vinyl, que o engine divide em 8 batidas. Por isso 26 ticks
- * fazem uma volta deslocar a faixa inteira, que é a sensação de vinil.
+ * Uma volta completa manda 750 ticks, e cada `nudge` desloca 0.035 de `phase`
+ * no modo vinyl, que o engine divide em 8 batidas. Por isso 26 ticks fazem uma
+ * volta encostada deslocar a faixa inteira, que é a sensação de scratch.
  *
- * A borda é sensor **separado**, já que uma volta feita só em cima não registra
- * tick nenhum nela, e por isso ela ganha divisor quatro vezes maior: no CDJ a
- * borda é pitch bend e o topo é scratch, e o divisor é o que traduz essa
- * diferença aqui, porque o engine só oferece `nudge`.
+ * A roda solta pede quatro vezes mais gesto porque ela é bend, e não arrasto,
+ * de modo que uma volta livre desloca dois tempos. O que separa os dois casos é
+ * o número do CC, que na DDJ-400 informa o toque e não o lugar da roda.
  */
-export const JOG_TICKS_PER_NUDGE = { platter: 26, side: 104 } as const;
+export const JOG_TICKS_PER_NUDGE = { touched: 26, free: 104 } as const;
 
 /**
  * Normaliza um controle unitário de 14 bits para 0 a 1.

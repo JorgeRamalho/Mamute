@@ -220,20 +220,20 @@ test.describe("transporte por inject", () => {
     await expect(page.getByRole("region", { name: "Deck A" })).toContainText("8.0%");
   });
 
-  test("o jog empurra a fase, e a borda pede quatro vezes mais gesto", async ({ page }) => {
+  test("o jog empurra a fase, e a roda solta pede quatro vezes mais gesto", async ({ page }) => {
     const deckA = page.getByRole("region", { name: "Deck A" });
     const phaseBefore = Number(await deckA.getAttribute("data-phase"));
 
-    // Modo CDJ dispensa o toque no prato, e a primeira mensagem só anuncia o
-    // modo, e por isso o giro começa no tick seguinte.
-    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, JOG_TICKS_PER_NUDGE.platter + 1);
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, JOG_TICKS_PER_NUDGE.touched);
     await expect
       .poll(async () => Number(await deckA.getAttribute("data-phase")))
       .not.toBe(phaseBefore);
 
-    const afterPlatter = Number(await deckA.getAttribute("data-phase"));
-    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.side, JOG_TICKS_PER_NUDGE.platter);
-    expect(Number(await deckA.getAttribute("data-phase"))).toBe(afterPlatter);
+    // O mesmo número de ticks com a roda solta não move nada, porque bend pede
+    // 104 e não 26.
+    const afterScratch = Number(await deckA.getAttribute("data-phase"));
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.free, JOG_TICKS_PER_NUDGE.touched);
+    expect(Number(await deckA.getAttribute("data-phase"))).toBe(afterScratch);
   });
 
   test("a latência do gesto fica dentro do orçamento", async ({ page }) => {
