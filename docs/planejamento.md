@@ -11,7 +11,7 @@ Não é um clone de rekordbox LINK. Streams de Beatport, Spotify, Deezer, SoundC
 | Superfície | Entrega |
 | --- | --- |
 | Home | Hero/visor, ticker, atalhos das três camadas |
-| Mixer | Deck A (CDJ house) + Deck B (controladora techno), EQ, pitch, crossfader |
+| Mixer | Deck A (CDJ house) + Deck B (controladora techno), EQ, pitch, crossfader. MIDI DDJ-400 no Escopo 1, que são as ondas 1 a 6. O Escopo 2, em que o grafo de áudio muda, está em [mixer-midi-escopo-2.md](mixer-midi-escopo-2.md). |
 | Academia | Módulos, aulas, dicas, exercícios e progresso em `localStorage` |
 | Rádio | Fila de clipes via YouTube IFrame |
 | Catálogo | Fichas oficiais: capacidade vs bloqueio de cada API |

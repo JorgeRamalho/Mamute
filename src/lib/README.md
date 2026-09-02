@@ -8,3 +8,8 @@ Lógica de domínio e adaptação de ambiente. Sem JSX.
 | `storage.ts` | Perfil DJ em `localStorage`. |
 | `academy.ts` | Progresso das aulas em `localStorage`. |
 | `base.ts` | Basename do router, URL do Live Server e `publicAsset()` para favicon. |
+| `midi/ddj-400-protocol.ts` | Status bytes, CCs e notes da Pioneer DDJ-400, mais a decodificação de 14 bits e do jog. |
+| `midi/parse-message.ts` | Quebra o `Uint8Array` da Web MIDI em CC ou note e ignora sysex. |
+| `midi/midi-session.ts` | `requestMIDIAccess` e filtro do input cujo nome contém DDJ-400. |
+| `midi/ddj-400-map.ts` | PoC dos knobs e faders: CC de 14 bits vira `MixerAction` na escala da cabine. |
+| `midi/use-midi-controller.ts` | Hook que liga a sessão MIDI ao `dispatch` da cabine. |

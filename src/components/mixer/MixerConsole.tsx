@@ -1,6 +1,6 @@
-import type { DeckId, MixerSnapshot } from "../../types/mixer";
-import type { MixerAction } from "./CdjDeck";
+import type { DeckId, MixerAction, MixerSnapshot } from "../../types/mixer";
 import { RotaryKnob } from "./RotaryKnob";
+import { formatKnobPercent } from "./rotary-knob-scale";
 import { VolumeKnob } from "./VolumeKnob";
 
 const EQ_BANDS = [
@@ -12,12 +12,6 @@ const EQ_BANDS = [
 const EQ_MIN = -24;
 const EQ_MAX = 12;
 const EQ_STEP = 1;
-
-function formatPositionPercent(value: number, min: number, max: number) {
-  const span = max - min;
-  if (span <= 0) return "0%";
-  return `${Math.round(((value - min) / span) * 100)}%`;
-}
 
 function EqBand({
   deckId,
@@ -50,7 +44,7 @@ function EqBand({
           disabled={killed}
           ariaLabel={`${label} canal ${channel}`}
           toneClass="mixer-vol-knob--eq"
-          formatValue={(next) => (killed ? "KILL" : formatPositionPercent(next, EQ_MIN, EQ_MAX))}
+          formatValue={(next) => (killed ? "KILL" : formatKnobPercent(next, EQ_MIN, EQ_MAX))}
           onChange={(next) => onChange({ type: "eq", id: deckId, band, value: next })}
         />
         <button
@@ -102,7 +96,7 @@ function ChannelEq({
           step={1}
           ariaLabel={`Filter deck ${channel}`}
           toneClass="mixer-vol-knob--filter"
-          formatValue={(next) => formatPositionPercent(next, -100, 100)}
+          formatValue={(next) => formatKnobPercent(next, -100, 100)}
           onChange={(value) => onChange({ type: "filter", id: deckId, value })}
         />
       </div>

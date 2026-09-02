@@ -1,25 +1,12 @@
 import { useRef, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function normalize(value: number, min: number, max: number) {
-  return (value - min) / (max - min);
-}
+import { snapKnobValue, valueFromVisualNorm, visualNorm } from "./rotary-knob-scale";
 
 function dialDeg(norm: number) {
   return norm * 270 - 135;
 }
 
 function valueFromAngle(deg: number, min: number, max: number) {
-  const norm = clamp((deg + 135) / 270, 0, 1);
-  return min + norm * (max - min);
-}
-
-function snapValue(value: number, min: number, max: number, step: number) {
-  const steps = Math.round((clamp(value, min, max) - min) / step);
-  return clamp(min + steps * step, min, max);
+  return valueFromVisualNorm(Math.min(1, Math.max(0, (deg + 135) / 270)), min, max);
 }
 
 function angleFromPointer(clientX: number, clientY: number, rect: DOMRect) {
@@ -57,7 +44,7 @@ export function RotaryKnob({
   const dialRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const draggingRef = useRef(false);
-  const norm = normalize(value, min, max);
+  const norm = visualNorm(value, min, max);
   const display = formatValue(value);
   const sliderValue = Math.round(norm * 100);
 
@@ -66,7 +53,12 @@ export function RotaryKnob({
     const dial = dialRef.current;
     if (!dial) return;
     const rect = dial.getBoundingClientRect();
-    const next = snapValue(valueFromAngle(angleFromPointer(clientX, clientY, rect), min, max), min, max, step);
+    const next = snapKnobValue(
+      valueFromAngle(angleFromPointer(clientX, clientY, rect), min, max),
+      min,
+      max,
+      step,
+    );
     onChange(next);
   };
 
@@ -126,7 +118,7 @@ export function RotaryKnob({
           className="mixer-vol-knob-input"
           onChange={(event) => {
             const nextNorm = Number(event.target.value) / 100;
-            onChange(snapValue(min + nextNorm * (max - min), min, max, step));
+            onChange(snapKnobValue(valueFromVisualNorm(nextNorm, min, max), min, max, step));
           }}
         />
       </div>

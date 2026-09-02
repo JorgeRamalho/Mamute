@@ -2,30 +2,7 @@ import { useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointe
 import { TRAINING_TRACKS } from "../../data/training-tracks";
 import { engine } from "../../lib/audio-engine";
 import { harmonicDistance, resolveMusicalKey } from "../../lib/musical-key";
-import type { DeckId } from "../../types";
-
-export type MixerAction =
-  | { type: "refresh" }
-  | { type: "pitch"; id: DeckId; value: number }
-  | { type: "gain"; id: DeckId; value: number }
-  | { type: "trim"; id: DeckId; value: number }
-  | { type: "filter"; id: DeckId; value: number }
-  | { type: "eq"; id: DeckId; band: "high" | "mid" | "low"; value: number }
-  | { type: "eqKill"; id: DeckId; band: "high" | "mid" | "low"; value: boolean }
-  | { type: "xf"; value: number }
-  | { type: "master"; value: number }
-  | { type: "booth"; value: number }
-  | { type: "cueMix"; value: number }
-  | { type: "sync"; id: DeckId; value: boolean }
-  | { type: "masterDeck"; id: DeckId }
-  | { type: "cueMonitor"; id: DeckId; value: boolean }
-  | { type: "jogMode"; id: DeckId; value: "vinyl" | "cdj" }
-  | { type: "quantize"; id: DeckId; value: boolean }
-  | { type: "loadTrack"; id: DeckId; trackId: string }
-  | { type: "callCue"; id: DeckId }
-  | { type: "setCue"; id: DeckId }
-  | { type: "toggleLoop"; id: DeckId }
-  | { type: "nudge"; id: DeckId; direction: -1 | 1 };
+import type { DeckId, MixerAction } from "../../types";
 
 function Waveform({
   id,
@@ -266,10 +243,7 @@ export function CdjDeck({
           <button
             className="cdj-btn cdj-btn--primary cdj-btn--play"
             type="button"
-            onClick={async () => {
-              await engine.toggle(id);
-              onChange({ type: "refresh" });
-            }}
+            onClick={() => onChange({ type: "toggle", id })}
           >
             {deck.playing ? "Pause" : "Play"}
           </button>

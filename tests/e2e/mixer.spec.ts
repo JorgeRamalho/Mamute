@@ -83,6 +83,10 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
     await expect(page.getByRole("button", { name: "Kill MED canal B" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Kill LOW canal A" })).toBeVisible();
 
+    await expect(
+      page.locator(".mixer-eq-channel[data-channel='a'] .mixer-eq-band").first().locator(".mixer-vol-knob-value"),
+    ).toHaveText("50%");
+
     await page.getByRole("slider", { name: "HIGH canal A" }).fill("100");
     await expect(
       page.locator(".mixer-eq-channel[data-channel='a'] .mixer-eq-band").first().locator(".mixer-vol-knob-value"),
@@ -107,6 +111,7 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
 
     await expect(page.getByRole("region", { name: "Deck A" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Deck B" })).toBeVisible();
+    await expect(page.getByRole("status", { name: /Controladora MIDI/ })).toBeVisible();
     await expect(page.getByLabel("Jog wheel deck A")).toBeVisible();
     await expect(page.getByRole("slider", { name: "HIGH canal A" })).toBeVisible();
     await expect(page.getByRole("slider", { name: "MED canal B" })).toBeVisible();

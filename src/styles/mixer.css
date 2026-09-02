@@ -6,8 +6,11 @@
 }
 
 .mixer-cabinet-head {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem 1rem;
 }
 
 .mixer-cabinet-note {
@@ -15,6 +18,93 @@
   line-height: 1.5;
   font-size: 0.88rem;
   max-width: 42rem;
+}
+
+.mixer-midi-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.4rem 0.55rem 0.4rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, #0c121c 82%, black);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mixer-midi-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.mixer-midi-detail {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: color-mix(in srgb, var(--muted) 80%, white);
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mixer-midi-dot {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: none;
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.mixer-midi-status[data-state="connected"] {
+  border-color: color-mix(in srgb, var(--lime) 50%, var(--line));
+  color: var(--lime);
+}
+
+.mixer-midi-status[data-state="connected"] .mixer-midi-dot {
+  background: var(--lime);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--lime) 70%, transparent);
+}
+
+.mixer-midi-status[data-state="denied"] {
+  border-color: color-mix(in srgb, var(--magenta) 45%, var(--line));
+  color: color-mix(in srgb, var(--magenta-hot) 80%, white);
+}
+
+.mixer-midi-status[data-state="denied"] .mixer-midi-dot,
+.mixer-midi-status[data-state="disconnected"] .mixer-midi-dot {
+  background: color-mix(in srgb, var(--magenta) 70%, white);
+}
+
+.mixer-midi-status[data-live="true"] .mixer-midi-dot {
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+.mixer-midi-connect {
+  margin: 0;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  background: color-mix(in srgb, var(--cyan) 12%, transparent);
+  color: var(--cyan-hot);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mixer-midi-connect:hover {
+  background: color-mix(in srgb, var(--cyan) 22%, transparent);
 }
 
 .mixer-board {

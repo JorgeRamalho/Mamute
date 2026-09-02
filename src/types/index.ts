@@ -25,6 +25,7 @@ export type {
   DeckState,
   HotCue,
   JogMode,
+  MixerAction,
   MixerSnapshot,
   TrainingTrack,
 } from "./mixer";

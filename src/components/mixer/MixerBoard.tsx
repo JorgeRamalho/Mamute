@@ -1,6 +1,9 @@
-import { useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { engine } from "../../lib/audio-engine";
-import { CdjDeck, type MixerAction } from "./CdjDeck";
+import { useMidiController } from "../../lib/midi/use-midi-controller";
+import type { MixerAction } from "../../types/mixer";
+import { CdjDeck } from "./CdjDeck";
+import { MidiStatus } from "./MidiStatus";
 import { MixerConsole } from "./MixerConsole";
 
 function cloneSnapshot() {
@@ -87,6 +90,11 @@ function reducer(_state: typeof engine.snapshot, action: MixerAction) {
     case "nudge":
       engine.nudge(action.id, action.direction);
       break;
+    case "toggle":
+      // Não chama o engine aqui, e sim em `dispatchAction`, porque o play
+      // espera o resume do AudioContext ao passo que o reducer precisa
+      // devolver o clone neste mesmo tick.
+      break;
     case "refresh":
       break;
   }
@@ -95,6 +103,25 @@ function reducer(_state: typeof engine.snapshot, action: MixerAction) {
 
 export function MixerBoard() {
   const [snap, dispatch] = useReducer(reducer, engine.snapshot, cloneSnapshot);
+
+  /**
+   * Caminho único de ação da cabine, para o mouse e a DDJ-400 emitirem o mesmo
+   * union em vez de fluxos separados.
+   *
+   * O `toggle` é a única ação assíncrona, porque `engine.toggle` aguarda o
+   * resume do `AudioContext`, e por isso ela não cabe no reducer, que devolve o
+   * clone na hora. Aqui o `refresh` só sai depois que o engine assenta, senão o
+   * rótulo continuaria em Play com o deck já tocando.
+   */
+  const dispatchAction = useCallback((action: MixerAction) => {
+    if (action.type === "toggle") {
+      void engine.toggle(action.id).then(() => dispatch({ type: "refresh" }));
+      return;
+    }
+    dispatch(action);
+  }, []);
+
+  const midi = useMidiController(dispatchAction);
   const masterKey = snap[snap.masterDeck].track.key;
 
   useEffect(() => {
@@ -112,12 +139,21 @@ export function MixerBoard() {
         <p className="mixer-cabinet-note">
           Key Camelot, sync, loop e trim. Loops sintéticos — sem streaming licenciado.
         </p>
+        <MidiStatus
+          status={midi.status}
+          deviceName={midi.deviceName}
+          ports={midi.ports}
+          lastHeard={midi.lastHeard}
+          error={midi.error}
+          live={midi.live}
+          onConnect={midi.connect}
+        />
       </header>
 
       <div className="mixer-board" data-stage="5">
-        <CdjDeck id="a" masterKey={masterKey} onChange={dispatch} />
-        <MixerConsole snap={snap} onChange={dispatch} />
-        <CdjDeck id="b" masterKey={masterKey} onChange={dispatch} />
+        <CdjDeck id="a" masterKey={masterKey} onChange={dispatchAction} />
+        <MixerConsole snap={snap} onChange={dispatchAction} />
+        <CdjDeck id="b" masterKey={masterKey} onChange={dispatchAction} />
       </div>
     </div>
   );
