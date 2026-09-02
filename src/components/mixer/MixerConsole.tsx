@@ -162,6 +162,12 @@ export function MixerConsole({
         </div>
       </div>
 
+      {/*
+        Os três faders usam `step="any"` porque eles recebem valor de 14 bits da
+        DDJ-400, e um step numérico faria o browser alinhar o valor ao múltiplo
+        mais próximo, jogando fora a resolução do par MSB/LSB. As setas do
+        teclado continuam andando 1% do curso, que é o passo padrão do range.
+      */}
       <div className="mixer-faders">
         <label className="mixer-fader">
           <span>CH A</span>
@@ -169,7 +175,7 @@ export function MixerConsole({
             type="range"
             min={0}
             max={1}
-            step={0.01}
+            step="any"
             value={snap.a.gain}
             aria-label="Volume deck A"
             onChange={(event) => onChange({ type: "gain", id: "a", value: Number(event.target.value) })}
@@ -181,7 +187,7 @@ export function MixerConsole({
             type="range"
             min={0}
             max={1}
-            step={0.01}
+            step="any"
             value={snap.b.gain}
             aria-label="Volume deck B"
             onChange={(event) => onChange({ type: "gain", id: "b", value: Number(event.target.value) })}
@@ -196,7 +202,7 @@ export function MixerConsole({
           type="range"
           min={0}
           max={1}
-          step={0.01}
+          step="any"
           value={snap.crossfader}
           aria-label="Crossfader"
           onChange={(event) => onChange({ type: "xf", value: Number(event.target.value) })}
