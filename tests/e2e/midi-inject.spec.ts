@@ -4,6 +4,7 @@ import {
   DECK_CC_14BIT,
   DECK_CC_JOG,
   DECK_NOTE,
+  HOT_CUE_FIRST_NOTE,
   MIXER_CC_14BIT,
   type Cc14Bit,
 } from "../../src/lib/midi/ddj-400-protocol";
@@ -45,6 +46,17 @@ async function tapNote(page: Page, status: number, noteNumber: number): Promise<
 }
 
 /**
+ * Toca e solta um pad, cujo canal é próprio e separado do transporte.
+ *
+ * @param page Página já em `/mixer`.
+ * @param status Canal de pad do deck.
+ * @param index Deslocamento a partir de `HOT_CUE_FIRST_NOTE`.
+ */
+async function tapPad(page: Page, status: number, index: number): Promise<void> {
+  await tapNote(page, status, HOT_CUE_FIRST_NOTE + index);
+}
+
+/**
  * Gira um jog por N ticks, que o hardware manda sempre como desvio de ±1.
  *
  * @param page Página já em `/mixer`.
@@ -56,6 +68,14 @@ async function spinJog(page: Page, status: number, jogCc: number, ticks: number)
   await inject(
     page,
     Array.from({ length: ticks }, () => [status, jogCc, 0x41]),
+  );
+  // O jog é coalescido em `requestAnimationFrame`, e por isso ler a fase no
+  // mesmo tick da injeção pegaria o valor de antes do gesto.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }),
   );
 }
 
@@ -138,11 +158,12 @@ test.describe("físico→virtual sem USB", () => {
   });
 
   test("o chip registra a última mensagem, mesmo a que o mapper ignora", async ({ page }) => {
-    // Loop in, que só entra no mapa na onda de pads.
-    await inject(page, [[DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn, 0x7f]]);
+    // O SHIFT existe como endereço mas não vira ação, porque a controladora
+    // resolve as combinações no hardware e manda uma note própria para cada uma.
+    await inject(page, [[DDJ_STATUS.noteDeckA, DECK_NOTE.shift, 0x7f]]);
 
     const chip = page.getByRole("status", { name: /Controladora MIDI/ });
-    await expect(chip.locator(".mixer-midi-detail")).toContainText("noteOn ch1 n16=127");
+    await expect(chip.locator(".mixer-midi-detail")).toContainText("noteOn ch1 n63=127");
   });
 });
 
@@ -234,6 +255,66 @@ test.describe("transporte por inject", () => {
     const afterScratch = Number(await deckA.getAttribute("data-phase"));
     await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.free, JOG_TICKS_PER_NUDGE.touched);
     expect(Number(await deckA.getAttribute("data-phase"))).toBe(afterScratch);
+  });
+
+  test("LOOP IN entra, LOOP OUT sai, e apertar duas vezes não desfaz", async ({ page }) => {
+    const led = page.locator('.cdj-deck[data-deck="a"] .cdj-status-leds span', { hasText: "LOOP" });
+    await expect(led).toHaveAttribute("data-on", "false");
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn);
+    await expect(led).toHaveAttribute("data-on", "true");
+
+    // Se os três botões fossem o mesmo toggle, este segundo IN desligaria.
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn);
+    await expect(led).toHaveAttribute("data-on", "true");
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.loopOut);
+    await expect(led).toHaveAttribute("data-on", "false");
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.loopOut);
+    await expect(led).toHaveAttribute("data-on", "false");
+
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.reloop);
+    await expect(led).toHaveAttribute("data-on", "true");
+  });
+
+  test("o pad gravado salta, e o pad vazio grava a posição atual", async ({ page }) => {
+    const deckA = page.getByRole("region", { name: "Deck A" });
+    const phase = async () => Number(await deckA.getAttribute("data-phase"));
+
+    // O slot 1 nasce gravado na batida zero, e por isso ele salta de primeira.
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 520);
+    expect(await phase()).toBeGreaterThan(0.2);
+
+    await tapPad(page, DDJ_STATUS.notePadDeckA, 0);
+    await expect.poll(phase).toBe(0);
+
+    // O slot 2 nasce vazio, então o primeiro toque grava e não move nada.
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 520);
+    const gravado = await phase();
+    await tapPad(page, DDJ_STATUS.notePadDeckA, 1);
+    expect(await phase()).toBe(gravado);
+
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 520);
+    expect(await phase()).not.toBe(gravado);
+
+    // O segundo toque salta para o ponto gravado, que o engine arredonda para
+    // a grade de oito batidas.
+    await tapPad(page, DDJ_STATUS.notePadDeckA, 1);
+    await expect.poll(phase).toBe(Math.round(gravado * 8) / 8);
+  });
+
+  test("pad fora da faixa de hot cue não mexe na cabine", async ({ page }) => {
+    const deckA = page.getByRole("region", { name: "Deck A" });
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.touched, 520);
+    const antes = await deckA.getAttribute("data-phase");
+
+    // Pad 5, que o engine não tem, e pad 1 em modo Beat Loop, que a
+    // controladora manda como note 0x60.
+    await tapPad(page, DDJ_STATUS.notePadDeckA, 4);
+    await tapPad(page, DDJ_STATUS.notePadDeckA, 0x60 - HOT_CUE_FIRST_NOTE);
+
+    expect(await deckA.getAttribute("data-phase")).toBe(antes);
   });
 
   test("a latência do gesto fica dentro do orçamento", async ({ page }) => {

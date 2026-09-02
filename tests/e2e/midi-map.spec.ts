@@ -5,13 +5,17 @@ import {
   DECK_CC_14BIT,
   DECK_CC_JOG,
   DECK_NOTE,
+  HOT_CUE_FIRST_NOTE,
   MIXER_CC_14BIT,
+  PAD_COUNT,
 } from "../../src/lib/midi/ddj-400-protocol";
 import { JOG_TICKS_PER_NUDGE } from "../../src/lib/midi/midi-scales";
+import { HOT_CUE_SLOTS } from "../../src/types/mixer";
 import { isDdj400PortName } from "../../src/lib/midi/midi-session";
 import { coalesceMode, createMidiActionQueue } from "../../src/lib/midi/midi-coalesce";
 import { parseMidiMessage, type ParsedMidiMessage } from "../../src/lib/midi/parse-message";
 import type { MixerAction } from "../../src/types/mixer";
+
 
 test.describe("mapa MIDI DDJ-400 — knobs e faders", () => {
   test.beforeEach(({}, testInfo) => {
@@ -393,15 +397,36 @@ test.describe("mapa MIDI DDJ-400 — transporte", () => {
     expect(mapDdj400({ ...note(0x80, DECK_NOTE.play, 0x7f), kind: "noteOff" }, ctx)).toBeNull();
   });
 
-  test("nem toda note é transporte, e o canal dos pads não vaza", () => {
+  test("nem toda note é transporte, e o canal do browser não vaza", () => {
     const ctx = createDdj400MapContext();
 
-    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn, 0x7f), ctx)).toBeNull();
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.shift, 0x7f), ctx)).toBeNull();
     expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x7f), ctx)).toBeNull();
 
-    // O pad do deck A tem canal próprio, e a note 0x0b ali é pad e não play.
-    expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, DECK_NOTE.play, 0x7f), ctx)).toBeNull();
+    // O browser tem canal próprio e pertence à onda seguinte, e por isso a note
+    // 0x0b ali não pode virar play.
     expect(mapDdj400(note(DDJ_STATUS.noteBrowser, DECK_NOTE.play, 0x7f), ctx)).toBeNull();
+  });
+
+  test("os três botões de loop pedem estados distintos, e não o mesmo toggle", () => {
+    const ctx = createDdj400MapContext();
+
+    // O engine só tem `toggleLoop`, mas mandar os três para ele faria apertar
+    // IN e depois OUT devolver a cabine ao estado inicial.
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn, 0x7f), ctx)).toEqual({
+      type: "loopOn",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.loopOut, 0x7f), ctx)).toEqual({
+      type: "loopOff",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckB, DECK_NOTE.reloop, 0x7f), ctx)).toEqual({
+      type: "toggleLoop",
+      id: "b",
+    });
+
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.loopIn, 0x00), ctx)).toBeNull();
   });
 
   test("botão não espera frame, ao passo que o fader espera", () => {
@@ -434,6 +459,59 @@ function note(status: number, data1: number, data2: number): ParsedMidiMessage {
 function cc(status: number, data1: number, data2: number): ParsedMidiMessage {
   return { status, channel: status & 0x0f, kind: "cc", data1, data2 };
 }
+
+test.describe("mapa MIDI DDJ-400 — pads", () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "mapa puro, um projeto basta");
+  });
+
+  test("os quatro primeiros pads viram slot, cada um no seu deck", () => {
+    const ctx = createDdj400MapContext();
+
+    for (let index = 0; index < HOT_CUE_SLOTS; index += 1) {
+      expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, HOT_CUE_FIRST_NOTE + index, 0x7f), ctx)).toEqual({
+        type: "hotCuePad",
+        id: "a",
+        slot: index + 1,
+      });
+    }
+
+    expect(mapDdj400(note(DDJ_STATUS.notePadDeckB, HOT_CUE_FIRST_NOTE, 0x7f), ctx)).toEqual({
+      type: "hotCuePad",
+      id: "b",
+      slot: 1,
+    });
+  });
+
+  test("os pads acima do quarto saem nulos, porque a cabine não tem esse slot", () => {
+    const ctx = createDdj400MapContext();
+
+    for (let index = HOT_CUE_SLOTS; index < PAD_COUNT; index += 1) {
+      expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, HOT_CUE_FIRST_NOTE + index, 0x7f), ctx)).toBeNull();
+    }
+  });
+
+  test("os outros modos de pad se ignoram sozinhos, sem o mapper guardar estado", () => {
+    const ctx = createDdj400MapContext();
+
+    // A controladora resolve o modo no hardware e manda note distinta para cada
+    // um, e por isso o pad 1 fora do Hot Cue cai fora da faixa por conta própria.
+    for (const outroModo of [0x60, 0x20, 0x30]) {
+      expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, outroModo, 0x7f), ctx)).toBeNull();
+    }
+
+    // Soltar o pad também não repete a ação.
+    expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, HOT_CUE_FIRST_NOTE, 0x00), ctx)).toBeNull();
+  });
+
+  test("o canal de pad não empresta significado do canal de transporte", () => {
+    const ctx = createDdj400MapContext();
+
+    // A note 0x0b é play no canal do deck, mas no canal dos pads ela está fora
+    // da faixa de hot cue e não pode tocar o transporte.
+    expect(mapDdj400(note(DDJ_STATUS.notePadDeckA, DECK_NOTE.play, 0x7f), ctx)).toBeNull();
+  });
+});
 
 /**
  * Manda um tick de jog, que a controladora envia como desvio de `0x40`.

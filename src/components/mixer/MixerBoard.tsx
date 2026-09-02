@@ -94,11 +94,20 @@ function reducer(_state: typeof engine.snapshot, action: MixerAction) {
     case "setCue":
       engine.setCueBeat(action.id, phaseToBeat(action.id));
       break;
+    case "hotCue":
+      engine.setHotCue(action.id, action.slot);
+      break;
+    case "triggerHotCue":
+      engine.triggerHotCue(action.id, action.slot);
+      break;
     case "toggle":
     case "toggleSync":
     case "toggleCueMonitor":
     case "cueButton":
     case "toggleLoop":
+    case "loopOn":
+    case "loopOff":
+    case "hotCuePad":
     case "nudge":
       // Resolvidas em `dispatchAction`, e não aqui, porque todas dependem do
       // estado anterior e este reducer roda duas vezes sob StrictMode. Chegar
@@ -156,6 +165,27 @@ export function MixerBoard() {
         engine.toggleLoop(action.id);
         dispatch({ type: "refresh" });
         return;
+      case "loopOn":
+      case "loopOff":
+        // O engine só expõe `toggleLoop`, e por isso LOOP IN e LOOP OUT viram
+        // pedidos de estado que só chamam o toggle quando ele muda alguma
+        // coisa. Sem essa guarda, apertar IN e depois OUT ligaria e desligaria
+        // o loop na sequência, deixando a cabine como estava.
+        if (engine.snapshot[action.id].loop.active === (action.type === "loopOn")) return;
+        engine.toggleLoop(action.id);
+        dispatch({ type: "refresh" });
+        return;
+      case "hotCuePad": {
+        // Critério do CDJ: pad com ponto gravado salta para ele, ao passo que
+        // pad vazio grava a posição atual.
+        const cue = engine.snapshot[action.id].hotCues.find((item) => item.slot === action.slot);
+        dispatch({
+          type: cue?.set ? "triggerHotCue" : "hotCue",
+          id: action.id,
+          slot: action.slot,
+        });
+        return;
+      }
       case "nudge":
         engine.nudge(action.id, action.direction);
         dispatch({ type: "refresh" });

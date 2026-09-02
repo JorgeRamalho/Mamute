@@ -8,6 +8,7 @@
  * `midi-scales.ts`, de modo que este arquivo só decide **qual** controle é.
  */
 
+import { HOT_CUE_SLOTS } from "../../types/mixer";
 import type { DeckId, MixerAction } from "../../types/mixer";
 import type { ParsedMidiMessage } from "./parse-message";
 import {
@@ -16,6 +17,7 @@ import {
   DECK_CC_JOG,
   DECK_NOTE,
   deckFromStatus,
+  HOT_CUE_FIRST_NOTE,
   isPress,
   jogDelta,
   MIXER_CC_14BIT,
@@ -63,6 +65,9 @@ export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): Mixe
     if (event.status === DDJ_STATUS.noteDeckA || event.status === DDJ_STATUS.noteDeckB) {
       return mapDeckNote(event);
     }
+    if (event.status === DDJ_STATUS.notePadDeckA || event.status === DDJ_STATUS.notePadDeckB) {
+      return mapPadNote(event);
+    }
     return null;
   }
   if (event.kind !== "cc") return null;
@@ -109,9 +114,41 @@ function mapDeckNote(event: ParsedMidiMessage): MixerAction | null {
       // Note distinta que o firmware emite ao segurar o SYNC, e por isso o
       // mapper não precisa de timer para separar toque curto de longo.
       return { type: "masterDeck", id: deck };
+    case DECK_NOTE.loopIn:
+      return { type: "loopOn", id: deck };
+    case DECK_NOTE.loopOut:
+      return { type: "loopOff", id: deck };
+    case DECK_NOTE.reloop:
+      return { type: "toggleLoop", id: deck };
     default:
       return null;
   }
+}
+
+/**
+ * Resolve os pads de um deck, que têm canal próprio.
+ *
+ * O mapper **não** rastreia em que modo os pads estão, e essa é a boa notícia
+ * desta faixa: a controladora resolve o modo no hardware e manda uma note
+ * distinta para cada um, de modo que o pad 1 sai como `0x00` em Hot Cue mas
+ * como `0x60` em Beat Loop. Filtrar a faixa que começa em `HOT_CUE_FIRST_NOTE`
+ * já descarta os outros modos sozinho, sem estado e sem escutar os botões de
+ * modo, pelo mesmo princípio que dispensou o SHIFT na onda 3.
+ *
+ * O hardware tem oito pads por deck, ao passo que o engine só tem quatro slots
+ * de hot cue, e por isso as quatro notes de cima saem como `null` em vez de
+ * pedirem um slot que não existe.
+ *
+ * @param event Note On no canal de pads do deck A ou B.
+ */
+function mapPadNote(event: ParsedMidiMessage): MixerAction | null {
+  const deck = deckFromStatus(event.status);
+  if (!deck || !isPress(event.data2)) return null;
+
+  const index = event.data1 - HOT_CUE_FIRST_NOTE;
+  if (index < 0 || index >= HOT_CUE_SLOTS) return null;
+
+  return { type: "hotCuePad", id: deck, slot: index + 1 };
 }
 
 /**

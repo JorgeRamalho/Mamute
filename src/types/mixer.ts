@@ -20,6 +20,15 @@ export interface HotCue {
   set: boolean;
 }
 
+/**
+ * Slots de hot cue por deck.
+ *
+ * Mora aqui, e não no engine, porque o mapper MIDI precisa do mesmo número para
+ * descartar os pads que a cabine não tem, e importar o `audio-engine` dentro do
+ * mapa puro arrastaria a Web Audio para um módulo que roda sem página.
+ */
+export const HOT_CUE_SLOTS = 4;
+
 export interface DeckEq {
   high: number;
   mid: number;
@@ -104,4 +113,9 @@ export type MixerAction =
   | { type: "setCue"; id: DeckId }
   | { type: "cueButton"; id: DeckId }
   | { type: "toggleLoop"; id: DeckId }
+  | { type: "loopOn"; id: DeckId }
+  | { type: "loopOff"; id: DeckId }
+  | { type: "hotCue"; id: DeckId; slot: number }
+  | { type: "triggerHotCue"; id: DeckId; slot: number }
+  | { type: "hotCuePad"; id: DeckId; slot: number }
   | { type: "nudge"; id: DeckId; direction: -1 | 1 };
