@@ -95,7 +95,8 @@ export interface MixerSnapshot {
  * recebe mas **não** qual track, porque quem sabe disso é o `BrowseState`.
  *
  * Union aberto: um `type` novo exige case em `applyAbsoluteAction` ou
- * `resolveMixerAction`, e na onda P3 uma linha em `MIXER_ACTION_ROUTES`.
+ * `resolveMixerAction`, e uma linha em `MIXER_ACTION_ROUTES` (ver
+ * `src/lib/mixer-action-routing.ts`).
  */
 export type MixerAction =
   | { type: "refresh" }

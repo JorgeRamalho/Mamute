@@ -8,6 +8,8 @@ Lógica de domínio e adaptação de ambiente. Sem JSX.
 | `mixer-snapshot.ts` | Clone do `MixerSnapshot` e conversão fase → beat. |
 | `mixer-browse.ts` | Cursor da biblioteca de treino, wrap nas pontas e índice do master. |
 | `mixer-dispatch.ts` | Resolve `MixerAction` em absoluto, intenção ou browse, sem React. |
+| `mixer-action-routing.ts` | Tabela `MIXER_ACTION_ROUTES`: dispatch-only, reducer-only, reducer-direct. |
+| `mixer-assert.ts` | `assertAllowedInReducer` — throw `[MixerContract]` em DEV se a rota for dispatch-only. |
 | `storage.ts` | Perfil DJ em `localStorage`. |
 | `academy.ts` | Progresso das aulas em `localStorage`. |
 | `base.ts` | Basename do router, URL do Live Server e `publicAsset()` para favicon. |

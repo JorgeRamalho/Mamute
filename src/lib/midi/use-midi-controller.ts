@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MixerAction } from "../../types/mixer";
+import type { MixerDispatch } from "../mixer-dispatch";
 import { createDdj400MapContext, mapDdj400 } from "./ddj-400-map";
 import { createMidiActionQueue } from "./midi-coalesce";
 import {
@@ -69,10 +70,11 @@ function round1(value: number): number {
  * rótulo do chip acompanha o mesmo frame, senão o diagnóstico re-renderizaria
  * a cabine a cada mensagem e desfaria o ganho da fila.
  *
- * @param onAction Callback do reducer, que recebe cada `MixerAction` mapeada a
- * partir de uma mensagem da DDJ-400.
+ * @param onAction Callback do dispatcher (`MixerDispatch`), que recebe cada
+ * `MixerAction` mapeada a partir de uma mensagem da DDJ-400. Não é o reducer
+ * cru: intenções passam por `createMixerDispatch` antes.
  */
-export function useMidiController(onAction: (action: MixerAction) => void): MidiControllerState {
+export function useMidiController(onAction: MixerDispatch): MidiControllerState {
   const onActionRef = useRef(onAction);
   const ctxRef = useRef(createDdj400MapContext());
   const queueRef = useRef(createMidiActionQueue());
