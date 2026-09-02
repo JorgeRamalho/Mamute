@@ -218,7 +218,40 @@ describe("MamuteEngine — toggle (T1–T6)", () => {
   });
 });
 
-describe("MamuteEngine — callCue (C1–C4)", () => {
+describe("MamuteEngine — cue momentâneo (C6–C8)", () => {
+  test("C6 pausado, pressCue toca a partir do cue", async () => {
+    ({ engine } = await createTestEngine());
+    engine.setCueBeat("a", 2);
+    engine.pressCue("a");
+    expect(engine.snapshot.a.playing).toBe(true);
+    expect(engine.snapshot.a.phase).toBeCloseTo(0.25, 5);
+  });
+
+  test("C7 releaseCue para no ponto de cue", async () => {
+    const created = await createTestEngine();
+    engine = created.engine;
+    const ctx = created.ctx;
+    engine.setCueBeat("a", 2);
+    engine.pressCue("a");
+    ctx.advance(0.3);
+    engine.releaseCue("a");
+    expect(engine.snapshot.a.playing).toBe(false);
+    expect(engine.snapshot.a.phase).toBeCloseTo(0.25, 5);
+  });
+
+  test("C8 tocando, pressCue salta ao cue sem preview", async () => {
+    ({ engine } = await createTestEngine());
+    await engine.toggle("a");
+    engine.setCueBeat("a", 4);
+    engine.pressCue("a");
+    expect(engine.snapshot.a.playing).toBe(true);
+    expect(engine.snapshot.a.phase).toBeCloseTo(0.5, 5);
+    engine.releaseCue("a");
+    expect(engine.snapshot.a.playing).toBe(true);
+  });
+});
+
+describe("MamuteEngine — callCue (C1–C5)", () => {
   test("C1 a phase vira cueBeat / 8", async () => {
     ({ engine } = await createTestEngine());
     engine.setCueBeat("a", 2);
@@ -410,7 +443,7 @@ describe("MamuteEngine — phase loop (PH1–PH5)", () => {
     expect(engine.snapshot.a.phase).toBeLessThan(1);
   });
 
-  test.todo("PH5 loop ativo recorta o playback ao IN/OUT (onda 8)");
+  test.todo("PH5 loop ativo recorta o playback ao IN/OUT (onda 8) — parcial via loopStart/loopEnd em arquivo");
 });
 
 describe("MamuteEngine — demais métodos públicos", () => {
@@ -485,6 +518,46 @@ describe("MamuteEngine — demais métodos públicos", () => {
     expect(engine.snapshot.a.playing).toBe(true);
     expect(engine.snapshot.a.sourceKind).toBe("file");
     expect(engine.snapshot.a.peaks?.length).toBe(512);
+    expect(lastSource(engine, "a")?.loop).toBe(false);
+  });
+
+  test("U-07 arquivo real toca uma vez e para no fim", async () => {
+    const created = await createTestEngine();
+    engine = created.engine;
+    const ctx = created.ctx;
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    engine.loadDeckBuffer("a", buffer as unknown as AudioBuffer, {
+      title: "full-track",
+      bpm: 120,
+      durationSec: buffer.duration,
+    });
+    await engine.toggle("a");
+    const source = lastSource(engine, "a");
+    expect(source?.loop).toBe(false);
+    expect(source?.onended).toBeTypeOf("function");
+    source?.onended?.();
+    expect(engine.snapshot.a.playing).toBe(false);
+    expect(engine.snapshot.a.phase).toBe(0);
+    expect(engine.snapshot.a.positionSec).toBe(0);
+  });
+
+  test("U-08 loop ativo num arquivo religa o source com região", async () => {
+    const created = await createTestEngine();
+    engine = created.engine;
+    const ctx = created.ctx;
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    engine.loadDeckBuffer("a", buffer as unknown as AudioBuffer, {
+      title: "loop-track",
+      bpm: 120,
+      durationSec: buffer.duration,
+    });
+    await engine.toggle("a");
+    engine.snapshot.a.phase = 0.25;
+    engine.toggleLoop("a");
+    const source = lastSource(engine, "a");
+    expect(source?.loop).toBe(true);
+    expect(source?.loopStart).toBeGreaterThan(0);
+    expect(source?.loopEnd).toBeGreaterThan(source?.loopStart ?? 0);
   });
 
   test("U-06 callCue com buffer real usa segundos", async () => {

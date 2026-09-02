@@ -28,6 +28,8 @@ export type MixerEngine = {
   setQuantize(id: DeckId, enabled: boolean): void;
   loadTrack(id: DeckId, trackId: string): void;
   callCue(id: DeckId): void;
+  pressCue(id: DeckId): void;
+  releaseCue(id: DeckId): void;
   setCueBeat(id: DeckId, beat: number): void;
   setHotCue(id: DeckId, slot: number): void;
   triggerHotCue(id: DeckId, slot: number): void;
@@ -46,6 +48,7 @@ export type MixerEngine = {
  */
 export type MixerUiOp =
   | { kind: "openFilePicker"; deckId: DeckId }
+  | { kind: "armFilePicker"; deckId: DeckId }
   | { kind: "showLoadError"; message: string };
 
 export type DispatchResult =
@@ -66,7 +69,8 @@ export type ResolvedPlan =
   | { kind: "absolute"; action: MixerAction }
   | { kind: "engine-toggle"; id: DeckId }
   | { kind: "engine-loop"; id: DeckId }
-  | { kind: "engine-nudge"; id: DeckId; direction: -1 | 1 }
+  | { kind: "engine-cue-press"; id: DeckId }
+  | { kind: "engine-cue-release"; id: DeckId }
   | { kind: "engine-file"; id: DeckId; file: File }
   | { kind: "ui-op"; op: MixerUiOp };
 
@@ -157,7 +161,8 @@ export function applyAbsoluteAction(eng: MixerEngine, action: MixerAction): void
     case "toggle":
     case "toggleSync":
     case "toggleCueMonitor":
-    case "cueButton":
+    case "cuePress":
+    case "cueRelease":
     case "toggleLoop":
     case "loopOn":
     case "loopOff":
@@ -202,13 +207,10 @@ export function resolveMixerAction(
           value: !eng.snapshot[action.id].cueMonitor,
         },
       };
-    case "cueButton":
-      return {
-        kind: "absolute",
-        action: eng.snapshot[action.id].playing
-          ? { type: "callCue", id: action.id }
-          : { type: "setCue", id: action.id },
-      };
+    case "cuePress":
+      return { kind: "engine-cue-press", id: action.id };
+    case "cueRelease":
+      return { kind: "engine-cue-release", id: action.id };
     case "toggleLoop":
       return { kind: "engine-loop", id: action.id };
     case "loopOn":
@@ -234,11 +236,8 @@ export function resolveMixerAction(
       return { kind: "browse-move", nextCursor: browse.getCursor() + action.delta };
     case "browseHome":
       return { kind: "browse-home", nextCursor: browse.masterTrackIndex() };
-    case "browseLoad": {
-      const trackId = browse.resolveTrackId(browse.getCursor());
-      if (!trackId) return { kind: "noop" };
-      return { kind: "absolute", action: { type: "loadTrack", id: action.id, trackId } };
-    }
+    case "browseLoad":
+      return { kind: "ui-op", op: { kind: "armFilePicker", deckId: action.id } };
     case "requestDeckLoad":
       return { kind: "ui-op", op: { kind: "openFilePicker", deckId: action.id } };
     case "loadDeckFile":
@@ -283,6 +282,14 @@ export function dispatchMixerAction(
       return { kind: "refresh" };
     case "engine-nudge":
       deps.eng.nudge(plan.id, plan.direction);
+      deps.dispatchReducer({ type: "refresh" });
+      return { kind: "refresh" };
+    case "engine-cue-press":
+      deps.eng.pressCue(plan.id);
+      deps.dispatchReducer({ type: "refresh" });
+      return { kind: "refresh" };
+    case "engine-cue-release":
+      deps.eng.releaseCue(plan.id);
       deps.dispatchReducer({ type: "refresh" });
       return { kind: "refresh" };
     case "ui-op":

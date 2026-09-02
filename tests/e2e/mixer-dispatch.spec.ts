@@ -26,20 +26,17 @@ test.describe("dispatcher do mixer — intenção e browse", () => {
     expect(wrapCursor(total + 2, total)).toBe(2);
   });
 
-  test("cueButton tocando chama o ponto, e pausado grava o ponto", () => {
+  test("cuePress e cueRelease vão direto ao engine", () => {
     const { eng } = createFakeEngine();
     const browse = createIdleBrowse();
 
-    eng.snapshot.a.playing = true;
-    expect(resolveMixerAction(eng, browse, { type: "cueButton", id: "a" })).toEqual({
-      kind: "absolute",
-      action: { type: "callCue", id: "a" },
+    expect(resolveMixerAction(eng, browse, { type: "cuePress", id: "a" })).toEqual({
+      kind: "engine-cue-press",
+      id: "a",
     });
-
-    eng.snapshot.a.playing = false;
-    expect(resolveMixerAction(eng, browse, { type: "cueButton", id: "a" })).toEqual({
-      kind: "absolute",
-      action: { type: "setCue", id: "a" },
+    expect(resolveMixerAction(eng, browse, { type: "cueRelease", id: "a" })).toEqual({
+      kind: "engine-cue-release",
+      id: "a",
     });
   });
 
@@ -92,36 +89,22 @@ test.describe("dispatcher do mixer — intenção e browse", () => {
     expect(calls).toEqual(["toggleLoop", "toggleLoop"]);
   });
 
-  test("browseLoad usa o cursor, e não a faixa que o deck já toca", () => {
-    const { eng, calls } = createFakeEngine();
-    let cursor = 2;
-    const browse = createBrowseState({
-      tracks: TRAINING_TRACKS,
-      getCursor: () => cursor,
-      setCursor: (index) => {
-        cursor = index;
-      },
-      snapshot: () => eng.snapshot,
-    });
-    const received: MixerAction[] = [];
+  test("browseLoad arma o picker de arquivo do deck", () => {
+    const { eng } = createFakeEngine();
+    const browse = createIdleBrowse();
+    const ops: Array<{ kind: string; deckId?: string }> = [];
     const result = dispatchMixerAction(
       {
         eng,
         browse,
-        dispatchReducer: (action) => {
-          received.push(action);
-          applyAbsoluteAction(eng, action);
-        },
+        dispatchReducer: () => undefined,
+        onUiOp: (op) => ops.push(op),
       },
       { type: "browseLoad", id: "b" },
     );
 
-    const expectedId = TRAINING_TRACKS[2]?.id;
-    expect(expectedId).toBeTruthy();
-    expect(result).toEqual({ kind: "applied" });
-    expect(received).toEqual([{ type: "loadTrack", id: "b", trackId: expectedId }]);
-    expect(calls).toEqual(["loadTrack"]);
-    expect(eng.snapshot.b.track.id).toBe(expectedId);
+    expect(result).toEqual({ kind: "ui-only" });
+    expect(ops).toEqual([{ kind: "armFilePicker", deckId: "b" }]);
   });
 
   test("browseMove envolve o cursor nos extremos da lista", () => {
@@ -266,6 +249,8 @@ function createFakeEngine(): { eng: MixerEngine; calls: string[] } {
       if (track) snapshot[id].track = track;
     },
     callCue: () => calls.push("callCue"),
+    pressCue: () => calls.push("pressCue"),
+    releaseCue: () => calls.push("releaseCue"),
     setCueBeat: () => calls.push("setCueBeat"),
     setHotCue: () => calls.push("setHotCue"),
     triggerHotCue: () => calls.push("triggerHotCue"),

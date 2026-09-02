@@ -1,15 +1,20 @@
-import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { TRAINING_TRACKS } from "../../data/training-tracks";
 import { engine } from "../../lib/audio-engine";
+import {
+  armDeckFileInput,
+  clickDeckFileInput,
+  disarmDeckFileInput,
+} from "../../lib/deck-file-picker";
 import { assertAllowedInReducer } from "../../lib/mixer-assert";
 import { createBrowseState, masterTrackIndex } from "../../lib/mixer-browse";
 import { applyAbsoluteAction, createMixerDispatch } from "../../lib/mixer-dispatch";
 import { cloneMixerSnapshot } from "../../lib/mixer-snapshot";
 import { useMidiController } from "../../lib/midi/use-midi-controller";
-import type { MixerAction, MixerSnapshot } from "../../types/mixer";
+import type { DeckId, MixerAction, MixerSnapshot } from "../../types/mixer";
 import { BrowseChip } from "./BrowseChip";
 import { CdjDeck } from "./CdjDeck";
-import { DeckFileInput, openDeckFilePicker } from "./DeckFileInput";
+import { DeckFileInput } from "./DeckFileInput";
 import { MidiStatus } from "./MidiStatus";
 import { MixerConsole } from "./MixerConsole";
 
@@ -41,12 +46,34 @@ export function MixerBoard() {
       TRAINING_TRACKS.map((track) => track.id),
     ),
   );
+  const [pendingLoad, setPendingLoad] = useState<DeckId | null>(null);
 
-  // O `dispatchAction` precisa ler o cursor para resolver o LOAD, mas ele é um
-  // callback estável, e fechar sobre o state o congelaria no valor da primeira
-  // render. Por isso o valor corrente vive num ref e o state só serve à
-  // pintura do chip.
   const cursorRef = useRef(cursor);
+  const inputRefA = useRef<HTMLInputElement>(null);
+  const inputRefB = useRef<HTMLInputElement>(null);
+
+  const lookupDeckInput = useCallback((deckId: DeckId) => {
+    return deckId === "a" ? inputRefA.current : inputRefB.current;
+  }, []);
+
+  const openDeckPicker = useCallback(
+    (deckId: DeckId) => {
+      disarmDeckFileInput();
+      setPendingLoad(null);
+      clickDeckFileInput(deckId, lookupDeckInput);
+    },
+    [lookupDeckInput],
+  );
+
+  const armDeckPicker = useCallback(
+    (deckId: DeckId) => {
+      armDeckFileInput(deckId, lookupDeckInput, {
+        onArm: () => setPendingLoad(deckId),
+        onDisarm: () => setPendingLoad(null),
+      });
+    },
+    [lookupDeckInput],
+  );
 
   const browse = useMemo(
     () =>
@@ -73,24 +100,19 @@ export function MixerBoard() {
         browse,
         dispatchReducer: dispatch,
         onUiOp: (op) => {
-          if (op.kind === "openFilePicker") openDeckFilePicker(op.deckId);
+          if (op.kind === "openFilePicker") openDeckPicker(op.deckId);
+          if (op.kind === "armFilePicker") armDeckPicker(op.deckId);
           if (op.kind === "showLoadError") window.alert(op.message);
         },
       }),
-    [browse],
+    [armDeckPicker, browse, openDeckPicker],
   );
 
   const midi = useMidiController(dispatchAction);
   const masterKey = snap[snap.masterDeck].track.key;
-  // O `wrapCursor` garante o índice na lista, mas o acesso indexado é opcional
-  // no tsconfig, e por isso o chip sai do ar em vez de fingir uma track.
   const browseTrack = TRAINING_TRACKS[cursor];
   const { markPainted } = midi;
 
-  // Fecha a medição de latência com o snapshot novo já no layout, e não depois
-  // da pintura assíncrona, porque `useEffect` mediria também o tempo ocioso até
-  // o próximo commit. O hook ignora a chamada quando nada de MIDI está em voo,
-  // e por isso o refresh periódico e os cliques de mouse não entram na conta.
   useLayoutEffect(() => {
     markPainted();
   }, [snap, markPainted]);
@@ -104,12 +126,19 @@ export function MixerBoard() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => () => disarmDeckFileInput(), []);
+
   return (
     <div className="mixer-cabinet" data-stage="6">
       <header className="mixer-cabinet-head">
         <p className="mixer-cabinet-note">
-          Key Camelot, sync, loop e trim. Loops sintéticos — sem streaming licenciado.
+          Key Camelot, sync, loop e trim. Carregue MP3 ou WAV com LOAD — loops sintéticos até haver arquivo.
         </p>
+        {pendingLoad ? (
+          <p className="mixer-cabinet-note mixer-cabinet-note--load-pending" role="status">
+            LOAD na DDJ-400: clique na tela para escolher o áudio do deck {pendingLoad.toUpperCase()}.
+          </p>
+        ) : null}
         {browseTrack ? (
           <BrowseChip
             track={browseTrack}
@@ -129,13 +158,39 @@ export function MixerBoard() {
         />
       </header>
 
-      <DeckFileInput id="a" onFile={(file) => dispatchAction({ type: "loadDeckFile", id: "a", file })} />
-      <DeckFileInput id="b" onFile={(file) => dispatchAction({ type: "loadDeckFile", id: "b", file })} />
+      <DeckFileInput
+        ref={inputRefA}
+        id="a"
+        onFile={(file) => {
+          setPendingLoad(null);
+          dispatchAction({ type: "loadDeckFile", id: "a", file });
+        }}
+      />
+      <DeckFileInput
+        ref={inputRefB}
+        id="b"
+        onFile={(file) => {
+          setPendingLoad(null);
+          dispatchAction({ type: "loadDeckFile", id: "b", file });
+        }}
+      />
 
       <div className="mixer-board" data-stage="5">
-        <CdjDeck id="a" masterKey={masterKey} onChange={dispatchAction} />
+        <CdjDeck
+          id="a"
+          masterKey={masterKey}
+          loadPending={pendingLoad === "a"}
+          onLoadClick={() => openDeckPicker("a")}
+          onChange={dispatchAction}
+        />
         <MixerConsole snap={snap} onChange={dispatchAction} />
-        <CdjDeck id="b" masterKey={masterKey} onChange={dispatchAction} />
+        <CdjDeck
+          id="b"
+          masterKey={masterKey}
+          loadPending={pendingLoad === "b"}
+          onLoadClick={() => openDeckPicker("b")}
+          onChange={dispatchAction}
+        />
       </div>
     </div>
   );

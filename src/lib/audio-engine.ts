@@ -157,6 +157,8 @@ class DeckNodes {
   buffer: AudioBuffer | null = null;
   startedAt = 0;
   pausedPhase = 0;
+  /** True enquanto o CUE momentâneo toca com o deck pausado. */
+  cuePreview = false;
 
   constructor(ctx: AudioContext, destination: AudioNode) {
     this.trim = ctx.createGain();
@@ -271,6 +273,7 @@ export class MamuteEngine {
 
   async toggle(id: DeckId): Promise<void> {
     await this.ensure();
+    this.clearCuePreview(id);
     if (this.snapshot[id].playing) {
       this.stop(id);
       return;
@@ -288,6 +291,7 @@ export class MamuteEngine {
     this.snapshot[id].pitch = 0;
     this.snapshot[id].cueBeat = 0;
     this.snapshot[id].phase = 0;
+    this.snapshot[id].positionSec = 0;
     this.snapshot[id].sourceKind = "synthetic";
     this.snapshot[id].peaks = null;
     this.rebuildBuffer(id);
@@ -454,6 +458,38 @@ export class MamuteEngine {
     }
   }
 
+  /**
+   * Inicia o gesto momentâneo do CUE: se o deck toca, salta ao ponto de cue;
+   * se está pausado, toca a partir do cue até o `releaseCue`.
+   *
+   * @param id Deck que recebeu o press do CUE.
+   */
+  pressCue(id: DeckId): void {
+    if (this.snapshot[id].playing) {
+      this.callCue(id);
+      return;
+    }
+    const nodes = this.decks?.[id];
+    if (nodes) nodes.cuePreview = true;
+    this.snapshot[id].phase = this.beatToPhase(id, this.snapshot[id].cueBeat);
+    this.start(id);
+  }
+
+  /**
+   * Encerra o preview momentâneo do CUE e para o deck no ponto de cue.
+   *
+   * @param id Deck que soltou o CUE.
+   */
+  releaseCue(id: DeckId): void {
+    const nodes = this.decks?.[id];
+    if (!nodes?.cuePreview) return;
+    nodes.cuePreview = false;
+    const deck = this.snapshot[id];
+    deck.phase = this.beatToPhase(id, deck.cueBeat);
+    deck.positionSec = this.beatToSeconds(id, deck.cueBeat);
+    this.stop(id, { preservePhase: true });
+  }
+
   setHotCue(id: DeckId, slot: number): void {
     const cue = this.snapshot[id].hotCues.find((item) => item.slot === slot);
     if (!cue) return;
@@ -475,11 +511,13 @@ export class MamuteEngine {
       loop.inBeat = this.phaseToBeat(id, this.snapshot[id].phase);
       loop.outBeat = loop.inBeat + 4;
       loop.active = true;
+      if (this.snapshot[id].playing) this.restart(id);
       return;
     }
     loop.active = false;
     loop.inBeat = null;
     loop.outBeat = null;
+    if (this.snapshot[id].playing) this.restart(id);
   }
 
   nudge(id: DeckId, direction: -1 | 1): void {
@@ -565,6 +603,66 @@ export class MamuteEngine {
   }
 
   /**
+   * Diz se o deck deve repetir o buffer no `BufferSource`.
+   *
+   * O loop sintético de treino repete os 8 beats para sempre, ao passo que um
+   * arquivo real só volta quando o DJ liga o loop de 4 beats na controladora.
+   *
+   * @param id Deck consultado.
+   */
+  private shouldLoopBuffer(id: DeckId): boolean {
+    const deck = this.snapshot[id];
+    if (deck.sourceKind === "synthetic") return true;
+    return deck.loop.active;
+  }
+
+  /**
+   * Converte beat ou segundo de cue em segundos absolutos no buffer.
+   *
+   * @param id Deck consultado.
+   * @param beat Valor do cue ou do loop IN/OUT.
+   */
+  private beatToSeconds(id: DeckId, beat: number): number {
+    const deck = this.snapshot[id];
+    if (deck.sourceKind === "file") return Math.max(0, beat);
+    const duration = deck.durationSec || this.decks?.[id].buffer?.duration || 1;
+    return ((beat % 8) / 8) * duration;
+  }
+
+  /**
+   * Aplica `loopStart` e `loopEnd` quando o loop de 4 beats está ativo num arquivo.
+   *
+   * @param id Deck que toca.
+   * @param source `BufferSource` recém-criado.
+   */
+  private applyLoopRegion(id: DeckId, source: AudioBufferSourceNode): void {
+    const deck = this.snapshot[id];
+    const duration = this.decks?.[id].buffer?.duration ?? deck.durationSec;
+    if (!this.shouldLoopBuffer(id) || deck.sourceKind !== "file") return;
+    if (deck.loop.inBeat === null || deck.loop.outBeat === null) return;
+    const loopStart = this.beatToSeconds(id, deck.loop.inBeat);
+    const loopEnd = Math.min(duration, this.beatToSeconds(id, deck.loop.outBeat));
+    source.loopStart = loopStart;
+    source.loopEnd = Math.max(loopStart + 0.05, loopEnd);
+  }
+
+  /**
+   * Para o deck quando o buffer de arquivo chega ao fim sem loop.
+   *
+   * @param id Deck que terminou.
+   * @param source Instância que disparou o `ended`.
+   */
+  private handleFileEnded(id: DeckId, source: AudioBufferSourceNode): void {
+    const nodes = this.decks?.[id];
+    if (!nodes || nodes.source !== source) return;
+    nodes.source.disconnect();
+    nodes.source = null;
+    this.snapshot[id].playing = false;
+    this.snapshot[id].phase = 0;
+    this.snapshot[id].positionSec = 0;
+  }
+
+  /**
    * Arranca o BufferSource no `snapshot.phase` corrente.
    *
    * O `stop` interno não captura a fase, porque o ponto de partida já está
@@ -577,16 +675,22 @@ export class MamuteEngine {
     this.stop(id, { preservePhase: true });
     const nodes = this.decks[id];
     if (!nodes.buffer) return;
+    const deck = this.snapshot[id];
     const source = this.ctx.createBufferSource();
     source.buffer = nodes.buffer;
-    source.loop = true;
-    source.playbackRate.value = 1 + this.snapshot[id].pitch / 100;
+    source.loop = this.shouldLoopBuffer(id);
+    this.applyLoopRegion(id, source);
+    source.playbackRate.value = 1 + deck.pitch / 100;
     source.connect(nodes.trim);
-    const offset = nodes.buffer.duration * this.snapshot[id].phase;
+    const duration = nodes.buffer.duration;
+    const offset = Math.min(duration * deck.phase, Math.max(0, duration - 0.01));
     source.start(0, offset);
+    if (deck.sourceKind === "file" && !source.loop) {
+      source.onended = () => this.handleFileEnded(id, source);
+    }
     nodes.source = source;
     nodes.startedAt = this.ctx.currentTime - offset / source.playbackRate.value;
-    this.snapshot[id].playing = true;
+    deck.playing = true;
   }
 
   /**
@@ -596,6 +700,16 @@ export class MamuteEngine {
    */
   private restart(id: DeckId): void {
     if (this.snapshot[id].playing) this.start(id);
+  }
+
+  /**
+   * Limpa o flag de preview do CUE sem parar o deck.
+   *
+   * @param id Deck cujo preview deve ser descartado.
+   */
+  private clearCuePreview(id: DeckId): void {
+    const nodes = this.decks?.[id];
+    if (nodes) nodes.cuePreview = false;
   }
 
   /**
@@ -611,12 +725,16 @@ export class MamuteEngine {
    */
   private stop(id: DeckId, options: { preservePhase?: boolean } = {}): void {
     const nodes = this.decks?.[id];
+    if (!options.preservePhase && nodes) nodes.cuePreview = false;
     if (nodes?.source && this.ctx) {
       if (!options.preservePhase) {
         const elapsed = this.ctx.currentTime - nodes.startedAt;
         const rate = 1 + this.snapshot[id].pitch / 100;
         const loopDuration = nodes.buffer?.duration ?? 1;
-        nodes.pausedPhase = ((elapsed * rate) / loopDuration) % 1;
+        const progress = (elapsed * rate) / loopDuration;
+        nodes.pausedPhase = this.shouldLoopBuffer(id)
+          ? progress % 1
+          : Math.min(1, progress);
         this.snapshot[id].phase = nodes.pausedPhase;
         this.snapshot[id].positionSec = nodes.pausedPhase * loopDuration;
       }
@@ -638,8 +756,20 @@ export class MamuteEngine {
         const elapsed = this.ctx!.currentTime - nodes.startedAt;
         const rate = 1 + deck.pitch / 100;
         const loopDuration = nodes.buffer?.duration ?? 1;
-        deck.phase = ((elapsed * rate) / loopDuration) % 1;
-        deck.positionSec = deck.phase * loopDuration;
+        const progress = (elapsed * rate) / loopDuration;
+        if (deck.sourceKind === "file" && !this.shouldLoopBuffer(id)) {
+          if (progress >= 1) {
+            this.stop(id);
+            deck.phase = 0;
+            deck.positionSec = 0;
+            return;
+          }
+          deck.phase = progress;
+          deck.positionSec = progress * loopDuration;
+        } else {
+          deck.phase = progress % 1;
+          deck.positionSec = deck.phase * loopDuration;
+        }
         deck.durationSec = loopDuration;
       });
     }, 50);

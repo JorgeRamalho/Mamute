@@ -139,10 +139,14 @@ function JogWheel({
 export function CdjDeck({
   id,
   masterKey,
+  loadPending = false,
+  onLoadClick,
   onChange,
 }: {
   id: DeckId;
   masterKey: string;
+  loadPending?: boolean;
+  onLoadClick: () => void;
   onChange: (action: MixerAction) => void;
 }) {
   const deck = engine.snapshot[id];
@@ -184,6 +188,7 @@ export function CdjDeck({
       data-pitch={deck.pitch.toFixed(2)}
       data-eq-high={String(deck.eq.high)}
       data-loop-active={deck.loop.active ? "true" : "false"}
+      data-load-pending={loadPending ? "true" : "false"}
       aria-label={`Deck ${id.toUpperCase()}`}
     >
       <header className="cdj-deck-top">
@@ -251,7 +256,8 @@ export function CdjDeck({
           className="cdj-btn cdj-btn--load"
           type="button"
           aria-label={`Carregar deck ${id.toUpperCase()}`}
-          onClick={() => onChange({ type: "requestDeckLoad", id })}
+          data-pending={loadPending ? "true" : "false"}
+          onClick={onLoadClick}
         >
           LOAD
         </button>
@@ -270,8 +276,18 @@ export function CdjDeck({
           <button
             className="cdj-btn cdj-btn--primary cdj-btn--cue"
             type="button"
-            aria-label={`Cue deck ${id.toUpperCase()}: grava o ponto com o deck pausado e volta a ele tocando`}
-            onClick={() => onChange({ type: "cueButton", id })}
+            aria-label={`Cue deck ${id.toUpperCase()}: segure para tocar a partir do ponto de cue`}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              onChange({ type: "cuePress", id });
+            }}
+            onPointerUp={(event) => {
+              onChange({ type: "cueRelease", id });
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+            }}
+            onPointerCancel={() => onChange({ type: "cueRelease", id })}
           >
             CUE
           </button>

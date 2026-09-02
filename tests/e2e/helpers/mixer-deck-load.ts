@@ -1,7 +1,7 @@
 import path from "node:path";
 import { expect, type Page } from "@playwright/test";
 
-export const MIXER_KICK_FIXTURE = path.resolve("tests/fixtures/mixer-kick-120bpm.mp3");
+export const MIXER_KICK_FIXTURE = path.resolve("tests/fixtures/mixer-kick-120bpm.wav");
 
 /**
  * Envia o MP3 de fixture para o input escondido do deck e espera o decode.

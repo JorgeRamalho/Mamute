@@ -1,23 +1,25 @@
+import { forwardRef } from "react";
 import type { DeckId } from "../../types/mixer";
 
 /**
- * Input de arquivo escondido, um por deck. O dispatcher só pede o click
- * via `openFilePicker`; o React é quem tem o DOM.
+ * Input de arquivo escondido, um por deck. O React guarda a ref para o click
+ * síncrono do botão LOAD preservar o gesto do usuário.
  *
  * @param props Deck e callback quando o aluno escolhe um arquivo.
  */
-export function DeckFileInput({
-  id,
-  onFile,
-}: {
-  id: DeckId;
-  onFile: (file: File) => void;
-}) {
+export const DeckFileInput = forwardRef<
+  HTMLInputElement,
+  {
+    id: DeckId;
+    onFile: (file: File) => void;
+  }
+>(function DeckFileInput({ id, onFile }, ref) {
   return (
     <input
+      ref={ref}
       type="file"
       hidden
-      accept="audio/*"
+      accept="audio/*,.mp3,.wav,.flac,.aac,.m4a,.ogg"
       data-deck-file={id}
       tabIndex={-1}
       aria-label={`Arquivo deck ${id.toUpperCase()}`}
@@ -28,14 +30,4 @@ export function DeckFileInput({
       }}
     />
   );
-}
-
-/**
- * Dispara o picker do deck, usado pelo `onUiOp` do dispatcher.
- *
- * @param deckId Deck cujo input será clicado.
- */
-export function openDeckFilePicker(deckId: DeckId): void {
-  const input = document.querySelector<HTMLInputElement>(`input[data-deck-file="${deckId}"]`);
-  input?.click();
-}
+});

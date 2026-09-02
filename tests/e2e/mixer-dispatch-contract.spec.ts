@@ -111,6 +111,8 @@ function createFakeEngine(): { eng: MixerEngine; calls: string[] } {
     setQuantize: () => calls.push("setQuantize"),
     loadTrack: () => calls.push("loadTrack"),
     callCue: () => calls.push("callCue"),
+    pressCue: () => calls.push("pressCue"),
+    releaseCue: () => calls.push("releaseCue"),
     setCueBeat: () => calls.push("setCueBeat"),
     setHotCue: () => calls.push("setHotCue"),
     triggerHotCue: () => calls.push("triggerHotCue"),

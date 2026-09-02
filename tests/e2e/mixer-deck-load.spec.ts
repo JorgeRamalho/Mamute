@@ -63,12 +63,13 @@ test.describe("P4 load de arquivo no deck", () => {
     await expect(page.locator(".cdj-deck[data-deck='b']")).toHaveAttribute("data-source-kind", "file");
   });
 
-  test("E07 LOAD MIDI em modo biblioteca", async ({ page }) => {
+  test("E07 LOAD MIDI arma o picker de arquivo", async ({ page }) => {
     await inject(page, [
       [DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a, 0x7f],
       [DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a, 0x00],
     ]);
-    await expect(page.locator(".cdj-deck[data-deck='a']")).toHaveAttribute("data-source-kind", "synthetic");
+    await expect(page.locator(".cdj-deck[data-deck='a']")).toHaveAttribute("data-load-pending", "true");
+    await expect(page.getByRole("status").filter({ hasText: /clique na tela/i })).toBeVisible();
   });
 
   test("E08 Crossfader com arquivo", async ({ page }) => {

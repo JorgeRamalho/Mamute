@@ -81,11 +81,14 @@ export class MockAudioBuffer {
 export class MockBufferSource extends MockAudioNode {
   buffer: MockAudioBuffer | null = null;
   loop = false;
+  loopStart = 0;
+  loopEnd = 0;
   playbackRate = new MockAudioParam();
   started = false;
   stopped = false;
   startWhen = 0;
   startOffset = 0;
+  onended: (() => void) | null = null;
 
   /**
    * Marca o source como iniciado e guarda o offset, que o teste de `toggle`

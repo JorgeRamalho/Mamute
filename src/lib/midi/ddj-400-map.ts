@@ -21,6 +21,7 @@ import {
   encoderDelta,
   HOT_CUE_FIRST_NOTE,
   isPress,
+  isRelease,
   jogDelta,
   MIXER_CC_14BIT,
   MIXER_CC_BROWSE,
@@ -101,10 +102,8 @@ export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): Mixe
  * porque as duas notes de LOAD chegam sob `DDJ_STATUS.noteBrowser`. Por isso
  * `deckFromStatus` devolve `null` aqui e não serve de nada.
  *
- * As duas ações são intenção, mas por um motivo diferente dos toggles das ondas
- * 3 e 5: o que falta ao mapper não é o estado do engine, e sim o cursor da
- * biblioteca, que é estado de tela. O mapper diz qual deck recebe, ao passo que
- * qual track é a destacada só o `MixerBoard` sabe.
+ * As duas ações de LOAD são intenção: o mapper diz qual deck recebe o arquivo,
+ * e o dispatcher abre o seletor de áudio daquele deck.
  *
  * @param event Note On no canal do browser.
  */
@@ -141,13 +140,19 @@ function mapBrowserNote(event: ParsedMidiMessage): MixerAction | null {
  */
 function mapDeckNote(event: ParsedMidiMessage): MixerAction | null {
   const deck = deckFromStatus(event.status);
-  if (!deck || !isPress(event.data2)) return null;
+  if (!deck) return null;
+
+  if (event.data1 === DECK_NOTE.cue) {
+    if (isPress(event.data2)) return { type: "cuePress", id: deck };
+    if (isRelease(event.data2)) return { type: "cueRelease", id: deck };
+    return null;
+  }
+
+  if (!isPress(event.data2)) return null;
 
   switch (event.data1) {
     case DECK_NOTE.play:
       return { type: "toggle", id: deck };
-    case DECK_NOTE.cue:
-      return { type: "cueButton", id: deck };
     case DECK_NOTE.pfl:
       return { type: "toggleCueMonitor", id: deck };
     case DECK_NOTE.sync:
