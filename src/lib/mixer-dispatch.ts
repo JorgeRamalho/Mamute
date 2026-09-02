@@ -274,8 +274,11 @@ export function dispatchMixerAction(
  *
  * @param deps Engine, browse e o `dispatch` do `useReducer`.
  */
-export function createMixerDispatch(deps: MixerDispatchDeps): (action: MixerAction) => void {
+export function createMixerDispatch(deps: MixerDispatchDeps): MixerDispatch {
   return (action) => {
     dispatchMixerAction(deps, action);
   };
 }
+
+/** Callback único da cabine: mouse, MIDI e testes injetam o mesmo union. */
+export type MixerDispatch = (action: MixerAction) => void;

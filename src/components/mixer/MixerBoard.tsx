@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { TRAINING_TRACKS } from "../../data/training-tracks";
 import { engine } from "../../lib/audio-engine";
+import { assertAllowedInReducer } from "../../lib/mixer-assert";
 import { createBrowseState, masterTrackIndex } from "../../lib/mixer-browse";
 import { applyAbsoluteAction, createMixerDispatch } from "../../lib/mixer-dispatch";
 import { cloneMixerSnapshot } from "../../lib/mixer-snapshot";
@@ -23,6 +24,7 @@ import { MixerConsole } from "./MixerConsole";
  * @param action Ação absoluta ou `refresh`.
  */
 function reducer(_state: MixerSnapshot, action: MixerAction): MixerSnapshot {
+  assertAllowedInReducer(action);
   applyAbsoluteAction(engine, action);
   return cloneMixerSnapshot(engine.snapshot);
 }

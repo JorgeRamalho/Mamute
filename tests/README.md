@@ -14,6 +14,7 @@ Testes de ponta a ponta e unitários. A config do Playwright está em `config/pl
 | Arquivo | Papel |
 | --- | --- |
 | `audio-engine.spec.ts` | `MamuteEngine` com `AudioContext` mockado: load, sync, gains, toggle, cue, nudge, pitch, buffer e phase loop. |
+| `mixer-dispatch-contract.spec.ts` | Tabela de rotas do union e throw `[MixerContract]` no misroute. |
 
 ## e2e/
 
@@ -27,5 +28,6 @@ Testes de ponta a ponta e unitários. A config do Playwright está em `config/pl
 | `midi-map.spec.ts` | Mapa puro da DDJ-400 e fila de coalesce, rodando no Node sem página. |
 | `midi-inject.spec.ts` | Bytes injetados na página até o slider e o chip de browse, com o orçamento de latência. |
 | `mixer-dispatch.spec.ts` | Dispatcher puro: intenção, loop guards e wrap do browse, sem página. |
+| `mixer-dispatch-contract.spec.ts` | Cobertura do union `MixerAction` e misroute no reducer. |
 
 Viewports: desktop 1440×900, tablet 768×1024, mobile 390×844.
