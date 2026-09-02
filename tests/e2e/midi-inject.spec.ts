@@ -2,10 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   DDJ_STATUS,
   DECK_CC_14BIT,
+  DECK_CC_JOG,
   DECK_NOTE,
   MIXER_CC_14BIT,
   type Cc14Bit,
 } from "../../src/lib/midi/ddj-400-protocol";
+import { JOG_TICKS_PER_NUDGE } from "../../src/lib/midi/midi-scales";
 
 const DESKTOP = { width: 1440, height: 900 };
 
@@ -40,6 +42,21 @@ async function tapNote(page: Page, status: number, noteNumber: number): Promise<
     [status, noteNumber, 0x7f],
     [status, noteNumber, 0x00],
   ]);
+}
+
+/**
+ * Gira um jog por N ticks, que o hardware manda sempre como desvio de ±1.
+ *
+ * @param page Página já em `/mixer`.
+ * @param status Canal MIDI do deck.
+ * @param jogCc Número do CC do topo ou da borda.
+ * @param ticks Quantos ticks girar para frente.
+ */
+async function spinJog(page: Page, status: number, jogCc: number, ticks: number): Promise<void> {
+  await inject(
+    page,
+    Array.from({ length: ticks }, () => [status, jogCc, 0x41]),
+  );
 }
 
 /**
@@ -188,6 +205,35 @@ test.describe("transporte por inject", () => {
       "aria-pressed",
       "false",
     );
+  });
+
+  test("o pitch fader chega à tela invertido, com o detent em zero", async ({ page }) => {
+    const pitch = page.getByRole("slider", { name: "Pitch deck A" });
+
+    await send14(page, DDJ_STATUS.ccDeckA, DECK_CC_14BIT.tempo, 0x40, 0x00);
+    await expect(pitch).toHaveValue("0");
+
+    // Topo do curso manda zero e vale +8%, e por isso o teste falharia com −8
+    // se alguém trocasse `tempoToBipolarUnit` por `bipolarUnit14Bit`.
+    await send14(page, DDJ_STATUS.ccDeckA, DECK_CC_14BIT.tempo, 0x00, 0x00);
+    await expect(pitch).toHaveValue("8");
+    await expect(page.getByRole("region", { name: "Deck A" })).toContainText("8.0%");
+  });
+
+  test("o jog empurra a fase, e a borda pede quatro vezes mais gesto", async ({ page }) => {
+    const deckA = page.getByRole("region", { name: "Deck A" });
+    const phaseBefore = Number(await deckA.getAttribute("data-phase"));
+
+    // Modo CDJ dispensa o toque no prato, e a primeira mensagem só anuncia o
+    // modo, e por isso o giro começa no tick seguinte.
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.platterCdj, JOG_TICKS_PER_NUDGE.platter + 1);
+    await expect
+      .poll(async () => Number(await deckA.getAttribute("data-phase")))
+      .not.toBe(phaseBefore);
+
+    const afterPlatter = Number(await deckA.getAttribute("data-phase"));
+    await spinJog(page, DDJ_STATUS.ccDeckA, DECK_CC_JOG.side, JOG_TICKS_PER_NUDGE.platter);
+    expect(Number(await deckA.getAttribute("data-phase"))).toBe(afterPlatter);
   });
 
   test("a latência do gesto fica dentro do orçamento", async ({ page }) => {

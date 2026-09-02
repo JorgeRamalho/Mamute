@@ -836,6 +836,38 @@
   text-transform: uppercase;
 }
 
+.cdj-jog-modes {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.cdj-jog-mode {
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.cdj-jog-mode:hover {
+  color: var(--fg);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.cdj-jog-mode.is-on {
+  color: #07101a;
+  border-color: transparent;
+  background: linear-gradient(180deg, #ffe08a, #f2b53c);
+  box-shadow: 0 0 12px rgba(242, 181, 60, 0.35);
+}
+
 .cdj-pitch {
   display: grid;
   justify-items: center;
