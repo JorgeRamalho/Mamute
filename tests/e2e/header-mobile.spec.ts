@@ -83,10 +83,17 @@ test.describe("Header mobile — botão Menu", () => {
     const toggle = await menuToggle(page);
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
 
+    // O link é procurado **dentro** da navegação, e não na página inteira,
+    // porque o FAQ da cabine ganhou um CTA "Abrir mixer CDJ" cujo nome
+    // acessível contém "Mixer CDJ". Buscar solto casava com os dois e violava
+    // o modo estrito, embora o assunto do teste seja só o menu.
+    const nav = page.getByRole("navigation", { name: "Principal" });
+    const mixerLink = nav.getByRole("link", { name: "Mixer CDJ" });
+
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    await expect(page.getByRole("navigation", { name: "Principal" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Mixer CDJ" })).toBeVisible();
+    await expect(nav).toBeVisible();
+    await expect(mixerLink).toBeVisible();
 
     const overflowOpen = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
@@ -95,6 +102,6 @@ test.describe("Header mobile — botão Menu", () => {
 
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
-    await expect(page.getByRole("link", { name: "Mixer CDJ" })).toBeHidden();
+    await expect(mixerLink).toBeHidden();
   });
 });

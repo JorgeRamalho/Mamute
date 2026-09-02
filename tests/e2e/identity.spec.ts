@@ -10,12 +10,21 @@ test.describe("Identidade visual e responsividade", () => {
         display: getComputedStyle(document.querySelector("h1")!).fontFamily,
         cyan: getComputedStyle(document.documentElement).getPropertyValue("--cyan").trim(),
         void: getComputedStyle(document.documentElement).getPropertyValue("--void").trim(),
+        themeColor: document
+          .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+          ?.content.trim()
+          .toLowerCase(),
       };
     });
     expect(fonts.body).toMatch(/Outfit/i);
     expect(fonts.display).toMatch(/Syne/i);
     expect(fonts.cyan).toBe("#00e8ff");
-    expect(fonts.void).toBe("#06070c");
+    expect(fonts.void).toBe("#05060b");
+    // O `theme-color` existe para a barra do navegador móvel se fundir com o
+    // fundo da página, e o fundo do `body` é `var(--void)`. Amarrar um ao
+    // outro transforma um desalinho silencioso em falha, porque o token já
+    // andou uma vez sem o `index.html` acompanhar.
+    expect(fonts.themeColor).toBe(fonts.void);
   });
 
   test("layout não estoura viewport e o visor permanece no fluxo", async ({ page }) => {
@@ -35,6 +44,7 @@ test.describe("Identidade visual e responsividade", () => {
       await menu.click();
       await expect(nav.getByRole("link")).toHaveText([
         "Início",
+        "Harmonia",
         "Sala de Aula",
         "Mixer CDJ",
         "Plataformas",
@@ -43,6 +53,7 @@ test.describe("Identidade visual e responsividade", () => {
     } else {
       await expect(nav.getByRole("link")).toHaveText([
         "Início",
+        "Harmonia",
         "Sala de Aula",
         "Mixer CDJ",
         "Plataformas",

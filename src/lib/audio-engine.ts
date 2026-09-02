@@ -32,9 +32,24 @@ function emptyHotCues(): HotCue[] {
   }));
 }
 
+/**
+ * Resolve a faixa com que um deck nasce.
+ *
+ * Não há fallback silencioso de propósito. O `??` que morava aqui foi o que
+ * escondeu por várias ondas uma deck B apontando para um id fora de
+ * `TRAINING_TRACKS`, e o sintoma era as duas decks nascerem na mesma faixa em
+ * vez de um erro. Hoje o tipo `TrainingTrackId` já barra isso na compilação, e
+ * este guarda existe para o caso de a biblioteca mudar em runtime.
+ *
+ * @param id Deck a inicializar.
+ */
 function defaultTrack(id: DeckId): TrainingTrack {
   const trackId = DEFAULT_DECK_TRACKS[id];
-  return getTrainingTrack(trackId) ?? getTrainingTrack("radio-spotify-01")!;
+  const track = getTrainingTrack(trackId);
+  if (!track) {
+    throw new Error(`Faixa padrão ${trackId} fora de TRAINING_TRACKS`);
+  }
+  return track;
 }
 
 function createDeck(id: DeckId): DeckState {

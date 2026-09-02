@@ -23,6 +23,10 @@ async function collectBalloonOverlaps(page: Page, selectors: string[]): Promise<
     for (const selector of targetSelectors) {
       for (const el of document.querySelectorAll(selector)) {
         if (!(el instanceof HTMLElement)) continue;
+        // O balão do hero vive dentro de `#conteudo`, e o título da faixa é um
+        // `h2`. Sem este guarda, `#conteudo h2` casa com o próprio visor e a
+        // checagem vira autodetecção: um filho sempre se sobrepõe ao pai.
+        if (balloonEl.contains(el)) continue;
         const style = window.getComputedStyle(el);
         if (style.display === "none" || style.visibility === "hidden") continue;
         if (el instanceof HTMLInputElement && el.type === "hidden") continue;

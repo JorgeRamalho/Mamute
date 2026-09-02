@@ -75,6 +75,30 @@ test.describe("Mixer CDJ — layout, usabilidade e acessibilidade", () => {
     expect(metrics.unlabeled).toBe(0);
   });
 
+  test("qualquer viewport: a cabine não gera rolagem horizontal", async ({ page }) => {
+    // Sem `setViewportSize` de propósito, ao contrário dos outros casos deste
+    // arquivo, que forçam 1440 porque afirmam coisas de três colunas. Era
+    // justamente esse `setViewportSize` em toda parte que fazia tablet e
+    // celular repetirem o cenário desktop, e por isso um estouro de 170px em
+    // 390px passou várias ondas sem ninguém ver.
+    await page.goto("/mixer");
+    await page.waitForSelector(".mixer-board");
+
+    const medidas = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      overflowX: document.documentElement.scrollWidth - window.innerWidth,
+      // A lista de culpados vai junto para o diagnóstico não exigir uma nova
+      // rodada quando a asserção falhar.
+      estourando: [...document.querySelectorAll<HTMLElement>(".mixer-cabinet *")]
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1)
+        .map((el) => `${el.tagName.toLowerCase()}.${[...el.classList].join(".")}`)
+        .slice(0, 5),
+    }));
+
+    expect(medidas.estourando).toEqual([]);
+    expect(medidas.overflowX).toBeLessThanOrEqual(8);
+  });
+
   test("usabilidade: play, EQ boost/kill e crossfader", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await page.goto("/mixer");

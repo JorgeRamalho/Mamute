@@ -7,9 +7,23 @@ export async function dismissPrivacyBanner(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Avança o player até a plataforma pedida estar no ar.
+ *
+ * A espera do catálogo usa 30 s de propósito, e não o padrão de 5 s do
+ * Playwright, porque `loadRadioMp3Catalog` dispara dezenas de chamadas à
+ * Deezer e o atributo `data-catalog-ready` só vira `"true"` depois que essa
+ * promise resolve. No ambiente local isso leva cerca de 8 s, e o caso da
+ * linha 50 de `radio.spec.ts` já esperava 30 s pelo mesmo atributo e passava,
+ * ao passo que este helper herdava 5 s e derrubava doze casos em dois arquivos
+ * antes de qualquer asserção de accent.
+ *
+ * @param page Página já em `/radio`.
+ * @param platformId Id da plataforma a colocar no ar, por exemplo `beatport`.
+ */
 export async function cueRadioPlatform(page: Page, platformId: string): Promise<void> {
   const player = page.getByRole("region", { name: "Mamute DJ · rádio integrada" });
-  await expect(player).toHaveAttribute("data-catalog-ready", "true");
+  await expect(player).toHaveAttribute("data-catalog-ready", "true", { timeout: 30_000 });
 
   const onAir = page.getByLabel("Plataforma no ar").locator("[data-platform]");
   await expect(onAir).toBeVisible();

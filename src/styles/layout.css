@@ -1,7 +1,23 @@
+/*
+ * O `overflow-x: clip` mata a rolagem horizontal que decoração sangrada cria.
+ *
+ * O caso concreto foi o `.mamute-spotlight-ambient`, um brilho em
+ * `inset: -18% -6%` que em 768px começava em -28px e terminava em 796px, e
+ * portanto abria 28px de rolagem para lugar nenhum, já que o conteúdo de fato
+ * cabia. Como a shell tem exatamente a largura da viewport, recortar aqui só
+ * corta o que já estava fora da tela.
+ *
+ * É `clip` e não `hidden` de propósito, por duas razões. O `clip` não cria
+ * contêiner de rolagem, e assim o `.site-header` em `position: sticky`
+ * continua grudando, ao passo que `hidden` o quebraria. E o `clip` no eixo x
+ * deixa o eixo y em `visible`, ou seja o sangramento vertical dos orbes, que
+ * é intencional, permanece.
+ */
 .app-shell {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
+  overflow-x: clip;
 }
 
 .site-header {
