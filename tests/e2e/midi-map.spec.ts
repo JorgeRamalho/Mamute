@@ -13,7 +13,7 @@ import {
 } from "../../src/lib/midi/ddj-400-protocol";
 import { JOG_TICKS_PER_NUDGE } from "../../src/lib/midi/midi-scales";
 import { HOT_CUE_SLOTS } from "../../src/types/mixer";
-import { isDdj400PortName } from "../../src/lib/midi/midi-session";
+import { isDdj400PortName, listenMidiInput } from "../../src/lib/midi/midi-session";
 import { coalesceMode, createMidiActionQueue } from "../../src/lib/midi/midi-coalesce";
 import { parseMidiMessage, type ParsedMidiMessage } from "../../src/lib/midi/parse-message";
 import type { MixerAction } from "../../src/types/mixer";
@@ -471,6 +471,59 @@ test.describe("mapa MIDI DDJ-400 — transporte", () => {
     expect(coalesceMode({ type: "toggleSync", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "toggleCueMonitor", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "masterDeck", id: "a" })).toBe("immediate");
+  });
+});
+
+/**
+ * Imita um `MIDIInput` do Chromium, que é um `EventTarget` e cujo atributo
+ * `onmidimessage` dispara **junto** dos listeners, em vez de substituí-los.
+ *
+ * O detalhe importa porque é exatamente ele que fazia a sessão contar cada
+ * mensagem mais de uma vez, e um mock que só honrasse o atributo esconderia o
+ * bug em vez de expô-lo.
+ */
+function createFakeInput() {
+  const listeners = new Set<(event: unknown) => void>();
+
+  return {
+    onmidimessage: null as null | ((event: unknown) => void),
+    open: async () => undefined,
+    addEventListener(_type: string, fn: (event: unknown) => void) {
+      listeners.add(fn);
+    },
+    removeEventListener(_type: string, fn: (event: unknown) => void) {
+      listeners.delete(fn);
+    },
+    emit(bytes: number[]) {
+      const event = { data: new Uint8Array(bytes), timeStamp: 0 };
+      this.onmidimessage?.(event);
+      for (const fn of listeners) fn(event);
+    },
+  };
+}
+
+test.describe("porta MIDI", () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "sessão pura, um projeto basta");
+  });
+
+  test("cada mensagem da porta vira um evento, e não dois", async () => {
+    const recebidos: number[][] = [];
+    const input = createFakeInput();
+    const stop = await listenMidiInput(input as unknown as MIDIInput, (data) => {
+      recebidos.push([...data]);
+    });
+
+    input.emit([DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x01]);
+
+    // Este é o bug que a DDJ-400 real expôs: um clique de encoder movia o
+    // cursor três posições, porque a escuta estava registrada no atributo e no
+    // `addEventListener` ao mesmo tempo.
+    expect(recebidos).toEqual([[DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x01]]);
+
+    stop();
+    input.emit([DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x01]);
+    expect(recebidos).toHaveLength(1);
   });
 });
 

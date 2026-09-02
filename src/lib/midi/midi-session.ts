@@ -37,6 +37,7 @@ let snapshot: MidiSessionSnapshot = {
 let access: MIDIAccess | null = null;
 let stops: Array<() => void> = [];
 let startPromise: Promise<void> | null = null;
+let attachChain: Promise<void> = Promise.resolve();
 
 /**
  * Diz se o browser expõe a Web MIDI API.
@@ -98,6 +99,13 @@ export function selectDdj400Inputs(midi: MIDIAccess): MIDIInput[] {
  * O dispose só zera o handler se ele ainda for o nosso, senão a segunda
  * instância do Strict Mode perderia a escuta.
  *
+ * A escuta usa **apenas** o atributo, e não também o `addEventListener`.
+ * Registrar nos dois parece redundância inofensiva, mas o `MIDIInput` é um
+ * `EventTarget` e o atributo dispara **junto** dos listeners em vez de
+ * substituí-los, ou seja cada mensagem seria processada duas vezes. Uma
+ * validação na DDJ-400 mostrou o sintoma: um clique de encoder movia o cursor
+ * três posições, porque o gesto era contado mais de uma vez.
+ *
  * @param input Porta de entrada MIDI.
  * @param onMessage Bytes crus de cada mensagem e o `timeStamp` do evento.
  */
@@ -111,15 +119,9 @@ export async function listenMidiInput(
     onMessage(data, event.timeStamp);
   };
   input.onmidimessage = handler;
-  if (typeof input.addEventListener === "function") {
-    input.addEventListener("midimessage", handler);
-  }
   await input.open();
   return () => {
     if (input.onmidimessage === handler) input.onmidimessage = null;
-    if (typeof input.removeEventListener === "function") {
-      input.removeEventListener("midimessage", handler);
-    }
   };
 }
 
@@ -231,7 +233,22 @@ async function runStart(): Promise<void> {
   }
 }
 
-async function attachPorts(midi: MIDIAccess): Promise<void> {
+/**
+ * Serializa as tentativas de anexar portas.
+ *
+ * O `input.open()` de `listenMidiInput` dispara `onstatechange`, que chama
+ * `attachPorts` de novo, e por isso duas execuções se cruzavam: a segunda
+ * rodava o `releasePorts` **antes** de a primeira registrar o seu stop, não
+ * encontrava nada para remover e deixava o handler anterior escutando para
+ * sempre. Enfileirar resolve porque o `releasePorts` de cada rodada passa a
+ * ver a lista de stops já completa.
+ */
+function attachPorts(midi: MIDIAccess): Promise<void> {
+  attachChain = attachChain.catch(() => undefined).then(() => runAttach(midi));
+  return attachChain;
+}
+
+async function runAttach(midi: MIDIAccess): Promise<void> {
   await releasePorts();
   const names = listMidiInputNames(midi);
   const chosen = selectDdj400Inputs(midi);
