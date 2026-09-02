@@ -66,6 +66,20 @@ export interface DeckState {
   cueBeat: number;
   track: TrainingTrack;
   phase: number;
+  /** `synthetic` é o loop de treino; `file` é buffer decodificado. */
+  sourceKind: "synthetic" | "file";
+  durationSec: number;
+  positionSec: number;
+  peaks: Float32Array | null;
+}
+
+/** Metadados de um arquivo carregado no deck. */
+export interface DeckFileMeta {
+  title: string;
+  artist?: string;
+  bpm?: number;
+  key?: string;
+  durationSec: number;
 }
 
 export interface MixerSnapshot {
@@ -131,4 +145,7 @@ export type MixerAction =
   | { type: "nudge"; id: DeckId; direction: -1 | 1 }
   | { type: "browseMove"; delta: number }
   | { type: "browseLoad"; id: DeckId }
-  | { type: "browseHome" };
+  | { type: "browseHome" }
+  | { type: "requestDeckLoad"; id: DeckId; source?: "file" | "library" }
+  | { type: "loadDeckFile"; id: DeckId; file: File }
+  | { type: "setDeckMeta"; id: DeckId; bpm?: number; key?: string; title?: string };

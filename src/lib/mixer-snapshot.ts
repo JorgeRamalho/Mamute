@@ -19,6 +19,7 @@ export function cloneMixerSnapshot(snapshot: MixerSnapshot): MixerSnapshot {
       loop: { ...snapshot.a.loop },
       hotCues: snapshot.a.hotCues.map((cue) => ({ ...cue })),
       track: { ...snapshot.a.track },
+      peaks: snapshot.a.peaks ? snapshot.a.peaks.slice() : null,
     },
     b: {
       ...snapshot.b,
@@ -27,17 +28,22 @@ export function cloneMixerSnapshot(snapshot: MixerSnapshot): MixerSnapshot {
       loop: { ...snapshot.b.loop },
       hotCues: snapshot.b.hotCues.map((cue) => ({ ...cue })),
       track: { ...snapshot.b.track },
+      peaks: snapshot.b.peaks ? snapshot.b.peaks.slice() : null,
     },
   };
 }
 
 /**
- * Converte a fase do deck no beat do compasso de oito, que é a unidade que
- * `setCueBeat` espera nos loops sintéticos.
+ * Converte a fase na unidade de cue do deck: beats no loop sintético,
+ * segundos no arquivo real.
  *
- * @param snapshot Snapshot de onde ler a fase.
+ * @param snapshot Snapshot de onde ler a fase e o `sourceKind`.
  * @param id Deck a consultar.
  */
 export function phaseToBeat(snapshot: MixerSnapshot, id: DeckId): number {
-  return snapshot[id].phase * 8;
+  const deck = snapshot[id];
+  if (deck.sourceKind === "file") {
+    return deck.phase * (deck.durationSec || 0);
+  }
+  return deck.phase * 8;
 }

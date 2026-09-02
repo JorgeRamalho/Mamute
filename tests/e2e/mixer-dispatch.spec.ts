@@ -158,6 +158,33 @@ test.describe("dispatcher do mixer — intenção e browse", () => {
     expect(eng.snapshot.a.eq.high).toBe(0);
     expect(phaseToBeat(eng.snapshot, "a")).toBe(4);
   });
+
+  test("U-07 requestDeckLoad emite openFilePicker", () => {
+    const { eng } = createFakeEngine();
+    const browse = createIdleBrowse();
+    const ops: { kind: string }[] = [];
+    const dispatch = createMixerDispatch({
+      eng,
+      browse,
+      dispatchReducer: () => undefined,
+      onUiOp: (op) => ops.push(op),
+    });
+    dispatch({ type: "requestDeckLoad", id: "a" });
+    expect(ops).toEqual([{ kind: "openFilePicker", deckId: "a" }]);
+  });
+
+  test("U-08 loadDeckFile chama loadDeckFile 1×", () => {
+    const { eng, calls } = createFakeEngine();
+    const browse = createIdleBrowse();
+    const file = new File([new Uint8Array(32)], "kick.mp3");
+    const dispatch = createMixerDispatch({
+      eng,
+      browse,
+      dispatchReducer: () => undefined,
+    });
+    dispatch({ type: "loadDeckFile", id: "a", file });
+    expect(calls.filter((name) => name === "loadDeckFile")).toEqual(["loadDeckFile"]);
+  });
 });
 
 function stubTrack(id: string): TrainingTrack {
@@ -194,6 +221,10 @@ function stubDeck(id: DeckId): DeckState {
     cueBeat: 0,
     track: stubTrack(id === "a" ? "radio-spotify-01" : "radio-deezer-02"),
     phase: 0,
+    sourceKind: "synthetic",
+    durationSec: 0,
+    positionSec: 0,
+    peaks: null,
   };
 }
 
@@ -246,6 +277,14 @@ function createFakeEngine(): { eng: MixerEngine; calls: string[] } {
       snapshot[id].loop.active = !snapshot[id].loop.active;
     },
     nudge: () => calls.push("nudge"),
+    ensure: async () => {
+      calls.push("ensure");
+    },
+    loadDeckBuffer: () => calls.push("loadDeckBuffer"),
+    loadDeckFile: async () => {
+      calls.push("loadDeckFile");
+    },
+    setDeckMeta: () => calls.push("setDeckMeta"),
   };
 
   return { eng, calls };

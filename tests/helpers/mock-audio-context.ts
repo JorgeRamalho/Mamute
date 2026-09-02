@@ -155,6 +155,20 @@ export class MockAudioContext {
   }
 
   /**
+   * Decodifica bytes em um buffer silencioso, ou rejeita arquivo minúsculo.
+   *
+   * @param data Bytes do arquivo.
+   */
+  async decodeAudioData(data: ArrayBuffer): Promise<MockAudioBuffer> {
+    if (data.byteLength < 16) {
+      throw new Error("invalid audio");
+    }
+    const seconds = Math.max(0.25, Math.min(4, data.byteLength / this.sampleRate));
+    const length = Math.floor(this.sampleRate * seconds);
+    return this.createBuffer(1, length, this.sampleRate);
+  }
+
+  /**
    * Avança o relógio do grafo. O loop de fase lê `currentTime`, e por isso
    * os testes não dependem de `Date.now`.
    *

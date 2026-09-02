@@ -1,4 +1,4 @@
-import type { DeckId, JogMode, MixerAction, MixerSnapshot } from "../types/mixer";
+import type { DeckFileMeta, DeckId, JogMode, MixerAction, MixerSnapshot } from "../types/mixer";
 import type { BrowseState } from "./mixer-browse";
 import { phaseToBeat } from "./mixer-snapshot";
 
@@ -34,6 +34,10 @@ export type MixerEngine = {
   toggle(id: DeckId): Promise<void>;
   toggleLoop(id: DeckId): void;
   nudge(id: DeckId, direction: -1 | 1): void;
+  ensure(): Promise<void>;
+  loadDeckBuffer(id: DeckId, buffer: AudioBuffer, meta: DeckFileMeta): void;
+  loadDeckFile(id: DeckId, file: File): Promise<void>;
+  setDeckMeta(id: DeckId, meta: { bpm?: number; key?: string; title?: string }): void;
 };
 
 /**
@@ -62,7 +66,9 @@ export type ResolvedPlan =
   | { kind: "absolute"; action: MixerAction }
   | { kind: "engine-toggle"; id: DeckId }
   | { kind: "engine-loop"; id: DeckId }
-  | { kind: "engine-nudge"; id: DeckId; direction: -1 | 1 };
+  | { kind: "engine-nudge"; id: DeckId; direction: -1 | 1 }
+  | { kind: "engine-file"; id: DeckId; file: File }
+  | { kind: "ui-op"; op: MixerUiOp };
 
 export type MixerDispatchDeps = {
   eng: MixerEngine;
@@ -141,6 +147,13 @@ export function applyAbsoluteAction(eng: MixerEngine, action: MixerAction): void
     case "triggerHotCue":
       eng.triggerHotCue(action.id, action.slot);
       return;
+    case "setDeckMeta":
+      eng.setDeckMeta(action.id, {
+        bpm: action.bpm,
+        key: action.key,
+        title: action.title,
+      });
+      return;
     case "toggle":
     case "toggleSync":
     case "toggleCueMonitor":
@@ -154,6 +167,8 @@ export function applyAbsoluteAction(eng: MixerEngine, action: MixerAction): void
     case "browseHome":
     case "browseLoad":
     case "refresh":
+    case "requestDeckLoad":
+    case "loadDeckFile":
       return;
   }
 }
@@ -224,6 +239,10 @@ export function resolveMixerAction(
       if (!trackId) return { kind: "noop" };
       return { kind: "absolute", action: { type: "loadTrack", id: action.id, trackId } };
     }
+    case "requestDeckLoad":
+      return { kind: "ui-op", op: { kind: "openFilePicker", deckId: action.id } };
+    case "loadDeckFile":
+      return { kind: "engine-file", id: action.id, file: action.file };
     default:
       return { kind: "absolute", action };
   }
@@ -266,6 +285,21 @@ export function dispatchMixerAction(
       deps.eng.nudge(plan.id, plan.direction);
       deps.dispatchReducer({ type: "refresh" });
       return { kind: "refresh" };
+    case "ui-op":
+      deps.onUiOp?.(plan.op);
+      return { kind: "ui-only" };
+    case "engine-file": {
+      const whenDone = deps.eng.loadDeckFile(plan.id, plan.file).then(
+        () => {
+          deps.dispatchReducer({ type: "refresh" });
+        },
+        (error: unknown) => {
+          const message = error instanceof Error ? error.message : "Falha ao carregar o arquivo";
+          deps.onUiOp?.({ kind: "showLoadError", message });
+        },
+      );
+      return { kind: "async", whenDone };
+    }
   }
 }
 

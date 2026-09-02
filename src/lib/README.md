@@ -10,6 +10,9 @@ Lógica de domínio e adaptação de ambiente. Sem JSX.
 | `mixer-dispatch.ts` | Resolve `MixerAction` em absoluto, intenção ou browse, sem React. |
 | `mixer-action-routing.ts` | Tabela `MIXER_ACTION_ROUTES`: dispatch-only, reducer-only, reducer-direct. |
 | `mixer-assert.ts` | `assertAllowedInReducer` — throw `[MixerContract]` em DEV se a rota for dispatch-only. |
+| `waveform-peaks.ts` | Picos de amplitude por bin para a waveform tipo CDJ. |
+| `deck-audio-decode.ts` | `decodeAudioData` + título/BPM do nome do arquivo. |
+| `deck-metadata.ts` | Heurística de BPM no filename. |
 | `storage.ts` | Perfil DJ em `localStorage`. |
 | `academy.ts` | Progresso das aulas em `localStorage`. |
 | `base.ts` | Basename do router, URL do Live Server e `publicAsset()` para favicon. |

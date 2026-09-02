@@ -1,6 +1,7 @@
 import { DEFAULT_DECK_TRACKS, getTrainingTrack } from "../data/training-tracks";
 import { HOT_CUE_SLOTS } from "../types/mixer";
 import type {
+  DeckFileMeta,
   DeckId,
   DeckState,
   HotCue,
@@ -8,6 +9,8 @@ import type {
   MixerSnapshot,
   TrainingTrack,
 } from "../types/mixer";
+import { decodeDeckFile } from "./deck-audio-decode";
+import { computePeaks } from "./waveform-peaks";
 
 export type { DeckState, MixerSnapshot } from "../types/mixer";
 
@@ -55,7 +58,17 @@ function createDeck(id: DeckId): DeckState {
     cueBeat: 0,
     track,
     phase: 0,
+    sourceKind: "synthetic",
+    durationSec: 0,
+    positionSec: 0,
+    peaks: null,
   };
+}
+
+function formatTrackDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 function makeNoiseBuffer(ctx: AudioContext, seconds: number): AudioBuffer {
@@ -260,9 +273,84 @@ export class MamuteEngine {
     this.snapshot[id].pitch = 0;
     this.snapshot[id].cueBeat = 0;
     this.snapshot[id].phase = 0;
+    this.snapshot[id].sourceKind = "synthetic";
+    this.snapshot[id].peaks = null;
     this.rebuildBuffer(id);
     if (this.snapshot[id].sync) this.applySync(id);
     if (wasPlaying) this.start(id);
+  }
+
+  /**
+   * Carrega áudio já decodificado no deck, preservando playing se aplicável.
+   *
+   * @param id Deck destino.
+   * @param buffer Buffer do Web Audio.
+   * @param meta Título, BPM e key para a tela.
+   */
+  loadDeckBuffer(id: DeckId, buffer: AudioBuffer, meta: DeckFileMeta): void {
+    const wasPlaying = this.snapshot[id].playing;
+    if (wasPlaying) this.stop(id);
+    if (this.decks) this.decks[id].buffer = buffer;
+    const bpm = meta.bpm ?? this.snapshot[id].bpm;
+    const key = meta.key ?? "—";
+    this.snapshot[id].sourceKind = "file";
+    this.snapshot[id].durationSec = buffer.duration;
+    this.snapshot[id].positionSec = 0;
+    this.snapshot[id].peaks = computePeaks(buffer, 512);
+    this.snapshot[id].track = {
+      id: `file:${meta.title}`,
+      title: meta.title,
+      artist: meta.artist ?? "Arquivo",
+      genre: "Upload",
+      bpm,
+      key,
+      scale: key,
+      duration: formatTrackDuration(buffer.duration),
+      grid: "FILE",
+    };
+    this.snapshot[id].bpm = bpm;
+    this.snapshot[id].pitch = 0;
+    this.snapshot[id].cueBeat = 0;
+    this.snapshot[id].phase = 0;
+    if (this.snapshot[id].sync) this.applySync(id);
+    if (wasPlaying) this.start(id);
+  }
+
+  /**
+   * Decodifica o arquivo e chama `loadDeckBuffer`.
+   *
+   * @param id Deck destino.
+   * @param file Arquivo do picker.
+   */
+  async loadDeckFile(id: DeckId, file: File): Promise<void> {
+    await this.ensure();
+    if (!this.ctx) return;
+    await this.ctx.resume();
+    const decoded = await decodeDeckFile(this.ctx, file);
+    this.loadDeckBuffer(id, decoded.buffer, {
+      title: decoded.title,
+      bpm: decoded.bpm,
+      durationSec: decoded.durationSec,
+    });
+  }
+
+  /**
+   * Atualiza BPM, key ou título sem recarregar o áudio.
+   *
+   * @param id Deck.
+   * @param meta Campos opcionais.
+   */
+  setDeckMeta(id: DeckId, meta: { bpm?: number; key?: string; title?: string }): void {
+    if (meta.bpm !== undefined) {
+      this.snapshot[id].bpm = meta.bpm;
+      this.snapshot[id].track = { ...this.snapshot[id].track, bpm: meta.bpm };
+    }
+    if (meta.key !== undefined) {
+      this.snapshot[id].track = { ...this.snapshot[id].track, key: meta.key, scale: meta.key };
+    }
+    if (meta.title !== undefined) {
+      this.snapshot[id].track = { ...this.snapshot[id].track, title: meta.title };
+    }
   }
 
   setPitch(id: DeckId, pitch: number): void {
@@ -393,11 +481,20 @@ export class MamuteEngine {
     }
   }
 
-  private beatToPhase(_id: DeckId, beat: number): number {
+  private beatToPhase(id: DeckId, beat: number): number {
+    const deck = this.snapshot[id];
+    if (deck.sourceKind === "file") {
+      const duration = deck.durationSec || 1;
+      return duration > 0 ? ((beat / duration) % 1 + 1) % 1 : 0;
+    }
     return (beat % 8) / 8;
   }
 
-  private phaseToBeat(_id: DeckId, phase: number): number {
+  private phaseToBeat(id: DeckId, phase: number): number {
+    const deck = this.snapshot[id];
+    if (deck.sourceKind === "file") {
+      return phase * (deck.durationSec || 0);
+    }
     return Math.round(phase * 8) % 8;
   }
 
@@ -446,14 +543,23 @@ export class MamuteEngine {
   private rebuildBuffer(id: DeckId): void {
     if (!this.ctx || !this.decks) return;
     this.decks[id].buffer = buildLoop(this.ctx, this.snapshot[id].bpm, id);
+    this.snapshot[id].durationSec = this.decks[id].buffer.duration;
     if (this.decks[id].source) {
       this.decks[id].source!.buffer = this.decks[id].buffer;
     }
   }
 
+  /**
+   * Arranca o BufferSource no `snapshot.phase` corrente.
+   *
+   * O `stop` interno não captura a fase, porque o ponto de partida já está
+   * no snapshot: pause gravou, `callCue` escreveu o cue, load zerou.
+   *
+   * @param id Deck a tocar.
+   */
   private start(id: DeckId): void {
     if (!this.ctx || !this.decks) return;
-    this.stop(id);
+    this.stop(id, { preservePhase: true });
     const nodes = this.decks[id];
     if (!nodes.buffer) return;
     const source = this.ctx.createBufferSource();
@@ -468,18 +574,37 @@ export class MamuteEngine {
     this.snapshot[id].playing = true;
   }
 
+  /**
+   * Recria o source no ponto já escrito em `snapshot.phase`.
+   *
+   * @param id Deck a reiniciar.
+   */
   private restart(id: DeckId): void {
     if (this.snapshot[id].playing) this.start(id);
   }
 
-  private stop(id: DeckId): void {
+  /**
+   * Para o source. Sem `preservePhase`, grava a fase viva no snapshot.
+   *
+   * O `startedAt` já inclui o offset do start, e por isso a fase viva é só
+   * `elapsed * rate / duration`. Somar `snapshot.phase` de novo duplicava o
+   * ponto e o `callCue` em play voltava ao lugar antigo em vez do cue.
+   *
+   * @param id Deck a parar.
+   * @param options `preservePhase` true quando o caller já definiu o ponto
+   *   (start/restart). Omitido no pause via `toggle`.
+   */
+  private stop(id: DeckId, options: { preservePhase?: boolean } = {}): void {
     const nodes = this.decks?.[id];
     if (nodes?.source && this.ctx) {
-      const elapsed = this.ctx.currentTime - nodes.startedAt;
-      const rate = 1 + this.snapshot[id].pitch / 100;
-      const loopDuration = nodes.buffer?.duration ?? 1;
-      nodes.pausedPhase = ((elapsed * rate) / loopDuration + this.snapshot[id].phase) % 1;
-      this.snapshot[id].phase = nodes.pausedPhase;
+      if (!options.preservePhase) {
+        const elapsed = this.ctx.currentTime - nodes.startedAt;
+        const rate = 1 + this.snapshot[id].pitch / 100;
+        const loopDuration = nodes.buffer?.duration ?? 1;
+        nodes.pausedPhase = ((elapsed * rate) / loopDuration) % 1;
+        this.snapshot[id].phase = nodes.pausedPhase;
+        this.snapshot[id].positionSec = nodes.pausedPhase * loopDuration;
+      }
       nodes.source.stop();
       nodes.source.disconnect();
       nodes.source = null;
@@ -499,6 +624,8 @@ export class MamuteEngine {
         const rate = 1 + deck.pitch / 100;
         const loopDuration = nodes.buffer?.duration ?? 1;
         deck.phase = ((elapsed * rate) / loopDuration) % 1;
+        deck.positionSec = deck.phase * loopDuration;
+        deck.durationSec = loopDuration;
       });
     }, 50);
   }

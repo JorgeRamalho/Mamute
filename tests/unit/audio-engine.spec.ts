@@ -252,6 +252,19 @@ describe("MamuteEngine — callCue (C1–C4)", () => {
     engine.callCue("a");
     expect(engine.snapshot.a.phase).toBe(0);
   });
+
+  test("C5 tocando depois de elapsed, callCue reinicia no cue e não no relógio antigo", async () => {
+    const created = await createTestEngine();
+    engine = created.engine;
+    const ctx = created.ctx;
+    await engine.toggle("a");
+    ctx.advance(0.4);
+    engine.setCueBeat("a", 0);
+    engine.callCue("a");
+    expect(engine.snapshot.a.playing).toBe(true);
+    expect(engine.snapshot.a.phase).toBeCloseTo(0, 5);
+    expect(lastSource(engine, "a")?.startOffset).toBeCloseTo(0, 5);
+  });
 });
 
 describe("MamuteEngine — nudge (N1–N5)", () => {
@@ -456,6 +469,44 @@ describe("MamuteEngine — demais métodos públicos", () => {
     engine.toggleLoop("a");
     expect(engine.snapshot.a.loop.active).toBe(false);
     expect(engine.snapshot.a.loop.inBeat).toBeNull();
+  });
+
+  test("U-05 loadDeckBuffer preserva playing", async () => {
+    const created = await createTestEngine();
+    engine = created.engine;
+    const ctx = created.ctx;
+    await engine.toggle("a");
+    const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    engine.loadDeckBuffer("a", buffer as unknown as AudioBuffer, {
+      title: "kick",
+      bpm: 120,
+      durationSec: buffer.duration,
+    });
+    expect(engine.snapshot.a.playing).toBe(true);
+    expect(engine.snapshot.a.sourceKind).toBe("file");
+    expect(engine.snapshot.a.peaks?.length).toBe(512);
+  });
+
+  test("U-06 callCue com buffer real usa segundos", async () => {
+    const created = await createTestEngine();
+    engine = created.engine;
+    const ctx = created.ctx;
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    engine.loadDeckBuffer("a", buffer as unknown as AudioBuffer, {
+      title: "kick",
+      bpm: 120,
+      durationSec: buffer.duration,
+    });
+    engine.setCueBeat("a", 0.5);
+    engine.callCue("a");
+    expect(engine.snapshot.a.phase).toBeCloseTo(0.25, 5);
+
+    await engine.toggle("a");
+    ctx.advance(0.8);
+    engine.setCueBeat("a", 0);
+    engine.callCue("a");
+    expect(engine.snapshot.a.phase).toBeCloseTo(0, 5);
+    expect(lastSource(engine, "a")?.startOffset).toBeCloseTo(0, 5);
   });
 });
 

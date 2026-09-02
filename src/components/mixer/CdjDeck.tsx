@@ -8,10 +8,12 @@ function Waveform({
   id,
   spinning,
   phase,
+  peaks,
 }: {
   id: DeckId;
   spinning: boolean;
   phase: number;
+  peaks: Float32Array | null;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -38,7 +40,11 @@ function Waveform({
 
       for (let bar = 0; bar < 64; bar += 1) {
         const x = (bar / 64) * width;
-        const h = 8 + Math.sin(bar * 0.55 + phase * Math.PI * 2) * 6 + (bar % 4 === 0 ? 14 : 6);
+        const fromPeaks =
+          peaks && peaks.length > 0
+            ? (peaks[Math.floor((bar / 64) * peaks.length)] ?? 0) * 36
+            : Math.sin(bar * 0.55 + phase * Math.PI * 2) * 6;
+        const h = 8 + fromPeaks + (bar % 4 === 0 ? 14 : 6);
         const grad = ctx.createLinearGradient(0, height - h, 0, height);
         grad.addColorStop(0, `${base}88`);
         grad.addColorStop(1, `${base}22`);
@@ -75,7 +81,7 @@ function Waveform({
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [id, phase, spinning]);
+  }, [id, phase, spinning, peaks]);
 
   return <canvas ref={ref} className="cdj-wave" aria-hidden="true" />;
 }
@@ -169,9 +175,15 @@ export function CdjDeck({
       data-stage="9"
       data-deck={id}
       data-playing={deck.playing ? "true" : "false"}
-      // O e2e do jog precisa ler o efeito do nudge, e a fase só existe no
-      // canvas do waveform e num anel decorativo, que o teste não consegue medir.
       data-phase={deck.phase.toFixed(3)}
+      data-bpm={engine.effectiveBpm(id).toFixed(2)}
+      data-key={deck.track.key}
+      data-source-kind={deck.sourceKind}
+      data-peaks-ready={deck.peaks && deck.peaks.length > 0 ? "true" : "false"}
+      data-cue-sec={deck.sourceKind === "file" ? String(deck.cueBeat) : undefined}
+      data-pitch={deck.pitch.toFixed(2)}
+      data-eq-high={String(deck.eq.high)}
+      data-loop-active={deck.loop.active ? "true" : "false"}
       aria-label={`Deck ${id.toUpperCase()}`}
     >
       <header className="cdj-deck-top">
@@ -215,22 +227,37 @@ export function CdjDeck({
         </div>
       </div>
 
-      <label className="cdj-track-select">
-        <span>USB · treino Mamute</span>
-        <select
-          value={deck.track.id}
-          aria-label={`Track deck ${id.toUpperCase()}`}
-          onChange={(event) => onChange({ type: "loadTrack", id, trackId: event.target.value })}
+      <div className="cdj-track-row">
+        <label className="cdj-track-select">
+          <span>USB · treino Mamute</span>
+          <select
+            value={deck.track.id.startsWith("file:") ? "" : deck.track.id}
+            aria-label={`Track deck ${id.toUpperCase()}`}
+            onChange={(event) => onChange({ type: "loadTrack", id, trackId: event.target.value })}
+          >
+            {deck.track.id.startsWith("file:") ? (
+              <option value="" disabled>
+                {deck.track.title} · arquivo
+              </option>
+            ) : null}
+            {TRAINING_TRACKS.map((track) => (
+              <option key={track.id} value={track.id}>
+                {track.title} · {track.key} · {track.bpm} BPM
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="cdj-btn cdj-btn--load"
+          type="button"
+          aria-label={`Carregar deck ${id.toUpperCase()}`}
+          onClick={() => onChange({ type: "requestDeckLoad", id })}
         >
-          {TRAINING_TRACKS.map((track) => (
-            <option key={track.id} value={track.id}>
-              {track.title} · {track.key} · {track.bpm} BPM
-            </option>
-          ))}
-        </select>
-      </label>
+          LOAD
+        </button>
+      </div>
 
-      <Waveform id={id} phase={deck.phase} spinning={deck.playing} />
+      <Waveform id={id} phase={deck.phase} spinning={deck.playing} peaks={deck.peaks} />
 
       <div className="cdj-transport-primary">
         <p className="cdj-transport-label">Comandos principais</p>
