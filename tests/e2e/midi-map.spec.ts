@@ -7,6 +7,7 @@ import {
   MIXER_CC_14BIT,
 } from "../../src/lib/midi/ddj-400-protocol";
 import { isDdj400PortName } from "../../src/lib/midi/midi-session";
+import { coalesceMode, createMidiActionQueue } from "../../src/lib/midi/midi-coalesce";
 import { parseMidiMessage, type ParsedMidiMessage } from "../../src/lib/midi/parse-message";
 import type { MixerAction } from "../../src/types/mixer";
 
@@ -134,6 +135,91 @@ test.describe("mapa MIDI DDJ-400 — knobs e faders", () => {
       ),
     ).toBeNull();
     expect(send14(ctx, DDJ_STATUS.ccDeckA, DECK_CC_14BIT.tempo, 0x40, 0)).toBeNull();
+  });
+});
+
+test.describe("fila de coalesce de um frame", () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "fila pura, um projeto basta");
+  });
+
+  test("knob e fader guardam só o último valor de cada controle", () => {
+    const queue = createMidiActionQueue();
+
+    expect(queue.push({ type: "gain", id: "a", value: 0.2 })).toBeNull();
+    expect(queue.push({ type: "gain", id: "a", value: 0.8 })).toBeNull();
+    expect(queue.push({ type: "gain", id: "b", value: 0.3 })).toBeNull();
+
+    expect(queue.drain()).toEqual([
+      { type: "gain", id: "a", value: 0.8 },
+      { type: "gain", id: "b", value: 0.3 },
+    ]);
+    expect(queue.isEmpty()).toBe(true);
+  });
+
+  test("EQ não deixa uma banda engolir a outra nem um deck engolir o outro", () => {
+    const queue = createMidiActionQueue();
+
+    queue.push({ type: "eq", id: "a", band: "high", value: 3 });
+    queue.push({ type: "eq", id: "a", band: "low", value: -6 });
+    queue.push({ type: "eq", id: "b", band: "high", value: 9 });
+    queue.push({ type: "eq", id: "a", band: "high", value: 4 });
+
+    expect(queue.drain()).toEqual([
+      { type: "eq", id: "a", band: "high", value: 4 },
+      { type: "eq", id: "a", band: "low", value: -6 },
+      { type: "eq", id: "b", band: "high", value: 9 },
+    ]);
+  });
+
+  test("o jog acumula, porque nudge é passo relativo e não valor absoluto", () => {
+    const queue = createMidiActionQueue();
+
+    for (let tick = 0; tick < 3; tick += 1) {
+      expect(queue.push({ type: "nudge", id: "a", direction: 1 })).toBeNull();
+    }
+    queue.push({ type: "nudge", id: "b", direction: -1 });
+    queue.push({ type: "nudge", id: "b", direction: -1 });
+
+    // Se a fila tratasse o jog como knob, três ticks virariam um só e o prato
+    // andaria um terço do gesto.
+    expect(queue.drain()).toEqual([
+      { type: "nudge", id: "a", direction: 1 },
+      { type: "nudge", id: "a", direction: 1 },
+      { type: "nudge", id: "a", direction: 1 },
+      { type: "nudge", id: "b", direction: -1 },
+      { type: "nudge", id: "b", direction: -1 },
+    ]);
+  });
+
+  test("ticks opostos no mesmo frame se cancelam", () => {
+    const queue = createMidiActionQueue();
+
+    queue.push({ type: "nudge", id: "a", direction: 1 });
+    queue.push({ type: "nudge", id: "a", direction: -1 });
+
+    expect(queue.drain()).toEqual([]);
+  });
+
+  test("botão sai na hora e não espera frame", () => {
+    const queue = createMidiActionQueue();
+
+    expect(queue.push({ type: "toggle", id: "a" })).toEqual({ type: "toggle", id: "a" });
+    expect(queue.push({ type: "cueMonitor", id: "b", value: true })).toEqual({
+      type: "cueMonitor",
+      id: "b",
+      value: true,
+    });
+    expect(queue.isEmpty()).toBe(true);
+    expect(queue.drain()).toEqual([]);
+  });
+
+  test("a classificação separa as três naturezas de ação", () => {
+    expect(coalesceMode({ type: "xf", value: 0.5 })).toBe("continuous");
+    expect(coalesceMode({ type: "pitch", id: "a", value: 2 })).toBe("continuous");
+    expect(coalesceMode({ type: "nudge", id: "a", direction: 1 })).toBe("accumulate");
+    expect(coalesceMode({ type: "toggleLoop", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "loadTrack", id: "a", trackId: "x" })).toBe("immediate");
   });
 });
 
