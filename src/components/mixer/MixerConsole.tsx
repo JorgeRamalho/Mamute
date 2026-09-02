@@ -224,6 +224,7 @@ export function MixerConsole({
           max={1}
           step="any"
           value={snap.crossfader}
+          data-xf={snap.crossfader}
           aria-label="Crossfader"
           onChange={(event) => onChange({ type: "xf", value: Number(event.target.value) })}
         />

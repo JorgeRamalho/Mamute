@@ -38,4 +38,7 @@ export const MIXER_ACTION_SAMPLES: { [K in MixerAction["type"]]: MixerAction } =
   browseMove: { type: "browseMove", delta: 1 },
   browseLoad: { type: "browseLoad", id: "a" },
   browseHome: { type: "browseHome" },
+  requestDeckLoad: { type: "requestDeckLoad", id: "a" },
+  loadDeckFile: { type: "loadDeckFile", id: "a", file: new File([], "x.mp3") },
+  setDeckMeta: { type: "setDeckMeta", id: "a", bpm: 120 },
 };

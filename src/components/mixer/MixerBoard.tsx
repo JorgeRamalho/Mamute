@@ -9,6 +9,7 @@ import { useMidiController } from "../../lib/midi/use-midi-controller";
 import type { MixerAction, MixerSnapshot } from "../../types/mixer";
 import { BrowseChip } from "./BrowseChip";
 import { CdjDeck } from "./CdjDeck";
+import { DeckFileInput, openDeckFilePicker } from "./DeckFileInput";
 import { MidiStatus } from "./MidiStatus";
 import { MixerConsole } from "./MixerConsole";
 
@@ -66,7 +67,16 @@ export function MixerBoard() {
    * mesmo union em vez de fluxos separados.
    */
   const dispatchAction = useMemo(
-    () => createMixerDispatch({ eng: engine, browse, dispatchReducer: dispatch }),
+    () =>
+      createMixerDispatch({
+        eng: engine,
+        browse,
+        dispatchReducer: dispatch,
+        onUiOp: (op) => {
+          if (op.kind === "openFilePicker") openDeckFilePicker(op.deckId);
+          if (op.kind === "showLoadError") window.alert(op.message);
+        },
+      }),
     [browse],
   );
 
@@ -118,6 +128,9 @@ export function MixerBoard() {
           onConnect={midi.connect}
         />
       </header>
+
+      <DeckFileInput id="a" onFile={(file) => dispatchAction({ type: "loadDeckFile", id: "a", file })} />
+      <DeckFileInput id="b" onFile={(file) => dispatchAction({ type: "loadDeckFile", id: "b", file })} />
 
       <div className="mixer-board" data-stage="5">
         <CdjDeck id="a" masterKey={masterKey} onChange={dispatchAction} />

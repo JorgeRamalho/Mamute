@@ -74,6 +74,10 @@ function stubDeck(id: DeckId): DeckState {
     cueBeat: 0,
     track: stubTrack(id),
     phase: 0,
+    sourceKind: "synthetic",
+    durationSec: 0,
+    positionSec: 0,
+    peaks: null,
   };
 }
 
@@ -115,6 +119,14 @@ function createFakeEngine(): { eng: MixerEngine; calls: string[] } {
     },
     toggleLoop: () => calls.push("toggleLoop"),
     nudge: () => calls.push("nudge"),
+    ensure: async () => {
+      calls.push("ensure");
+    },
+    loadDeckBuffer: () => calls.push("loadDeckBuffer"),
+    loadDeckFile: async () => {
+      calls.push("loadDeckFile");
+    },
+    setDeckMeta: () => calls.push("setDeckMeta"),
   };
   return { eng, calls };
 }

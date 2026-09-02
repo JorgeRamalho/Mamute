@@ -496,6 +496,20 @@
   text-transform: uppercase;
 }
 
+.cdj-track-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+  align-items: end;
+}
+
+.cdj-btn--load {
+  height: 2.35rem;
+  padding: 0 0.75rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+
 .cdj-track-select select {
   width: 100%;
   border-radius: 10px;

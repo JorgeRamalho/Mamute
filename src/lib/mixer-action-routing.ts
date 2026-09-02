@@ -48,6 +48,9 @@ export const MIXER_ACTION_ROUTES: Record<MixerAction["type"], MixerActionRoute> 
   browseMove: "dispatch-only",
   browseLoad: "dispatch-only",
   browseHome: "dispatch-only",
+  requestDeckLoad: "dispatch-only",
+  loadDeckFile: "dispatch-only",
+  setDeckMeta: "reducer-only",
 };
 
 /**
