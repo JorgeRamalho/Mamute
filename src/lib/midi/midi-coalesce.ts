@@ -43,6 +43,7 @@ export function coalesceMode(action: MixerAction): CoalesceMode {
     case "pitch":
       return "continuous";
     case "nudge":
+    case "browseMove":
       return "accumulate";
     default:
       return "immediate";
@@ -86,13 +87,18 @@ export interface MidiActionQueue {
 export function createMidiActionQueue(): MidiActionQueue {
   const continuous = new Map<string, MixerAction>();
   const steps = new Map<DeckId, number>();
+  let browse = 0;
 
   return {
     push(action) {
       const mode = coalesceMode(action);
       if (mode === "immediate") return action;
-      if (mode === "accumulate" && action.type === "nudge") {
+      if (action.type === "nudge") {
         steps.set(action.id, (steps.get(action.id) ?? 0) + action.direction);
+        return null;
+      }
+      if (action.type === "browseMove") {
+        browse += action.delta;
         return null;
       }
       continuous.set(coalesceKey(action), action);
@@ -111,11 +117,19 @@ export function createMidiActionQueue(): MidiActionQueue {
       }
       steps.clear();
 
+      // O encoder sai numa ação só com a soma, ao contrário do `nudge`, porque
+      // quem o aplica é uma função de UI que já soma e dá a volta na lista, ao
+      // passo que `engine.nudge` precisa de uma chamada por passo.
+      if (browse !== 0) {
+        out.push({ type: "browseMove", delta: browse });
+        browse = 0;
+      }
+
       return out;
     },
 
     isEmpty() {
-      return continuous.size === 0 && steps.size === 0;
+      return continuous.size === 0 && steps.size === 0 && browse === 0;
     },
   };
 }

@@ -1,12 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { createDdj400MapContext, mapDdj400 } from "../../src/lib/midi/ddj-400-map";
 import {
+  BROWSER_NOTE,
   DDJ_STATUS,
   DECK_CC_14BIT,
   DECK_CC_JOG,
   DECK_NOTE,
   HOT_CUE_FIRST_NOTE,
   MIXER_CC_14BIT,
+  MIXER_CC_BROWSE,
   PAD_COUNT,
 } from "../../src/lib/midi/ddj-400-protocol";
 import { JOG_TICKS_PER_NUDGE } from "../../src/lib/midi/midi-scales";
@@ -403,8 +405,7 @@ test.describe("mapa MIDI DDJ-400 — transporte", () => {
     expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.shift, 0x7f), ctx)).toBeNull();
     expect(mapDdj400(note(DDJ_STATUS.noteDeckA, DECK_NOTE.jogTouch, 0x7f), ctx)).toBeNull();
 
-    // O browser tem canal próprio e pertence à onda seguinte, e por isso a note
-    // 0x0b ali não pode virar play.
+    // O browser tem canal próprio, e por isso a note 0x0b ali não vira play.
     expect(mapDdj400(note(DDJ_STATUS.noteBrowser, DECK_NOTE.play, 0x7f), ctx)).toBeNull();
   });
 
@@ -435,6 +436,107 @@ test.describe("mapa MIDI DDJ-400 — transporte", () => {
     expect(coalesceMode({ type: "toggleSync", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "toggleCueMonitor", id: "a" })).toBe("immediate");
     expect(coalesceMode({ type: "masterDeck", id: "a" })).toBe("immediate");
+  });
+});
+
+test.describe("mapa MIDI DDJ-400 — browser", () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "mapa puro, um projeto basta");
+  });
+
+  test("o encoder anda um passo para cada lado, em complemento de dois", () => {
+    const ctx = createDdj400MapContext();
+
+    // Este é o ponto em que confundir o decodificador custa caro, porque o
+    // encoder manda 0x7F para andar um passo atrás, ao passo que `jogDelta`
+    // leria o mesmo byte como 63 passos à frente.
+    expect(mapDdj400(cc(DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x01), ctx)).toEqual({
+      type: "browseMove",
+      delta: 1,
+    });
+    expect(mapDdj400(cc(DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x7f), ctx)).toEqual({
+      type: "browseMove",
+      delta: -1,
+    });
+    expect(mapDdj400(cc(DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x03), ctx)).toEqual({
+      type: "browseMove",
+      delta: 3,
+    });
+  });
+
+  test("o encoder divide o canal com o crossfader sem se confundir com ele", () => {
+    const ctx = createDdj400MapContext();
+
+    // Os dois moram em `0xB6`, e o encoder é resolvido antes da tabela de 14
+    // bits, senão o passo relativo entraria na conta de um par MSB/LSB.
+    expect(send14(ctx, DDJ_STATUS.ccMixer, MIXER_CC_14BIT.crossfader, 0x7f, 0x7f)).toEqual({
+      type: "xf",
+      value: 1,
+    });
+    expect(mapDdj400(cc(DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, 0x01), ctx)).toEqual({
+      type: "browseMove",
+      delta: 1,
+    });
+  });
+
+  test("o LOAD resolve o deck pela note, e não pelo canal", () => {
+    const ctx = createDdj400MapContext();
+
+    // Única seção do mapa em que o canal não diz o deck, porque as duas notes
+    // chegam sob 0x96.
+    expect(mapDdj400(note(DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a, 0x7f), ctx)).toEqual({
+      type: "browseLoad",
+      id: "a",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.b, 0x7f), ctx)).toEqual({
+      type: "browseLoad",
+      id: "b",
+    });
+    expect(mapDdj400(note(DDJ_STATUS.noteBrowser, BROWSER_NOTE.back, 0x7f), ctx)).toEqual({
+      type: "browseHome",
+    });
+
+    expect(mapDdj400(note(DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a, 0x00), ctx)).toBeNull();
+  });
+
+  test("0x47 é LOAD no browser e PLAY+SHIFT no deck, sem colidir", () => {
+    const ctx = createDdj400MapContext();
+
+    // O mesmo número em canais diferentes, e por isso o mapa não pode olhar só
+    // a note. No canal do deck, 0x47 continua fora do transporte.
+    expect(BROWSER_NOTE.load.b).toBe(0x47);
+    expect(mapDdj400(note(DDJ_STATUS.noteDeckA, 0x47, 0x7f), ctx)).toBeNull();
+  });
+
+  test("o encoder acumula no frame e sai numa ação só, ao contrário do nudge", () => {
+    expect(coalesceMode({ type: "browseMove", delta: 1 })).toBe("accumulate");
+    expect(coalesceMode({ type: "browseLoad", id: "a" })).toBe("immediate");
+    expect(coalesceMode({ type: "browseHome" })).toBe("immediate");
+
+    const queue = createMidiActionQueue();
+    expect(queue.isEmpty()).toBe(true);
+
+    for (const delta of [1, 1, 1, -1]) {
+      expect(queue.push({ type: "browseMove", delta })).toBeNull();
+    }
+    expect(queue.isEmpty()).toBe(false);
+
+    // Duas voltas de encoder num frame viram um salto de dois, e não dois
+    // saltos, porque quem aplica já sabe somar e dar a volta na lista.
+    expect(queue.drain()).toEqual([{ type: "browseMove", delta: 2 }]);
+    expect(queue.isEmpty()).toBe(true);
+  });
+
+  test("giro que volta ao ponto de partida não gasta frame", () => {
+    const queue = createMidiActionQueue();
+
+    queue.push({ type: "browseMove", delta: 2 });
+    queue.push({ type: "browseMove", delta: -2 });
+
+    // A soma zero significa cursor no mesmo lugar, e por isso não há o que
+    // pintar nem por que agendar frame.
+    expect(queue.isEmpty()).toBe(true);
+    expect(queue.drain()).toEqual([]);
   });
 });
 

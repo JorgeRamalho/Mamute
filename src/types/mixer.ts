@@ -87,6 +87,11 @@ export interface MixerSnapshot {
  * `value`, a saber `toggle`, `toggleSync`, `toggleCueMonitor`, `toggleLoop` e
  * `cueButton`, são de **intenção**: elas descrevem o gesto e deixam o reducer
  * ler o snapshot, porque um botão MIDI manda press e nada mais.
+ *
+ * As três ações de browser são intenção por um motivo diferente dos toggles.
+ * Elas não dependem do snapshot, e sim do cursor da biblioteca, que é estado de
+ * tela e portanto invisível ao mapper, ou seja `browseLoad` diz qual deck
+ * recebe mas **não** qual track, porque quem sabe disso é o `MixerBoard`.
  */
 export type MixerAction =
   | { type: "refresh" }
@@ -118,4 +123,7 @@ export type MixerAction =
   | { type: "hotCue"; id: DeckId; slot: number }
   | { type: "triggerHotCue"; id: DeckId; slot: number }
   | { type: "hotCuePad"; id: DeckId; slot: number }
-  | { type: "nudge"; id: DeckId; direction: -1 | 1 };
+  | { type: "nudge"; id: DeckId; direction: -1 | 1 }
+  | { type: "browseMove"; delta: number }
+  | { type: "browseLoad"; id: DeckId }
+  | { type: "browseHome" };

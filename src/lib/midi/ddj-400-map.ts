@@ -3,7 +3,7 @@
  *
  * Cobre os knobs e faders analógicos de 14 bits, a saber trim, EQ, filter,
  * channel fader, crossfader, os dois knobs de fone e o tempo fader, mais as
- * notes de transporte e os jogs. Pads e browser ficam para ondas seguintes.
+ * notes de transporte, os pads de hot cue, os jogs e a seção de browser.
  * Os bytes vêm de `ddj-400-protocol.ts` e os ranges de destino de
  * `midi-scales.ts`, de modo que este arquivo só decide **qual** controle é.
  */
@@ -12,15 +12,18 @@ import { HOT_CUE_SLOTS } from "../../types/mixer";
 import type { DeckId, MixerAction } from "../../types/mixer";
 import type { ParsedMidiMessage } from "./parse-message";
 import {
+  BROWSER_NOTE,
   DDJ_STATUS,
   DECK_CC_14BIT,
   DECK_CC_JOG,
   DECK_NOTE,
   deckFromStatus,
+  encoderDelta,
   HOT_CUE_FIRST_NOTE,
   isPress,
   jogDelta,
   MIXER_CC_14BIT,
+  MIXER_CC_BROWSE,
   type Cc14Bit,
 } from "./ddj-400-protocol";
 import {
@@ -68,6 +71,9 @@ export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): Mixe
     if (event.status === DDJ_STATUS.notePadDeckA || event.status === DDJ_STATUS.notePadDeckB) {
       return mapPadNote(event);
     }
+    if (event.status === DDJ_STATUS.noteBrowser) {
+      return mapBrowserNote(event);
+    }
     return null;
   }
   if (event.kind !== "cc") return null;
@@ -76,9 +82,45 @@ export function mapDdj400(event: ParsedMidiMessage, ctx: Ddj400MapContext): Mixe
     return mapDeckCc(event, ctx);
   }
   if (event.status === DDJ_STATUS.ccMixer) {
+    // O encoder é resolvido antes da tabela de 14 bits porque ele divide o
+    // canal com o crossfader e os knobs de fone, mas não é um par MSB/LSB, e
+    // deixá-lo cair no `matchCc14` faria o passo relativo ser lido como metade
+    // de um valor absoluto.
+    if (event.data1 === MIXER_CC_BROWSE) {
+      return { type: "browseMove", delta: encoderDelta(event.data2) };
+    }
     return mapMixerAnalog(event, ctx);
   }
   return null;
+}
+
+/**
+ * Resolve LOAD e BACK, que moram num canal sem deck.
+ *
+ * Esta é a única seção em que o deck sai do **número da note**, e não do canal,
+ * porque as duas notes de LOAD chegam sob `DDJ_STATUS.noteBrowser`. Por isso
+ * `deckFromStatus` devolve `null` aqui e não serve de nada.
+ *
+ * As duas ações são intenção, mas por um motivo diferente dos toggles das ondas
+ * 3 e 5: o que falta ao mapper não é o estado do engine, e sim o cursor da
+ * biblioteca, que é estado de tela. O mapper diz qual deck recebe, ao passo que
+ * qual track é a destacada só o `MixerBoard` sabe.
+ *
+ * @param event Note On no canal do browser.
+ */
+function mapBrowserNote(event: ParsedMidiMessage): MixerAction | null {
+  if (!isPress(event.data2)) return null;
+
+  switch (event.data1) {
+    case BROWSER_NOTE.load.a:
+      return { type: "browseLoad", id: "a" };
+    case BROWSER_NOTE.load.b:
+      return { type: "browseLoad", id: "b" };
+    case BROWSER_NOTE.back:
+      return { type: "browseHome" };
+    default:
+      return null;
+  }
 }
 
 /**

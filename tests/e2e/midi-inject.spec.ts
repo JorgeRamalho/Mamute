@@ -1,11 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  BROWSER_NOTE,
   DDJ_STATUS,
   DECK_CC_14BIT,
   DECK_CC_JOG,
   DECK_NOTE,
   HOT_CUE_FIRST_NOTE,
   MIXER_CC_14BIT,
+  MIXER_CC_BROWSE,
   type Cc14Bit,
 } from "../../src/lib/midi/ddj-400-protocol";
 import { JOG_TICKS_PER_NUDGE } from "../../src/lib/midi/midi-scales";
@@ -77,6 +79,42 @@ async function spinJog(page: Page, status: number, jogCc: number, ticks: number)
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       }),
   );
+}
+
+/**
+ * Gira o encoder BROWSE em passos, que ele manda em complemento de dois.
+ *
+ * @param page Página já em `/mixer`.
+ * @param steps Passos com sinal, sendo positivo para frente na lista.
+ */
+async function spinEncoder(page: Page, steps: number): Promise<void> {
+  if (steps === 0) return;
+  await inject(page, [[DDJ_STATUS.ccMixer, MIXER_CC_BROWSE, steps > 0 ? steps : 0x80 + steps]]);
+  // O encoder é acumulativo como o prato, e por isso o destaque só aparece no
+  // frame seguinte à injeção.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }),
+  );
+}
+
+/**
+ * Lê o chip da biblioteca, que é o único espelho do cursor na tela.
+ *
+ * @param page Página já em `/mixer`.
+ */
+async function readBrowse(page: Page): Promise<{ title: string; position: number; total: number }> {
+  const chip = page.getByRole("status", { name: /^Browse/ });
+  await expect(chip).toBeVisible();
+
+  const title = (await chip.locator(".mixer-browse-title").innerText()).trim();
+  const meta = await chip.locator(".mixer-browse-meta").innerText();
+  const found = /(\d+)\s*\/\s*(\d+)\s*$/.exec(meta.trim());
+  if (!found) throw new Error(`chip de browse sem posição: ${meta}`);
+
+  return { title, position: Number(found[1]), total: Number(found[2]) };
 }
 
 /**
@@ -315,6 +353,80 @@ test.describe("transporte por inject", () => {
     await tapPad(page, DDJ_STATUS.notePadDeckA, 0x60 - HOT_CUE_FIRST_NOTE);
 
     expect(await deckA.getAttribute("data-phase")).toBe(antes);
+  });
+
+  test("o encoder move o destaque sem tocar no áudio", async ({ page }) => {
+    const partida = await readBrowse(page);
+    expect(partida.total).toBeGreaterThan(1);
+
+    // Um controle da cabine serve de testemunha: se o encoder vazasse para o
+    // snapshot, o fader mudaria junto do destaque.
+    await send14(page, DDJ_STATUS.ccDeckA, DECK_CC_14BIT.channelFader, 0x40, 0x00);
+    await expect(page.getByLabel("Volume deck A")).toHaveValue("0.5");
+
+    await spinEncoder(page, 1);
+    const depois = await readBrowse(page);
+    expect(depois.position).toBe((partida.position % partida.total) + 1);
+    expect(depois.title).not.toBe(partida.title);
+
+    await expect(page.getByLabel("Volume deck A")).toHaveValue("0.5");
+    await expect(page.getByLabel("Track deck A").locator("option:checked")).not.toContainText(
+      depois.title,
+    );
+  });
+
+  test("o cursor dá a volta na ponta da lista, em vez de travar", async ({ page }) => {
+    const partida = await readBrowse(page);
+
+    // Anda até a última faixa e passa dela, que numa biblioteca de cinco itens
+    // é gesto comum, e não caso de borda raro.
+    await spinEncoder(page, partida.total - partida.position);
+    expect((await readBrowse(page)).position).toBe(partida.total);
+
+    await spinEncoder(page, 1);
+    expect((await readBrowse(page)).position).toBe(1);
+
+    // Para trás o módulo do JavaScript devolveria −1, e por isso a volta é
+    // testada nos dois sentidos.
+    await spinEncoder(page, -1);
+    expect((await readBrowse(page)).position).toBe(partida.total);
+  });
+
+  test("o LOAD joga a faixa destacada na deck, e o select da tela acompanha", async ({ page }) => {
+    await spinEncoder(page, 2);
+    const destacada = await readBrowse(page);
+
+    await tapNote(page, DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a);
+    await expect(page.getByLabel("Track deck A").locator("option:checked")).toContainText(
+      destacada.title,
+    );
+
+    // A note diz o deck nesta seção, e por isso o LOAD do lado 2 não pode
+    // atropelar a deck A.
+    await spinEncoder(page, 1);
+    const outra = await readBrowse(page);
+    await tapNote(page, DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.b);
+    await expect(page.getByLabel("Track deck B").locator("option:checked")).toContainText(
+      outra.title,
+    );
+    await expect(page.getByLabel("Track deck A").locator("option:checked")).toContainText(
+      destacada.title,
+    );
+  });
+
+  test("o BACK realinha o destaque com a faixa do deck master", async ({ page }) => {
+    // Segurar SYNC manda a note longa e elege a deck A como master, e assim o
+    // teste não depende de qual deck nasce master.
+    await tapNote(page, DDJ_STATUS.noteDeckA, DECK_NOTE.syncLong);
+    await spinEncoder(page, 2);
+    await tapNote(page, DDJ_STATUS.noteBrowser, BROWSER_NOTE.load.a);
+
+    const carregada = await readBrowse(page);
+    await spinEncoder(page, 3);
+    expect((await readBrowse(page)).title).not.toBe(carregada.title);
+
+    await tapNote(page, DDJ_STATUS.noteBrowser, BROWSER_NOTE.back);
+    expect((await readBrowse(page)).title).toBe(carregada.title);
   });
 
   test("a latência do gesto fica dentro do orçamento", async ({ page }) => {

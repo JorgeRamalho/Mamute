@@ -126,6 +126,50 @@
   background: color-mix(in srgb, var(--cyan) 22%, transparent);
 }
 
+.mixer-browse-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 32%, var(--line));
+  background: color-mix(in srgb, #0c121c 82%, black);
+  font-family: var(--font-mono);
+}
+
+.mixer-browse-tag {
+  padding: 0.14rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cyan) 14%, transparent);
+  color: var(--cyan-hot);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mixer-browse-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.mixer-browse-title {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--text) 90%, white);
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mixer-browse-meta {
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
 .mixer-board {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
